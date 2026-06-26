@@ -1,0 +1,202 @@
+﻿<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Configura una parete IconicWall in 3D scegliendo pannelli, finiture e accessori magnetici.">
+  <title>Configuratore 3D — IconicWall</title>
+  <link rel="stylesheet" href="styles.css?v=26">
+  <link rel="stylesheet" href="configuratore.css?v=8">
+  <script src="script.js?v=43" defer></script>
+  <script src="assets/three-gltf-bundle.js" defer></script>
+  <script src="assets/models/iw-models.js" defer></script>
+  <script src="assets/dinoc/catalog.js?v=3" defer></script>
+  <script src="configuratore.js?v=23" defer></script>
+</head>
+<body data-page="configuratore">
+  <main class="configurator-page">
+    <section class="configurator-intro">
+      <div>
+        <p class="config-kicker">IconicWall Studio · Beta</p>
+        <h1>Disegna la tua<br><em>parete.</em></h1>
+      </div>
+      <p>Trascina gli elementi sulla parete, scegli materia e dimensioni, poi esplora il progetto in 3D.</p>
+    </section>
+
+    <section class="configurator-shell" aria-label="Configuratore IconicWall">
+      <aside class="config-sidebar">
+        <div class="config-section">
+          <div class="config-section-head">
+            <span>01</span>
+            <h2>Ambiente</h2>
+          </div>
+          <div class="dimension-grid">
+            <label>
+              <span>Larghezza composta</span>
+              <output id="wall-width-output">2400 mm</output>
+            </label>
+            <label>
+              <span>Altezza</span>
+              <select id="wall-height">
+                <option value="2400">2400 mm</option>
+                <option value="2700" selected>2700 mm</option>
+                <option value="3000">3000 mm</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div class="config-section">
+          <div class="config-section-head">
+            <span>02</span>
+            <h2>Moduli parete</h2>
+          </div>
+          <p class="drag-hint">Componi la parete da sinistra a destra. Ogni colonna è indipendente.</p>
+          <div class="module-add">
+            <button data-add-module="300"><b>＋ 300</b><small>mm</small></button>
+            <button data-add-module="600"><b>＋ 600</b><small>mm</small></button>
+            <button data-add-module="900"><b>＋ 900</b><small>mm</small></button>
+          </div>
+          <div id="module-list" class="module-list"></div>
+        </div>
+
+        <div class="config-section">
+          <div class="config-section-head">
+            <span>03</span>
+            <h2>Pannelli IW</h2>
+          </div>
+          <p class="drag-hint">Scegli il pannello e trascinalo su un modulo compatibile.</p>
+          <div class="panel-builder">
+            <label>
+              <span>Famiglia</span>
+              <select id="panel-type">
+                <option value="flat">Flat</option>
+                <option value="lux">Lux</option>
+                <option value="shelf">Shelf</option>
+                <option value="frame">Frame</option>
+                <option value="box">Box</option>
+              </select>
+            </label>
+            <label>
+              <span>Larghezza</span>
+              <select id="panel-width"></select>
+            </label>
+            <label>
+              <span>Altezza</span>
+              <select id="panel-height"></select>
+            </label>
+            <label id="panel-variant-field" class="panel-variant-field">
+              <span>Variante</span>
+              <select id="panel-variant"></select>
+            </label>
+            <button id="panel-drag-card" class="panel-drag-card" draggable="true">
+              <span class="panel-preview"></span>
+              <span><b id="panel-card-name">Flat 300 × 2700</b><small>Trascina sul modello</small></span>
+              <i>↗</i>
+            </button>
+          </div>
+          <div id="panel-list" class="panel-list"></div>
+        </div>
+
+        <div class="config-section">
+          <div class="config-section-head">
+            <span>04</span>
+            <h2>Materiali DI-NOC</h2>
+          </div>
+          <p class="drag-hint">Trascina una finitura sul pannello, sull’etichetta del modulo oppure nello sfondo bianco per applicarla a tutta la parete.</p>
+          <div class="material-filters">
+            <input id="material-search" type="search" placeholder="Cerca codice, es. WG-..." autocomplete="off">
+            <select id="material-family" aria-label="Famiglia DI-NOC">
+              <option value="">Tutte le famiglie</option>
+            </select>
+          </div>
+          <div class="material-tabs" aria-label="Vista catalogo">
+            <button class="active" data-material-tab="all">Tutti</button>
+            <button data-material-tab="favorites">Preferiti</button>
+            <button data-material-tab="recent">Recenti</button>
+          </div>
+          <div id="material-current" class="material-current">
+            <span class="material-current-swatch"></span>
+            <span><b>Nessun materiale selezionato</b><small>Scegli una texture dal catalogo</small></span>
+          </div>
+          <div class="material-settings">
+            <label><span>Direzione</span><select id="material-rotation"><option value="0">Verticale</option><option value="90">Orizzontale</option></select></label>
+            <label><span>Scala texture</span><select id="material-scale"><option value="300">300 mm</option><option value="600" selected>600 mm</option><option value="1200">1200 mm</option></select></label>
+          </div>
+          <div class="material-apply">
+            <button id="apply-material-panel">Pannello</button>
+            <button id="apply-material-module">Modulo</button>
+            <button id="apply-material-wall">Parete</button>
+          </div>
+          <div id="material-grid" class="material-grid"></div>
+          <button id="material-more" class="material-more" hidden>Mostra altri</button>
+        </div>
+
+        <div class="config-section">
+          <div class="config-section-head">
+            <span>05</span>
+            <h2>Accessori</h2>
+          </div>
+          <p class="drag-hint">Trascina un elemento sulla parete.</p>
+          <div class="component-list">
+            <button class="component-card" draggable="true" data-component="shelf">
+              <span class="component-icon shelf-icon"></span>
+              <span><b>Mensola</b><small>90 × 24 cm</small></span>
+              <i>＋</i>
+            </button>
+            <button class="component-card" draggable="true" data-component="box">
+              <span class="component-icon box-icon"></span>
+              <span><b>Box</b><small>60 × 40 cm</small></span>
+              <i>＋</i>
+            </button>
+            <button class="component-card" draggable="true" data-component="light">
+              <span class="component-icon light-icon"></span>
+              <span><b>Lux verticale</b><small>6 × 180 cm</small></span>
+              <i>＋</i>
+            </button>
+            <button class="component-card" draggable="true" data-component="mirror">
+              <span class="component-icon mirror-icon"></span>
+              <span><b>Specchio</b><small>60 × 90 cm</small></span>
+              <i>＋</i>
+            </button>
+            <button class="component-card" draggable="true" data-component="hook">
+              <span class="component-icon hook-icon"></span>
+              <span><b>Gancio</b><small>Magnetico</small></span>
+              <i>＋</i>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <div class="config-stage-wrap">
+        <div class="stage-toolbar">
+          <div class="view-tabs" aria-label="Vista">
+            <button class="active" data-view="front">Frontale</button>
+            <button data-view="perspective">Prospettiva</button>
+          </div>
+          <div class="stage-actions">
+            <button id="undo-button" title="Annulla ultima aggiunta">Annulla</button>
+            <button id="clear-button">Svuota</button>
+          </div>
+        </div>
+
+        <div id="config-stage" class="config-stage">
+          <div class="stage-loading">
+            <span></span>
+            <p>Preparazione studio 3D</p>
+          </div>
+          <div class="drop-message">Rilascia sulla parete</div>
+          <div class="stage-tip">Trascina per ruotare · rotella per zoom</div>
+        </div>
+
+        <div class="config-summary">
+          <div><span>Configurazione</span><strong id="configuration-count">0 elementi</strong></div>
+          <div><span>Dimensione</span><strong id="configuration-size">360 × 270 cm</strong></div>
+          <button id="request-button">Richiedi il progetto <span>↗</span></button>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
+

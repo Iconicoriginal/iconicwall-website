@@ -193,15 +193,122 @@ const contactForm = document.querySelector(".contact-form");
 if (contactForm) {
   const params = new URLSearchParams(location.search);
   if (params.get("tipo") === "Configurazione 3D") {
-    const projectType = document.querySelector("#type");
+    const requestType = document.querySelector("#request_type");
     const message = document.querySelector("#message");
-    if (projectType && ![...projectType.options].some((option) => option.value === "Configurazione IconicWall")) {
-      projectType.add(new Option("Configurazione IconicWall", "Configurazione IconicWall"));
-    }
-    if (projectType) projectType.value = "Configurazione IconicWall";
+    if (requestType) requestType.value = "Nuovo progetto";
     if (message) {
       const components = params.get("elementi") || "nessun accessorio";
       message.value = `Configurazione IconicWall 3D\nDimensioni: ${params.get("dimensioni") || "da definire"} cm\nFinitura: ${params.get("finitura") || "da definire"}\nElementi: ${components}`;
     }
   }
+
+  const status = contactForm.querySelector(".form-status");
+  const submitButton = contactForm.querySelector(".contact-submit");
+  const submitLabel = submitButton?.querySelector(".contact-submit-label");
+  const fields = ["full_name", "email", "profile_type", "request_type", "message", "privacy"];
+
+  function setFieldError(name, message) {
+    const field = contactForm.elements[name];
+    const error = contactForm.querySelector(`[data-error-for="${name}"]`);
+    if (field) {
+      field.setAttribute("aria-invalid", message ? "true" : "false");
+      if (error) field.setAttribute("aria-describedby", error.id || `${name}_error`);
+    }
+    if (error) {
+      if (!error.id) error.id = `${name}_error`;
+      error.textContent = message;
+    }
+  }
+
+  function setStatus(message, type = "") {
+    if (!status) return;
+    status.textContent = message;
+    status.className = `form-status${type ? ` ${type}` : ""}`;
+  }
+
+  function validateContactForm() {
+    let valid = true;
+    fields.forEach((name) => setFieldError(name, ""));
+
+    const fullName = contactForm.elements.full_name.value.trim();
+    const email = contactForm.elements.email.value.trim();
+    const profileType = contactForm.elements.profile_type.value.trim();
+    const requestType = contactForm.elements.request_type.value.trim();
+    const message = contactForm.elements.message.value.trim();
+    const privacy = contactForm.elements.privacy.checked;
+    const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+    if (!fullName) {
+      setFieldError("full_name", "Inserisci nome e cognome.");
+      valid = false;
+    }
+    if (!email) {
+      setFieldError("email", "Inserisci un indirizzo email.");
+      valid = false;
+    } else if (!emailValid) {
+      setFieldError("email", "Inserisci un indirizzo email valido.");
+      valid = false;
+    }
+    if (!profileType) {
+      setFieldError("profile_type", "Seleziona un profilo.");
+      valid = false;
+    }
+    if (!requestType) {
+      setFieldError("request_type", "Seleziona il tipo di richiesta.");
+      valid = false;
+    }
+    if (!message) {
+      setFieldError("message", "Scrivi un messaggio.");
+      valid = false;
+    }
+    if (!privacy) {
+      setFieldError("privacy", "Devi accettare l'informativa privacy.");
+      valid = false;
+    }
+
+    return valid;
+  }
+
+  contactForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    setStatus("");
+
+    if (!validateContactForm()) return;
+
+    const payload = {
+      full_name: contactForm.elements.full_name.value.trim(),
+      email: contactForm.elements.email.value.trim(),
+      phone: contactForm.elements.phone.value.trim(),
+      company: contactForm.elements.company.value.trim(),
+      profile_type: contactForm.elements.profile_type.value.trim(),
+      request_type: contactForm.elements.request_type.value.trim(),
+      message: contactForm.elements.message.value.trim(),
+    };
+
+    if (submitButton) {
+      submitButton.disabled = true;
+      if (submitLabel) submitLabel.textContent = "INVIO IN CORSO…";
+    }
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error("Request failed");
+
+      contactForm.reset();
+      fields.forEach((name) => setFieldError(name, ""));
+      setStatus("Richiesta inviata. Ti risponderemo appena possibile.", "success");
+    } catch {
+      setStatus("Non siamo riusciti a inviare la richiesta. Riprova tra poco o scrivici via email.", "error");
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+        if (submitLabel) submitLabel.textContent = "INVIA RICHIESTA";
+      }
+    }
+  });
 }

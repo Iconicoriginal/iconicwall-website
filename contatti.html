@@ -1,34 +1,115 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Contatta IconicWall per progetti residenziali, retail, hospitality e contract.">
-  <title>Contatti — IconicWall</title>
-  <link rel="stylesheet" href="styles.css?v=26"><script src="script.js?v=43" defer></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Contatta IconicWall per progetti, riqualificazioni, collaborazioni e partnership legate a superfici evolutive per interni.">
+  <title>Contatti | IconicWall</title>
+  <link rel="stylesheet" href="styles.css?v=26">
+  <script src="script.js?v=43" defer></script>
 </head>
 <body class="dark-header" data-page="contatti">
   <main>
     <section class="contact-hero">
-      <p class="eyebrow reveal">Inizia un progetto</p>
-      <h1 class="display reveal">Immaginiamo ciò che<br>la parete può <em>diventare.</em></h1>
       <div class="contact-layout">
-        <div class="contact-details reveal">
-          <p>Parla direttamente con Iconic</p>
-          <a href="mailto:info@iconicoriginal.it">info@iconicoriginal.it</a>
-          <a href="tel:+393403549344">+39 340 354 9344</a>
-          <p style="margin-top:2rem">Via Guido Rossa, 39<br>35020 Padova, Italia</p>
-        </div>
-        <form class="contact-form reveal" action="mailto:info@iconicoriginal.it" method="post" enctype="text/plain">
-          <div class="field"><label for="name">Nome</label><input id="name" name="Nome" required></div>
-          <div class="field"><label for="company">Studio / Azienda</label><input id="company" name="Azienda"></div>
-          <div class="field"><label for="email">Email</label><input id="email" name="Email" type="email" required></div>
-          <div class="field"><label for="type">Tipo di progetto</label><select id="type" name="Progetto"><option>Living</option><option>Hospitality</option><option>Retail</option><option>Workspace</option><option>Healthcare</option><option>Contract</option></select></div>
-          <div class="field full"><label for="message">Raccontaci lo spazio</label><textarea id="message" name="Messaggio"></textarea></div>
-          <div class="field full"><button class="button light" type="submit">Invia la richiesta <span>↗</span></button></div>
-        </form>
+        <aside class="contact-details reveal" aria-label="Informazioni aziendali">
+          <p class="contact-kicker">CONTATTI</p>
+          <h1 class="display">Parliamo del<br>tuo progetto.</h1>
+          <p class="lead">Raccontaci lo spazio, l'esigenza o la collaborazione che vuoi sviluppare. Ti risponderemo con una proposta concreta.</p>
+
+          <div class="contact-divider" aria-hidden="true"></div>
+
+          <div class="contact-identity" aria-label="Dati aziendali">
+            <div class="contact-info-row">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+              <p><strong>ICONIC S.R.L. a socio unico</strong><br>Via Guido Rossa, 39<br>35020 Ponte San Nicolò (PD) - Italia</p>
+            </div>
+            <div class="contact-info-row">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4Z"/><path d="m22 6-10 7L2 6"/></svg>
+              <a href="mailto:info@iconicoriginal.it">info@iconicoriginal.it</a>
+            </div>
+          </div>
+        </aside>
+
+        <section class="contact-form-panel reveal" aria-labelledby="contact-form-title">
+          <form class="contact-form" novalidate>
+            <h2 id="contact-form-title" class="sr-only">Modulo contatti</h2>
+
+            <div class="field">
+              <label for="full_name">Nome e cognome *</label>
+              <input id="full_name" name="full_name" autocomplete="name" placeholder="Inserisci il tuo nome" required>
+              <span class="field-error" data-error-for="full_name"></span>
+            </div>
+
+            <div class="field">
+              <label for="email">Email *</label>
+              <input id="email" name="email" type="email" autocomplete="email" placeholder="Inserisci la tua email" required>
+              <span class="field-error" data-error-for="email"></span>
+            </div>
+
+            <div class="field">
+              <label for="phone">Telefono</label>
+              <input id="phone" name="phone" type="tel" autocomplete="tel" placeholder="Inserisci il tuo numero">
+            </div>
+
+            <div class="field">
+              <label for="company">Azienda / Studio</label>
+              <input id="company" name="company" autocomplete="organization" placeholder="Inserisci il nome della tua azienda">
+            </div>
+
+            <div class="field">
+              <label for="profile_type">Profilo *</label>
+              <select id="profile_type" name="profile_type" required>
+                <option value="">Seleziona un profilo</option>
+                <option>Architetto</option>
+                <option>Interior Designer</option>
+                <option>Impresa / General Contractor</option>
+                <option>Hotel / Hospitality</option>
+                <option>Retail</option>
+                <option>Azienda / Brand</option>
+                <option>Privato</option>
+                <option>Partner / Produttore</option>
+                <option>Altro</option>
+              </select>
+              <span class="field-error" data-error-for="profile_type"></span>
+            </div>
+
+            <div class="field">
+              <label for="request_type">Tipo di richiesta *</label>
+              <select id="request_type" name="request_type" required>
+                <option value="">Seleziona una tipologia</option>
+                <option>Nuovo progetto</option>
+                <option>Riqualificazione</option>
+                <option>Informazioni commerciali</option>
+                <option>Collaborazione</option>
+                <option>Partnership</option>
+                <option>Altro</option>
+              </select>
+              <span class="field-error" data-error-for="request_type"></span>
+            </div>
+
+            <div class="field full">
+              <label for="message">Messaggio *</label>
+              <textarea id="message" name="message" placeholder="Scrivi qui il tuo messaggio" required></textarea>
+              <span class="field-error" data-error-for="message"></span>
+            </div>
+
+            <div class="field full privacy-field">
+              <label class="privacy-check" for="privacy">
+                <input id="privacy" name="privacy" type="checkbox" required>
+                <span>Ho letto la <a href="/privacy">Privacy Policy</a> e acconsento al trattamento dei dati per le finalità indicate nella stessa. *</span>
+              </label>
+              <span class="field-error" data-error-for="privacy"></span>
+            </div>
+
+            <div class="field full form-actions">
+              <button class="contact-submit" type="submit"><span class="contact-submit-label">INVIA RICHIESTA</span><span aria-hidden="true">→</span></button>
+              <p class="form-status" role="status" aria-live="polite"></p>
+            </div>
+          </form>
+        </section>
       </div>
     </section>
   </main>
 </body>
 </html>
-

@@ -1327,12 +1327,16 @@ footer {
   padding-left: 0;
   border-left: 0;
 }
-.footer-brand {
-  color: white;
+.footer-brand,
+.footer-iconic-mark {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
 }
-.footer-brand-wall {
-  font-size: clamp(2.1rem, 3vw, 3.4rem);
-  letter-spacing: .14em;
+.footer-brand-wall img {
+  width: clamp(220px, 18vw, 340px);
+  height: auto;
+  max-width: 100%;
 }
 .footer-intro p {
   max-width: 28rem;
@@ -1343,13 +1347,12 @@ footer {
   line-height: 1.62;
 }
 .footer-iconic-mark {
-  display: inline-block;
   margin-bottom: 2.7rem;
-  color: white;
-  font-size: clamp(2rem, 3.1vw, 3.7rem);
-  font-weight: 300;
-  line-height: 1;
-  letter-spacing: .26em;
+}
+.footer-iconic-mark img {
+  width: clamp(170px, 14vw, 270px);
+  height: auto;
+  max-width: 100%;
 }
 .footer-company strong {
   display: block;
@@ -1619,12 +1622,14 @@ footer a:focus-visible {
     padding-top: 0;
     border-top: 0;
   }
-  .footer-brand-wall {
-    font-size: clamp(2rem, 12vw, 3rem);
+  .footer-brand-wall img {
+    width: min(240px, 72vw);
   }
   .footer-iconic-mark {
     margin-bottom: 2.2rem;
-    font-size: clamp(2rem, 13vw, 3.2rem);
+  }
+  .footer-iconic-mark img {
+    width: min(180px, 58vw);
   }
   .footer-social {
     display: flex;

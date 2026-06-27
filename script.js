@@ -29,14 +29,16 @@ footer.innerHTML = `
   <div class="footer-inner">
     <div class="footer-columns">
       <section class="footer-column footer-intro" aria-label="IconicWall">
-        <a class="brand footer-brand footer-brand-wall" href="index.html" aria-label="IconicWall home">
-          <b>ICONIC</b><span>WALL</span>
+        <a class="footer-brand footer-brand-wall" href="index.html" aria-label="IconicWall home">
+          <img src="assets/logos/iconicwall-logo-white.svg" alt="Logo IconicWall">
         </a>
         <p>Una struttura permanente progettata<br>per accogliere superfici, luce, accessori<br>e funzioni che evolvono nel tempo.</p>
       </section>
 
       <section class="footer-column footer-company" aria-label="Iconic S.R.L.">
-        <a class="footer-iconic-mark" href="index.html" aria-label="Iconic">ICONIC</a>
+        <a class="footer-iconic-mark" href="index.html" aria-label="Iconic home">
+          <img src="assets/logos/iconic-logo-white.svg" alt="Logo Iconic">
+        </a>
         <strong>ICONIC S.R.L. a socio unico</strong>
         <ul class="footer-contact-list">
           <li>

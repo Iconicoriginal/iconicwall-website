@@ -26,18 +26,79 @@ document.body.prepend(header);
 
 const footer = document.createElement("footer");
 footer.innerHTML = `
-  <div class="footer-top">
-    <a class="brand footer-brand" href="index.html"><b>ICONIC</b><span>WALL</span></a>
-    <p class="footer-statement">Dress your interiors.<br>Change them when life changes.</p>
-    <div class="footer-links">
-      ${navItems.map(([, label, href]) => `<a href="${href}">${label}</a>`).join("")}
-      <a href="contatti.html">Contatti</a>
+  <div class="footer-inner">
+    <div class="footer-columns">
+      <section class="footer-column footer-intro" aria-label="IconicWall">
+        <a class="brand footer-brand footer-brand-wall" href="index.html" aria-label="IconicWall home">
+          <b>ICONIC</b><span>WALL</span>
+        </a>
+        <p>Una struttura permanente progettata<br>per accogliere superfici, luce, accessori<br>e funzioni che evolvono nel tempo.</p>
+      </section>
+
+      <section class="footer-column footer-company" aria-label="Iconic S.R.L.">
+        <a class="footer-iconic-mark" href="index.html" aria-label="Iconic">ICONIC</a>
+        <strong>ICONIC S.R.L. a socio unico</strong>
+        <ul class="footer-contact-list">
+          <li>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span>Via Guido Rossa, 39<br>35020 Ponte San Nicolò (PD)</span>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h8M8 9h2"/></svg>
+            <span>P.IVA / C.F. 04683100988</span>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4Z"/><path d="m22 6-10 7L2 6"/></svg>
+            <a href="mailto:info@iconicoriginal.it">info@iconicoriginal.it</a>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.32 1.77.59 2.61a2 2 0 0 1-.45 2.11L8 9.7a16 16 0 0 0 6.3 6.3l1.26-1.25a2 2 0 0 1 2.11-.45c.84.27 1.71.47 2.61.59A2 2 0 0 1 22 16.92Z"/></svg>
+            <a href="tel:+393403549344">+39 340 354 9344</a>
+          </li>
+        </ul>
+      </section>
+
+      <nav class="footer-column footer-nav" aria-label="Risorse">
+        <h2>Risorse</h2>
+        <a href="#">Cataloghi</a>
+        <a href="#">FAQ</a>
+        <a href="#">Manutenzione</a>
+        <a href="#">Istruzioni di montaggio</a>
+      </nav>
+
+      <nav class="footer-column footer-nav" aria-label="Legali">
+        <h2>Legali</h2>
+        <a href="#">Privacy Policy</a>
+        <a href="#">Cookie Policy</a>
+        <a href="#">Preferenze Cookie</a>
+        <a href="#">Termini e condizioni</a>
+      </nav>
+
+      <nav class="footer-column footer-nav footer-social" aria-label="Social">
+        <h2>Social</h2>
+        <a href="#" aria-label="Instagram">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg>
+          <span>Instagram</span>
+        </a>
+        <a href="#" aria-label="LinkedIn">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 11v6M8 8v.01M12 17v-6M12 14a3 3 0 0 1 6 0v3"/></svg>
+          <span>LinkedIn</span>
+        </a>
+        <a href="#" aria-label="Pinterest">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 19c.7-2.3 1-4 1.6-6.4M11.6 12.6c-.4 1.4.5 2.5 1.9 2.5 2.3 0 3.8-2.2 3.8-4.8 0-2.5-2-4.3-5-4.3-3.5 0-5.5 2.5-5.5 5.2 0 1.5.6 2.6 1.6 3.1"/></svg>
+          <span>Pinterest</span>
+        </a>
+        <a href="#" aria-label="YouTube">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 12s0-3.2-.4-4.6a2.8 2.8 0 0 0-2-2C17.9 5 12 5 12 5s-5.9 0-7.6.4a2.8 2.8 0 0 0-2 2C2 8.8 2 12 2 12s0 3.2.4 4.6a2.8 2.8 0 0 0 2 2C6.1 19 12 19 12 19s5.9 0 7.6-.4a2.8 2.8 0 0 0 2-2C22 15.2 22 12 22 12Z"/><path d="m10 9 5 3-5 3Z"/></svg>
+          <span>YouTube</span>
+        </a>
+      </nav>
     </div>
-  </div>
-  <div class="footer-bottom">
-    <span>ICONIC S.R.L. · Via Guido Rossa 39, Padova</span>
-    <a href="mailto:info@iconicoriginal.it">info@iconicoriginal.it</a>
-    <span>© ${new Date().getFullYear()}</span>
+
+    <div class="footer-bottom">
+      <span>© ${new Date().getFullYear()} IconicWall.<br>Tutti i diritti riservati.</span>
+      <span>Made in Italy</span>
+    </div>
   </div>`;
 document.body.append(footer);
 

@@ -73,10 +73,19 @@ button, input, textarea, select { font: inherit; }
 }
 .brand {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   line-height: 1;
   font-size: clamp(1.25rem, 2vw, 1.8rem);
   letter-spacing: -.07em;
+}
+.brand img {
+  width: clamp(160px, 14vw, 240px);
+  height: auto;
+  max-width: 42vw;
+  display: block;
+}
+.dark-header .site-header:not(.scrolled) .brand img {
+  filter: invert(1);
 }
 .brand b { font-weight: 600; }
 .brand span { font-weight: 300; }

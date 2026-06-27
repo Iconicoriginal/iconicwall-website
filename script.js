@@ -13,7 +13,7 @@ const header = document.createElement("header");
 header.className = "site-header";
 header.innerHTML = `
   <a class="brand" href="index.html" aria-label="IconicWall home">
-    <b>ICONIC</b><span>WALL</span>
+    <img src="assets/logos/iconicwall-logo-black.svg" alt="Logo IconicWall">
   </a>
   <button class="menu-toggle" aria-expanded="false" aria-label="Apri il menu">
     <i></i><i></i>

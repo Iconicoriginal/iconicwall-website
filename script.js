@@ -60,18 +60,18 @@ footer.innerHTML = `
 
       <nav class="footer-column footer-nav" aria-label="Risorse">
         <h2>Risorse</h2>
-        <a href="#">Cataloghi</a>
-        <a href="#">FAQ</a>
-        <a href="#">Manutenzione</a>
-        <a href="#">Istruzioni di montaggio</a>
+        <a href="downloads.html">Cataloghi</a>
+        <a href="faq.html">FAQ</a>
+        <a href="manutenzione.html">Manutenzione</a>
+        <a href="istruzioni-montaggio.html">Istruzioni di montaggio</a>
       </nav>
 
       <nav class="footer-column footer-nav" aria-label="Legali">
         <h2>Legali</h2>
-        <a href="#">Privacy Policy</a>
-        <a href="#">Cookie Policy</a>
-        <a href="#">Preferenze Cookie</a>
-        <a href="#">Termini e condizioni</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="cookie.html">Cookie Policy</a>
+        <a href="cookie.html#preferenze">Preferenze Cookie</a>
+        <a href="termini.html">Termini e condizioni</a>
       </nav>
 
       <nav class="footer-column footer-nav footer-social" aria-label="Social">

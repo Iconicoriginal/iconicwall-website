@@ -1034,6 +1034,48 @@ button, input, textarea, select { font: inherit; }
 .field textarea { min-height: 90px; resize: vertical; }
 .contact-form .button { color: white; background: transparent; cursor: pointer; }
 
+.info-main {
+  background: var(--paper);
+}
+.info-hero {
+  min-height: 72vh;
+  padding: 18vh 7vw 8vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.info-hero .display {
+  max-width: 1180px;
+}
+.info-hero .lead {
+  max-width: 44rem;
+  margin: 2rem 0 0;
+}
+.info-content {
+  padding-top: 0;
+}
+.info-panel {
+  max-width: 920px;
+  padding: clamp(2rem, 4vw, 4rem) 0;
+  border-top: 1px solid var(--line);
+}
+.info-panel h2 {
+  margin: 0 0 1rem;
+  font: 400 clamp(2.4rem, 4vw, 4.8rem)/1.04 var(--serif);
+  letter-spacing: -.035em;
+}
+.info-panel p {
+  max-width: 48rem;
+  margin: 0;
+  color: #55514a;
+  font-size: clamp(1rem, 1.15vw, 1.16rem);
+  font-weight: 300;
+  line-height: 1.65;
+}
+.info-panel .text-link {
+  margin-top: 2rem;
+}
+
 footer {
   color: rgba(255,255,255,.78);
   background: #090909;

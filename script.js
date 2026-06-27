@@ -51,10 +51,6 @@ footer.innerHTML = `
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4Z"/><path d="m22 6-10 7L2 6"/></svg>
             <a href="mailto:info@iconicoriginal.it">info@iconicoriginal.it</a>
           </li>
-          <li>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.32 1.77.59 2.61a2 2 0 0 1-.45 2.11L8 9.7a16 16 0 0 0 6.3 6.3l1.26-1.25a2 2 0 0 1 2.11-.45c.84.27 1.71.47 2.61.59A2 2 0 0 1 22 16.92Z"/></svg>
-            <a href="tel:+393403549344">+39 340 354 9344</a>
-          </li>
         </ul>
       </section>
 
@@ -76,28 +72,24 @@ footer.innerHTML = `
 
       <nav class="footer-column footer-nav footer-social" aria-label="Social">
         <h2>Social</h2>
-        <a href="#" aria-label="Instagram">
+        <a href="https://www.instagram.com/iconic_dressyourinteriors/" target="_blank" rel="noopener noreferrer" aria-label="Instagram IconicWall">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg>
           <span>Instagram</span>
         </a>
-        <a href="#" aria-label="LinkedIn">
+        <a href="https://www.facebook.com/iconicoriginal/" target="_blank" rel="noopener noreferrer" aria-label="Facebook IconicOriginal">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3Z"/></svg>
+          <span>Facebook</span>
+        </a>
+        <a href="https://www.linkedin.com/company/iconicoriginal/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn IconicOriginal">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 11v6M8 8v.01M12 17v-6M12 14a3 3 0 0 1 6 0v3"/></svg>
           <span>LinkedIn</span>
-        </a>
-        <a href="#" aria-label="Pinterest">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 19c.7-2.3 1-4 1.6-6.4M11.6 12.6c-.4 1.4.5 2.5 1.9 2.5 2.3 0 3.8-2.2 3.8-4.8 0-2.5-2-4.3-5-4.3-3.5 0-5.5 2.5-5.5 5.2 0 1.5.6 2.6 1.6 3.1"/></svg>
-          <span>Pinterest</span>
-        </a>
-        <a href="#" aria-label="YouTube">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 12s0-3.2-.4-4.6a2.8 2.8 0 0 0-2-2C17.9 5 12 5 12 5s-5.9 0-7.6.4a2.8 2.8 0 0 0-2 2C2 8.8 2 12 2 12s0 3.2.4 4.6a2.8 2.8 0 0 0 2 2C6.1 19 12 19 12 19s5.9 0 7.6-.4a2.8 2.8 0 0 0 2-2C22 15.2 22 12 22 12Z"/><path d="m10 9 5 3-5 3Z"/></svg>
-          <span>YouTube</span>
         </a>
       </nav>
     </div>
 
     <div class="footer-bottom">
       <span>© ${new Date().getFullYear()} IconicWall.<br>Tutti i diritti riservati.</span>
-      <span>Made in Italy</span>
+      <span>Designed & Made in Italy</span>
     </div>
   </div>`;
 document.body.append(footer);

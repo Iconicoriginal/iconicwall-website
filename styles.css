@@ -1500,7 +1500,7 @@ footer a:focus-visible {
   }
   .footer-social {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, max-content));
+    grid-template-columns: repeat(3, minmax(0, max-content));
     align-content: start;
     column-gap: 2.6rem;
   }

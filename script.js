@@ -6,6 +6,7 @@ const navItems = [
   ["accessori", "Accessori", "accessori.html"],
   ["materiali", "Materiali", "materiali.html"],
   ["applicazioni", "Applicazioni", "applicazioni.html"],
+  ["origine", "Origine", "origine.html"],
   ["contatti", "Contatti", "contatti.html"],
 ];
 

@@ -1445,6 +1445,120 @@ button, input, textarea, select { font: inherit; }
   margin: 0 auto 3rem;
 }
 
+.origin-page {
+  color: white;
+  background: #0f0f0f;
+}
+.origin-hero {
+  width: min(100%, 1800px);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: clamp(8rem, 13vh, 11rem) 7vw clamp(5rem, 8vw, 8rem);
+  display: grid;
+  grid-template-columns: minmax(0, .54fr) minmax(0, .46fr);
+  gap: clamp(3rem, 6vw, 7rem);
+  align-items: center;
+}
+.origin-kicker {
+  margin: 0 0 2rem;
+  color: rgba(255,255,255,.72);
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: .16em;
+}
+.origin-hero .display {
+  max-width: 1050px;
+  color: white;
+  font-size: clamp(4.5rem, 7.8vw, 9rem);
+  line-height: .92;
+}
+.origin-hero-text {
+  max-width: 45rem;
+  margin-top: clamp(2.2rem, 4vw, 4rem);
+  display: grid;
+  gap: 1.2rem;
+}
+.origin-hero-text p,
+.origin-row p,
+.origin-note p,
+.origin-cta p {
+  margin: 0;
+  color: rgba(255,255,255,.72);
+  font-size: clamp(1.04rem, 1.2vw, 1.25rem);
+  font-weight: 300;
+  line-height: 1.7;
+}
+.origin-hero-media {
+  min-height: clamp(520px, 64vh, 780px);
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.13);
+}
+.origin-hero-media img {
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(.88) contrast(1.03) brightness(.82);
+}
+.origin-sections {
+  width: min(86vw, 1500px);
+  margin: 0 auto;
+  border-top: 1px solid rgba(255,255,255,.16);
+}
+.origin-row {
+  display: grid;
+  grid-template-columns: minmax(110px, .18fr) minmax(0, .82fr);
+  gap: clamp(2rem, 6vw, 7rem);
+  padding: clamp(4.5rem, 8vw, 8rem) 0;
+  border-bottom: 1px solid rgba(255,255,255,.16);
+}
+.origin-row > span {
+  color: rgba(170,139,104,.95);
+  font: 400 clamp(4rem, 6vw, 7.5rem)/.9 var(--serif);
+  letter-spacing: -.05em;
+}
+.origin-row h2 {
+  max-width: 720px;
+  margin: 0 0 1.6rem;
+  color: white;
+  font: 400 clamp(3rem, 5vw, 6rem)/.98 var(--serif);
+  letter-spacing: -.04em;
+}
+.origin-row div {
+  max-width: 850px;
+  display: grid;
+  gap: 1.1rem;
+}
+.origin-note {
+  width: min(86vw, 1500px);
+  margin: 0 auto;
+  padding: clamp(7rem, 11vw, 12rem) 0;
+  display: grid;
+  grid-template-columns: minmax(0, .5fr) minmax(0, .5fr);
+  gap: clamp(3rem, 7vw, 8rem);
+  border-bottom: 1px solid rgba(255,255,255,.16);
+}
+.origin-note .display,
+.origin-cta .display {
+  color: white;
+}
+.origin-note > div {
+  display: grid;
+  gap: 1.2rem;
+}
+.origin-cta {
+  width: min(86vw, 1160px);
+  margin: 0 auto;
+  padding: clamp(7rem, 11vw, 12rem) 0;
+  text-align: center;
+}
+.origin-cta .display {
+  margin: 0 auto 1.6rem;
+}
+.origin-cta p {
+  max-width: 620px;
+  margin: 0 auto 3rem;
+}
+
 .info-main {
   background: var(--paper);
 }
@@ -1631,7 +1745,7 @@ footer a:focus-visible {
 .reveal.in { opacity: 1; transform: none; }
 
 @media (max-width: 1000px) {
-  .main-nav { gap: 1rem; }
+  .main-nav { gap: .85rem; }
   .intro-grid { display: flex; }
   .story-frame, .technical-grid, .magnet-demo { grid-template-columns: 1fr; }
   .story-image img { min-height: 60vh; }
@@ -1663,7 +1777,9 @@ footer a:focus-visible {
   .real-grid { grid-template-columns: 1fr 1fr; }
   .patent-hero,
   .patent-statement,
-  .patent-why {
+  .patent-why,
+  .origin-hero,
+  .origin-note {
     grid-template-columns: 1fr;
   }
   .patent-hero {
@@ -1686,6 +1802,13 @@ footer a:focus-visible {
   }
   .patent-point:nth-child(odd) {
     border-left: 0;
+  }
+  .origin-hero {
+    min-height: 0;
+    align-items: start;
+  }
+  .origin-hero-media {
+    min-height: 56vh;
   }
   .footer-columns {
     grid-template-columns: 1fr 1fr;
@@ -1796,14 +1919,24 @@ footer a:focus-visible {
     padding-top: 8rem;
     gap: 3rem;
   }
+  .origin-hero {
+    padding-top: 8rem;
+    gap: 3rem;
+  }
   .patent-hero .display {
     font-size: clamp(4rem, 17vw, 6.4rem);
+  }
+  .origin-hero .display {
+    font-size: clamp(3.7rem, 15vw, 6.2rem);
   }
   .patent-subtitle {
     font-size: clamp(1.25rem, 7vw, 1.8rem);
   }
   .patent-hero-media {
     min-height: 46vh;
+  }
+  .origin-hero-media {
+    min-height: 42vh;
   }
   .patent-band {
     width: 86vw;
@@ -1818,9 +1951,20 @@ footer a:focus-visible {
   }
   .patent-statement,
   .patent-why,
-  .patent-cta {
+  .patent-cta,
+  .origin-sections,
+  .origin-note,
+  .origin-cta {
     width: 86vw;
     padding: 6rem 0;
+  }
+  .origin-row {
+    grid-template-columns: 1fr;
+    gap: 1.6rem;
+    padding: 4.2rem 0;
+  }
+  .origin-row > span {
+    font-size: clamp(4rem, 18vw, 6rem);
   }
   .patent-points {
     grid-template-columns: 1fr;
@@ -1837,7 +1981,11 @@ footer a:focus-visible {
   .patent-cta {
     text-align: left;
   }
-  .patent-cta .button {
+  .origin-cta {
+    text-align: left;
+  }
+  .patent-cta .button,
+  .origin-cta .button {
     width: 100%;
   }
   .contact-hero {

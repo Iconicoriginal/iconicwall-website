@@ -2,9 +2,8 @@ const page = document.body.dataset.page || "home";
 
 const navItems = [
   ["sistema", "Sistema", "sistema.html"],
-  ["collezione", "Collezione", "collezione.html"],
-  ["accessori", "Accessori", "accessori.html"],
   ["materiali", "Materiali", "materiali.html"],
+  ["accessori", "Accessori", "accessori.html"],
   ["applicazioni", "Applicazioni", "applicazioni.html"],
   ["origine", "Origine", "origine.html"],
   ["contatti", "Contatti", "contatti.html"],
@@ -63,6 +62,7 @@ footer.innerHTML = `
         <a href="faq.html">FAQ</a>
         <a href="manutenzione.html">Manutenzione</a>
         <a href="istruzioni-montaggio.html">Istruzioni di montaggio</a>
+        <a href="tecnologia-proprietaria.html">Tecnologia proprietaria</a>
       </nav>
 
       <nav class="footer-column footer-nav" aria-label="Legali">

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Gestione delle preferenze cookie del sito Iconic.">
+  <title>Preferenze Cookie | Iconic</title>
+  <link rel="stylesheet" href="styles.css?v=26"><script src="script.js?v=43" defer></script>
+</head>
+<body data-page="info">
+  <main class="page-main info-main">
+    <section class="info-hero">
+      <p class="eyebrow reveal">Legali</p>
+      <h1 class="display reveal">Preferenze Cookie</h1>
+      <p class="lead reveal">Gestisci in ogni momento le tue scelte sui cookie utilizzati dal sito Iconic.</p>
+    </section>
+
+    <section class="info-content section">
+      <form class="info-panel cookie-preferences reveal" data-cookie-preferences>
+        <p>Puoi scegliere quali categorie di cookie autorizzare. I cookie tecnici necessari sono sempre attivi perché consentono il corretto funzionamento del sito. Le preferenze possono essere modificate in qualsiasi momento.</p>
+
+        <section class="cookie-preference-group" aria-labelledby="necessary-cookie-title">
+          <div>
+            <h2 id="necessary-cookie-title">Cookie necessari</h2>
+            <p>Questi cookie servono al funzionamento tecnico del sito, alla sicurezza, alla navigazione e alla memorizzazione delle preferenze espresse. Non possono essere disattivati tramite questo pannello.</p>
+          </div>
+          <span class="cookie-status">Sempre attivi</span>
+        </section>
+
+        <section class="cookie-preference-group" aria-labelledby="analytics-cookie-title">
+          <div>
+            <h2 id="analytics-cookie-title">Cookie analytics</h2>
+            <p>Questi cookie o strumenti ci aiutano a capire come viene utilizzato il sito, quali pagine vengono visitate e come migliorare contenuti e prestazioni.</p>
+          </div>
+          <label class="cookie-toggle">
+            <input type="checkbox" name="analytics">
+            <span aria-hidden="true"></span>
+            <strong>Accetto cookie analytics</strong>
+          </label>
+        </section>
+
+        <section class="cookie-preference-group" aria-labelledby="marketing-cookie-title">
+          <div>
+            <h2 id="marketing-cookie-title">Cookie marketing</h2>
+            <p>Questi cookie permettono di misurare campagne pubblicitarie e proporre contenuti più pertinenti rispetto agli interessi dell’utente.</p>
+          </div>
+          <label class="cookie-toggle">
+            <input type="checkbox" name="marketing">
+            <span aria-hidden="true"></span>
+            <strong>Accetto cookie marketing</strong>
+          </label>
+        </section>
+
+        <div class="cookie-preferences-actions">
+          <button class="button dark" type="submit">Salva preferenze <span>→</span></button>
+          <button class="button" type="button" data-cookie-preferences-accept>Accetta tutti <span>→</span></button>
+          <button class="cookie-link-button" type="button" data-cookie-preferences-reject>Rifiuta non necessari</button>
+        </div>
+        <p class="form-status" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+  </main>
+</body>
+</html>

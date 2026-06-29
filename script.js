@@ -58,7 +58,7 @@ footer.innerHTML = `
 
       <nav class="footer-column footer-nav" aria-label="Risorse">
         <h2>Risorse</h2>
-        <a href="downloads.html">Cataloghi</a>
+        <a href="documentazione/index.html">Documentazione</a>
         <a href="faq.html">FAQ</a>
         <a href="manutenzione.html">Manutenzione</a>
         <a href="istruzioni-montaggio.html">Istruzioni di montaggio</a>

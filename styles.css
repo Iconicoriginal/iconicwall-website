@@ -1,12 +1,11 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Italiana&display=swap");
-
 :root {
   --ink: #11110f;
   --paper: #f2f0eb;
   --paper-2: #e7e3dc;
   --white: #fff;
   --bronze: #aa8b68;
-  --muted: #8e8b84;
+  --bronze-ink: #776149;
+  --muted: #66645f;
   --line: rgba(17, 17, 15, .18);
   --serif: "Italiana", Georgia, serif;
   --sans: "DM Sans", Arial, sans-serif;
@@ -138,7 +137,16 @@ button, input, textarea, select { font: inherit; }
   transition: none;
 }
 .display.small { font-size: clamp(3.2rem, 5.5vw, 6rem); }
-.display em, .serif em { color: var(--bronze); font-style: normal; }
+.display em, .serif em { color: var(--bronze-ink); font-style: normal; }
+/* Sezioni a sfondo scuro: l'accento resta nel bronze chiaro originale per mantenere il contrasto */
+.home-hero .display em,
+.cta-section .display em,
+.magnet-demo .display em,
+.savhotel-hero .display em,
+.savhotel-split-dark .display em,
+.savhotel-metrics .display em {
+  color: var(--bronze);
+}
 .lead { font-size: clamp(1.05rem, 1.45vw, 1.35rem); font-weight: 300; line-height: 1.65; }
 .copy { max-width: 37rem; font-weight: 300; color: #47453f; }
 .button {
@@ -469,7 +477,7 @@ button, input, textarea, select { font: inherit; }
 
 .savhotel-feature__eyebrow {
   margin: 0 0 1.4rem;
-  color: var(--bronze);
+  color: var(--bronze-ink);
   font-size: .72rem;
   font-weight: 700;
   letter-spacing: .14em;
@@ -3755,7 +3763,7 @@ footer a:focus-visible {
 .origine-manifesto .display em,
 .origine-split__title em,
 .origine-cta .display em {
-  color: var(--bronze);
+  color: var(--bronze-ink);
   font-style: normal;
 }
 .origine-manifesto p:last-child {
@@ -3841,7 +3849,7 @@ footer a:focus-visible {
   color: var(--ink);
 }
 .origine-note .display em {
-  color: var(--bronze);
+  color: var(--bronze-ink);
   font-style: normal;
 }
 .origine-note > div {
@@ -3963,6 +3971,12 @@ footer a:focus-visible {
   color: var(--bronze);
   font-style: normal;
 }
+/* Varianti modulari con sfondo chiaro: accento più scuro per il contrasto */
+.system-page--modular .system-copy em,
+.system-page--modular .system-elements em,
+.system-page--modular .system-closing em {
+  color: var(--bronze-ink);
+}
 .system-hero .lead {
   max-width: 45rem;
   margin: clamp(2rem, 4vw, 3rem) 0 0;
@@ -4053,7 +4067,7 @@ footer a:focus-visible {
 }
 .system-kicker {
   margin: 0 0 1.4rem;
-  color: var(--bronze) !important;
+  color: var(--bronze-ink) !important;
   font-size: .72rem !important;
   font-weight: 700 !important;
   letter-spacing: .16em;
@@ -4158,7 +4172,7 @@ footer a:focus-visible {
   margin: 0;
 }
 .system-element-grid dt {
-  color: var(--bronze);
+  color: var(--bronze-ink);
   font-size: .66rem;
   font-weight: 700;
   letter-spacing: .1em;
@@ -4522,7 +4536,7 @@ footer a:focus-visible {
   margin-bottom: 1.35rem;
 }
 .system-page--modular .system-element-grid dt {
-  color: var(--bronze);
+  color: var(--bronze-ink);
 }
 .system-page--modular .system-element-grid dd {
   color: rgba(17,17,15,.74);

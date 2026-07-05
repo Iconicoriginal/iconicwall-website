@@ -21,7 +21,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Italiana&display=swap">
   <link rel="stylesheet" href="styles.css?v=44">
-  <script src="script.js?v=43" defer></script>
+  <script src="script.js?v=44" defer></script>
 </head>
 <body class="dark-header" data-page="contatti">
   <main>
@@ -63,9 +63,35 @@
             </div>
 
             <div class="field full">
+              <label for="profilo">Chi sei</label>
+              <select id="profilo" name="profilo">
+                <option value="">Seleziona un&rsquo;opzione</option>
+                <option value="Privato">Privato</option>
+                <option value="Progettista / Studio tecnico">Progettista / Studio tecnico</option>
+                <option value="Rivenditore / Contract">Rivenditore / Contract</option>
+              </select>
+            </div>
+
+            <div class="field full">
+              <label for="company">Azienda / Studio <span class="field-optional">(facoltativo)</span></label>
+              <input id="company" name="company" autocomplete="organization" placeholder="Nome azienda o studio">
+            </div>
+
+            <div class="field full">
               <label for="message">Messaggio *</label>
               <textarea id="message" name="message" placeholder="Scrivi qui il tuo messaggio" required></textarea>
               <span class="field-error" data-error-for="message"></span>
+            </div>
+
+            <div class="field full interest-field">
+              <label class="privacy-check" for="wants_samples">
+                <input id="wants_samples" name="wants_samples" type="checkbox">
+                <span>Vorrei ricevere un campionario materiali</span>
+              </label>
+              <label class="privacy-check" for="wants_docs">
+                <input id="wants_docs" name="wants_docs" type="checkbox">
+                <span>Vorrei ricevere la documentazione tecnica</span>
+              </label>
             </div>
 
             <div class="field full privacy-field">

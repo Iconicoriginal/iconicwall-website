@@ -433,6 +433,7 @@ button, input, textarea, select { font: inherit; }
 .cta-section { text-align: center; color: white; background: var(--ink); }
 .cta-section .display { max-width: 1050px; margin: 0 auto 3rem; }
 .cta-section .copy { max-width: 620px; margin: -1.5rem auto 2.8rem; color: rgba(255,255,255,.68); }
+.cta-actions { display: inline-flex; flex-wrap: wrap; gap: 1rem; justify-content: center; }
 
 .savhotel-feature {
   display: grid;
@@ -1347,6 +1348,14 @@ button, input, textarea, select { font: inherit; }
 }
 .privacy-field {
   margin-top: .15rem;
+}
+.field-optional {
+  color: rgba(255,255,255,.5);
+  font-weight: 400;
+  text-transform: none;
+}
+.interest-field {
+  gap: .85rem;
 }
 .privacy-check {
   display: grid;

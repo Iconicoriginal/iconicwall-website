@@ -28,7 +28,8 @@
       "Bash(mkdir -p .claude)",
       "Bash(cat .claude/launch.json)",
       "Bash(node -e \"console.log\\('CSS syntax check via brace count'\\)\")",
-      "Bash(node add-seo-meta.js)"
+      "Bash(node add-seo-meta.js)",
+      "Bash(xargs sed -i 's/script\\\\.js?v=43/script.js?v=44/g')"
     ]
   }
 }

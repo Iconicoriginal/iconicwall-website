@@ -318,12 +318,23 @@ if (cookiePreferencesForm) {
 const contactForm = document.querySelector(".contact-form");
 if (contactForm) {
   const params = new URLSearchParams(location.search);
-  if (params.get("tipo") === "Configurazione 3D") {
+  const tipoParam = params.get("tipo");
+  if (tipoParam === "Configurazione 3D") {
     const message = document.querySelector("#message");
     if (message) {
       const components = params.get("elementi") || "nessun accessorio";
       message.value = `Configurazione IconicWall 3D\nDimensioni: ${params.get("dimensioni") || "da definire"} cm\nFinitura: ${params.get("finitura") || "da definire"}\nElementi: ${components}`;
     }
+  } else if (tipoParam === "Richiesta campionario materiali") {
+    const wantsSamples = document.querySelector("#wants_samples");
+    const message = document.querySelector("#message");
+    if (wantsSamples) wantsSamples.checked = true;
+    if (message && !message.value) message.value = "Vorrei richiedere un campionario dei materiali IconicWall.";
+  } else if (tipoParam === "Richiesta documentazione tecnica") {
+    const wantsDocs = document.querySelector("#wants_docs");
+    const message = document.querySelector("#message");
+    if (wantsDocs) wantsDocs.checked = true;
+    if (message && !message.value) message.value = "Vorrei ricevere la documentazione tecnica IconicWall.";
   }
 
   const status = contactForm.querySelector(".form-status");
@@ -393,6 +404,10 @@ if (contactForm) {
       full_name: contactForm.elements.full_name.value.trim(),
       email: contactForm.elements.email.value.trim(),
       message: contactForm.elements.message.value.trim(),
+      profilo: contactForm.elements.profilo?.value.trim() || "",
+      company: contactForm.elements.company?.value.trim() || "",
+      wants_samples: Boolean(contactForm.elements.wants_samples?.checked),
+      wants_docs: Boolean(contactForm.elements.wants_docs?.checked),
     };
 
     if (submitButton) {

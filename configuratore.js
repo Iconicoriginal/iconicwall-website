@@ -1,6 +1,10 @@
 const stage = document.querySelector("#config-stage");
 const loading = stage.querySelector(".stage-loading");
 const stageLockBanner = document.querySelector("#stage-lock-banner");
+const announcer = document.querySelector("#config-announcer");
+function announce(message) {
+  if (announcer) announcer.textContent = message;
+}
 const countOutput = document.querySelector("#configuration-count");
 const sizeOutput = document.querySelector("#configuration-size");
 const widthOutput = document.querySelector("#wall-width-output");
@@ -705,6 +709,7 @@ function compositionError(module, candidatePanels) {
 
 function showDropError(message) {
   stage.querySelector(".drop-message").textContent = message;
+  announce(message);
   stage.classList.add("drag-over");
   setTimeout(() => {
     stage.classList.remove("drag-over");
@@ -729,6 +734,7 @@ function assignPanel(module, panel, pointY) {
   const error = compositionError(module, candidate);
   if (error) return showDropError(error);
   module.panels = candidate;
+  announce(`${IW_RULES[panel.type].label} ${panel.width} × ${panel.height} aggiunto al modulo`);
   buildWall();
 }
 
@@ -796,6 +802,7 @@ function addAccessory(type, position = new THREE.Vector3()) {
   clampAccessory(object);
   accessoryGroup.add(object);
   placed.push(object);
+  announce(`${ACCESSORY_LABELS[type] || type} posizionato sulla parete`);
   updateSummary();
 }
 function removeAccessory(object) {
@@ -803,6 +810,7 @@ function removeAccessory(object) {
   if (index < 0) return;
   placed.splice(index, 1);
   accessoryGroup.remove(object);
+  announce(`${ACCESSORY_LABELS[object.userData.type] || object.userData.type} rimosso`);
   updateSummary();
 }
 function renderAccessoryList() {
@@ -1234,6 +1242,10 @@ document.querySelectorAll("[data-config-open]").forEach((button) => {
   button.addEventListener("click", () => {
     openConfigPanel(button.dataset.configOpen);
     if (button.dataset.configOpen === "materials") loadDinocCatalog();
+    if (onboarding && !onboarding.hidden) {
+      onboarding.hidden = true;
+      localStorage.setItem(ONBOARDING_SEEN_KEY, "1");
+    }
   });
 });
 document.querySelectorAll("[data-config-back]").forEach((button) => {
@@ -1697,6 +1709,14 @@ document.querySelector("#request-button").addEventListener("click", () => {
   location.href = `contatti.html?${params}`;
 });
 requestFooterButton?.addEventListener("click", () => document.querySelector("#request-button").click());
+
+const ONBOARDING_SEEN_KEY = "iwConfiguratorOnboardingSeen";
+const onboarding = document.querySelector("#config-onboarding");
+if (onboarding && !localStorage.getItem(ONBOARDING_SEEN_KEY)) onboarding.hidden = false;
+document.querySelector("#config-onboarding-dismiss")?.addEventListener("click", () => {
+  if (onboarding) onboarding.hidden = true;
+  localStorage.setItem(ONBOARDING_SEEN_KEY, "1");
+});
 
 addEventListener("resize", resize);
 applyEnvironmentTransform();

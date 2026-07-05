@@ -21,17 +21,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Italiana&display=swap">
   <link rel="stylesheet" href="styles.css?v=44">
-  <link rel="stylesheet" href="configuratore.css?v=15">
+  <link rel="stylesheet" href="configuratore.css?v=18">
   <script src="script.js?v=44" defer></script>
   <script src="assets/three-gltf-bundle.js" defer></script>
   <script src="assets/models/iw-models.js" defer></script>
-  <script src="configuratore.js?v=31" defer></script>
+  <script src="configuratore.js?v=33" defer></script>
 </head>
 <body data-page="configuratore">
+  <div id="config-announcer" class="sr-only" aria-live="polite" role="status"></div>
   <main class="configurator-page">
     <section class="configurator-intro">
       <div>
-        <p class="config-kicker">IconicWall Studio · Beta</p>
+        <p class="config-kicker">IconicWall Studio</p>
         <h1>Disegna la tua<br><em>parete.</em></h1>
       </div>
       <p>Una preview progettuale guidata: moduli, pannelli, materiali e ambiente in un flusso pulito.</p>
@@ -39,6 +40,11 @@
 
     <section class="configurator-shell" aria-label="Configuratore IconicWall">
       <aside class="config-sidebar" aria-label="Menu configuratore">
+        <div id="config-onboarding" class="config-onboarding" hidden>
+          <p class="config-onboarding-title">Come funziona</p>
+          <p>Segui i passaggi numerati: componi la struttura in <b>Moduli</b>, scegli <b>Pannelli</b> e <b>Accessori</b>, applica le finiture in <b>Materiali</b>, poi salva la richiesta in <b>Riepilogo</b>.</p>
+          <button id="config-onboarding-dismiss" type="button">Ho capito</button>
+        </div>
         <nav class="config-main-menu" aria-label="Sezioni configuratore">
           <button data-config-open="modules" aria-expanded="false"><span>01</span><b>Moduli</b><small>Struttura parete</small></button>
           <button data-config-open="panels" aria-expanded="false"><span>02</span><b>Pannelli</b><small>Famiglie IW</small></button>

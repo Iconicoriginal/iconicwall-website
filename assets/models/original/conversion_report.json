@@ -1,0 +1,68 @@
+{
+  "IconicBox": {
+    "source": "assets\\models\\original\\IconicBox.dae",
+    "target": "assets\\models\\original\\IconicBox.glb",
+    "geometry_count": 2,
+    "size_m": [
+      0.3,
+      0.1513,
+      0.45
+    ],
+    "bounds_m": [
+      [
+        0.0,
+        -0.0,
+        0.0
+      ],
+      [
+        0.3,
+        0.1513,
+        0.45
+      ]
+    ]
+  },
+  "IconicFrame": {
+    "source": "assets\\models\\original\\IconicFrame.dae",
+    "target": "assets\\models\\original\\IconicFrame.glb",
+    "geometry_count": 4,
+    "size_m": [
+      0.3,
+      0.1512,
+      0.45
+    ],
+    "bounds_m": [
+      [
+        -0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.3,
+        0.1512,
+        0.45
+      ]
+    ]
+  },
+  "IconicShelf": {
+    "source": "assets\\models\\original\\IconicShelf.dae",
+    "target": "assets\\models\\original\\IconicShelf.glb",
+    "geometry_count": 2,
+    "size_m": [
+      0.3,
+      0.1525,
+      0.45
+    ],
+    "bounds_m": [
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.3,
+        0.1525,
+        0.45
+      ]
+    ]
+  }
+}

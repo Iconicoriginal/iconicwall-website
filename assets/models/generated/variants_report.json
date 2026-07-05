@@ -1,0 +1,299 @@
+{
+  "shelf_300_300": {
+    "file": "IW_SHELF_W300_H300.glb",
+    "extents_mm": [
+      300.0,
+      152.5,
+      300.0
+    ],
+    "valid": true,
+    "authored_width_vertices": 36,
+    "authored_height_vertices": 24
+  },
+  "shelf_300_450": {
+    "file": "IW_SHELF_W300_H450.glb",
+    "extents_mm": [
+      300.0,
+      152.5,
+      450.0
+    ],
+    "valid": true,
+    "authored_width_vertices": 36,
+    "authored_height_vertices": 24
+  },
+  "shelf_300_600": {
+    "file": "IW_SHELF_W300_H600.glb",
+    "extents_mm": [
+      300.0,
+      152.5,
+      600.0
+    ],
+    "valid": true,
+    "authored_width_vertices": 36,
+    "authored_height_vertices": 24
+  },
+  "shelf_600_300": {
+    "file": "IW_SHELF_W600_H300.glb",
+    "extents_mm": [
+      600.0,
+      152.5,
+      300.0
+    ],
+    "valid": true,
+    "authored_width_vertices": 36,
+    "authored_height_vertices": 24
+  },
+  "shelf_600_450": {
+    "file": "IW_SHELF_W600_H450.glb",
+    "extents_mm": [
+      600.0,
+      152.5,
+      450.0
+    ],
+    "valid": true,
+    "authored_width_vertices": 36,
+    "authored_height_vertices": 24
+  },
+  "shelf_600_600": {
+    "file": "IW_SHELF_W600_H600.glb",
+    "extents_mm": [
+      600.0,
+      152.5,
+      600.0
+    ],
+    "valid": true,
+    "authored_width_vertices": 36,
+    "authored_height_vertices": 24
+  },
+  "shelf_900_300": {
+    "file": "IW_SHELF_W900_H300.glb",
+    "extents_mm": [
+      900.0,
+      152.5,
+      300.0
+    ],
+    "valid": true,
+    "authored_width_vertices": 36,
+    "authored_height_vertices": 24
+  },
+  "shelf_900_450": {
+    "file": "IW_SHELF_W900_H450.glb",
+    "extents_mm": [
+      900.0,
+      152.5,
+      450.0
+    ],
+    "valid": true,
+    "authored_width_vertices": 36,
+    "authored_height_vertices": 24
+  },
+  "shelf_900_600": {
+    "file": "IW_SHELF_W900_H600.glb",
+    "extents_mm": [
+      900.0,
+      152.5,
+      600.0
+    ],
+    "valid": true,
+    "authored_width_vertices": 36,
+    "authored_height_vertices": 24
+  },
+  "frame_300_300": {
+    "file": "IW_FRAME_W300_H300.glb",
+    "extents_mm": [
+      300.0,
+      151.2,
+      300.0
+    ],
+    "valid": true,
+    "authored_width_vertices": 48,
+    "authored_height_vertices": 48
+  },
+  "frame_300_450": {
+    "file": "IW_FRAME_W300_H450.glb",
+    "extents_mm": [
+      300.0,
+      151.2,
+      450.0
+    ],
+    "valid": true,
+    "authored_width_vertices": 48,
+    "authored_height_vertices": 48
+  },
+  "frame_300_600": {
+    "file": "IW_FRAME_W300_H600.glb",
+    "extents_mm": [
+      300.0,
+      151.2,
+      600.0
+    ],
+    "valid": true,
+    "authored_width_vertices": 48,
+    "authored_height_vertices": 48
+  },
+  "frame_600_300": {
+    "file": "IW_FRAME_W600_H300.glb",
+    "extents_mm": [
+      600.0,
+      151.2,
+      300.0
+    ],
+    "valid": true,
+    "authored_width_vertices": 48,
+    "authored_height_vertices": 48
+  },
+  "frame_600_450": {
+    "file": "IW_FRAME_W600_H450.glb",
+    "extents_mm": [
+      600.0,
+      151.2,
+      450.0
+    ],
+    "valid": true,
+    "authored_width_vertices": 48,
+    "authored_height_vertices": 48
+  },
+  "frame_600_600": {
+    "file": "IW_FRAME_W600_H600.glb",
+    "extents_mm": [
+      600.0,
+      151.2,
+      600.0
+    ],
+    "valid": true,
+    "authored_width_vertices": 48,
+    "authored_height_vertices": 48
+  },
+  "frame_900_300": {
+    "file": "IW_FRAME_W900_H300.glb",
+    "extents_mm": [
+      900.0,
+      151.2,
+      300.0
+    ],
+    "valid": true,
+    "authored_width_vertices": 48,
+    "authored_height_vertices": 48
+  },
+  "frame_900_450": {
+    "file": "IW_FRAME_W900_H450.glb",
+    "extents_mm": [
+      900.0,
+      151.2,
+      450.0
+    ],
+    "valid": true,
+    "authored_width_vertices": 48,
+    "authored_height_vertices": 48
+  },
+  "frame_900_600": {
+    "file": "IW_FRAME_W900_H600.glb",
+    "extents_mm": [
+      900.0,
+      151.2,
+      600.0
+    ],
+    "valid": true,
+    "authored_width_vertices": 48,
+    "authored_height_vertices": 48
+  },
+  "box_300_300": {
+    "file": "IW_BOX_W300_H300.glb",
+    "extents_mm": [
+      300.0,
+      151.3,
+      300.0
+    ],
+    "valid": true,
+    "authored_width_vertices": 288,
+    "authored_height_vertices": 28
+  },
+  "box_300_450": {
+    "file": "IW_BOX_W300_H450.glb",
+    "extents_mm": [
+      300.0,
+      151.3,
+      450.0
+    ],
+    "valid": true,
+    "authored_width_vertices": 288,
+    "authored_height_vertices": 28
+  },
+  "box_300_600": {
+    "file": "IW_BOX_W300_H600.glb",
+    "extents_mm": [
+      300.0,
+      151.3,
+      600.0
+    ],
+    "valid": true,
+    "authored_width_vertices": 288,
+    "authored_height_vertices": 28
+  },
+  "box_600_300": {
+    "file": "IW_BOX_W600_H300.glb",
+    "extents_mm": [
+      600.0,
+      151.3,
+      300.0
+    ],
+    "valid": true,
+    "authored_width_vertices": 288,
+    "authored_height_vertices": 28
+  },
+  "box_600_450": {
+    "file": "IW_BOX_W600_H450.glb",
+    "extents_mm": [
+      600.0,
+      151.3,
+      450.0
+    ],
+    "valid": true,
+    "authored_width_vertices": 288,
+    "authored_height_vertices": 28
+  },
+  "box_600_600": {
+    "file": "IW_BOX_W600_H600.glb",
+    "extents_mm": [
+      600.0,
+      151.3,
+      600.0
+    ],
+    "valid": true,
+    "authored_width_vertices": 288,
+    "authored_height_vertices": 28
+  },
+  "box_900_300": {
+    "file": "IW_BOX_W900_H300.glb",
+    "extents_mm": [
+      900.0,
+      151.3,
+      300.0
+    ],
+    "valid": true,
+    "authored_width_vertices": 288,
+    "authored_height_vertices": 28
+  },
+  "box_900_450": {
+    "file": "IW_BOX_W900_H450.glb",
+    "extents_mm": [
+      900.0,
+      151.3,
+      450.0
+    ],
+    "valid": true,
+    "authored_width_vertices": 288,
+    "authored_height_vertices": 28
+  },
+  "box_900_600": {
+    "file": "IW_BOX_W900_H600.glb",
+    "extents_mm": [
+      900.0,
+      151.3,
+      600.0
+    ],
+    "valid": true,
+    "authored_width_vertices": 288,
+    "authored_height_vertices": 28
+  }
+}

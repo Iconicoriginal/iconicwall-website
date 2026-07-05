@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Contatta IconicWall per progetti, riqualificazioni, collaborazioni e partnership legate a superfici evolutive per interni.">
+  <title>Contatti | IconicWall</title>
+  <link rel="stylesheet" href="styles.css?v=26">
+  <script src="script.js?v=43" defer></script>
+</head>
+<body class="dark-header" data-page="contatti">
+  <main>
+    <section class="contact-hero">
+      <div class="contact-layout">
+        <aside class="contact-details reveal" aria-label="Informazioni aziendali">
+          <p class="contact-kicker">CONTATTI</p>
+          <h1 class="display">Parliamo del tuo<br><em>progetto.</em></h1>
+          <p class="lead">Raccontaci lo spazio, l'esigenza o la collaborazione che vuoi sviluppare. Ti risponderemo con una proposta concreta.</p>
+
+          <div class="contact-divider" aria-hidden="true"></div>
+
+          <div class="contact-identity" aria-label="Dati aziendali">
+            <div class="contact-info-row">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+              <p><strong>ICONIC S.R.L. a socio unico</strong><br>Via Guido Rossa, 39<br>35020 Ponte San Nicolò (PD) - Italia</p>
+            </div>
+            <div class="contact-info-row">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4Z"/><path d="m22 6-10 7L2 6"/></svg>
+              <a href="mailto:info@iconicoriginal.it">info@iconicoriginal.it</a>
+            </div>
+          </div>
+        </aside>
+
+        <section class="contact-form-panel reveal" aria-labelledby="contact-form-title">
+          <form class="contact-form" novalidate>
+            <h2 id="contact-form-title" class="sr-only">Modulo contatti</h2>
+
+            <div class="field full">
+              <label for="full_name">Nome e cognome *</label>
+              <input id="full_name" name="full_name" autocomplete="name" placeholder="Inserisci il tuo nome" required>
+              <span class="field-error" data-error-for="full_name"></span>
+            </div>
+
+            <div class="field full">
+              <label for="email">Email *</label>
+              <input id="email" name="email" type="email" autocomplete="email" placeholder="Inserisci la tua email" required>
+              <span class="field-error" data-error-for="email"></span>
+            </div>
+
+            <div class="field full">
+              <label for="message">Messaggio *</label>
+              <textarea id="message" name="message" placeholder="Scrivi qui il tuo messaggio" required></textarea>
+              <span class="field-error" data-error-for="message"></span>
+            </div>
+
+            <div class="field full privacy-field">
+              <label class="privacy-check" for="privacy">
+                <input id="privacy" name="privacy" type="checkbox" required>
+                <span>Ho letto la <a href="privacy.html">Privacy Policy</a> e acconsento al trattamento dei dati per le finalità indicate nella stessa. *</span>
+              </label>
+              <span class="field-error" data-error-for="privacy"></span>
+            </div>
+
+            <div class="field full form-actions">
+              <button class="contact-submit" type="submit"><span class="contact-submit-label">INVIA RICHIESTA</span><span aria-hidden="true">→</span></button>
+              <p class="form-status" role="status" aria-live="polite"></p>
+            </div>
+          </form>
+        </section>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

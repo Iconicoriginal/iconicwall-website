@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.iconicwall.it)",
+      "mcp__claude-in-chrome__tabs_context_mcp",
+      "Bash(curl -s -A \"Mozilla/5.0\" https://www.iconicwall.it/index.html -o /tmp/iconicwall_index.html -w \"HTTP %{http_code} - size %{size_download} bytes\\\\n\")",
+      "Bash(pwd && ls -la /tmp/iconicwall_index.html 2>&1; find / -maxdepth 2 -iname \"tmp\" 2>/dev/null)",
+      "Bash(curl -s -A \"Mozilla/5.0\" \"https://www.iconicwall.it/styles.css?v=43\" -o /tmp/iconicwall_styles.css -w \"HTTP %{http_code} - size %{size_download} bytes\\\\n\")",
+      "Bash(node -e ' *)",
+      "Bash(du -sh \"/c/Users/utente/Documents/Sito Web/\"/*)",
+      "PowerShell(robocopy \"C:\\\\Users\\\\utente\\\\Documents\\\\Sito Web\" \"C:\\\\Users\\\\utente\\\\.claude\\\\SitoWeb IconicWall\" /E /XD \".git\" \".agents\" /R:1 /W:1 /NFL /NDL /NP; \"Exit code: $LASTEXITCODE\")"
+    ]
+  }
+}

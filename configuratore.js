@@ -1,11 +1,13 @@
 const stage = document.querySelector("#config-stage");
 const loading = stage.querySelector(".stage-loading");
+const stageLockBanner = document.querySelector("#stage-lock-banner");
 const countOutput = document.querySelector("#configuration-count");
 const sizeOutput = document.querySelector("#configuration-size");
 const widthOutput = document.querySelector("#wall-width-output");
 const heightSelect = document.querySelector("#wall-height");
 const moduleList = document.querySelector("#module-list");
 const panelList = document.querySelector("#panel-list");
+const accessoryList = document.querySelector("#accessory-list");
 const panelType = document.querySelector("#panel-type");
 const panelWidth = document.querySelector("#panel-width");
 const panelHeight = document.querySelector("#panel-height");
@@ -41,6 +43,13 @@ const IW_RULES = {
   box:   { label: "Box",   widths: [300, 600, 900], heights: [300, 450, 600], variants: [] },
   frame: { label: "Frame", widths: [300, 600, 900], heights: [300, 450, 600], variants: [] },
 };
+const ACCESSORY_LABELS = {
+  shelf: "Mensola",
+  box: "Box",
+  light: "Luce",
+  mirror: "Specchio",
+  hook: "Gancio",
+};
 const ORIGINAL_GEOMETRY_SIZE = {
   shelf: { depth: 152.5 },
   frame: { depth: 151.2 },
@@ -48,8 +57,9 @@ const ORIGINAL_GEOMETRY_SIZE = {
 };
 const STRUCTURE_FRONT_Z = .09;
 const originalModelTemplates = {};
-const dinocCatalog = globalThis.IW_DINOC_CATALOG || { families: [], materials: [] };
-const dinocById = new Map(dinocCatalog.materials.map((material) => [material.id, material]));
+let dinocCatalog = { families: [], materials: [] };
+let dinocById = new Map();
+let dinocCatalogPromise = null;
 const dinocTexturePromises = new Map();
 
 const scene = new THREE.Scene();
@@ -100,6 +110,10 @@ let materialTab = "all";
 let materialLimit = 72;
 let draggedMaterial = null;
 let materialDragGhost = null;
+let draggedNewPanel = null;
+let panelDragGhost = null;
+let draggedNewAccessoryType = null;
+let accessoryDragGhost = null;
 const favoriteMaterials = new Set(JSON.parse(localStorage.getItem("iwDinocFavorites") || "[]"));
 let recentMaterials = JSON.parse(localStorage.getItem("iwDinocRecent") || "[]");
 let wallHeightMm = Number(heightSelect.value);
@@ -350,10 +364,10 @@ function createLabel(text, background = "rgba(20,20,18,.82)", foreground = "#fff
   return sprite;
 }
 
-function createPanelMoveHandle() {
+function createPanelMoveHandle(panel) {
   const handle = createLabel("SPOSTA", "rgba(44,40,34,.78)", "#ffffff");
   handle.scale.set(.26, .05, 1);
-  handle.visible = true;
+  handle.visible = viewMode === "technical" || Boolean(panel && panel.id === selectedPanelId);
   handle.userData.panelHandle = true;
   return handle;
 }
@@ -420,7 +434,7 @@ function createPanelVisual(panel, moduleWidth) {
     group.add(original);
     const selectedHighlight = createSelectedPanelHighlight(panel, moduleWidth, featureHeight);
     if (selectedHighlight) group.add(selectedHighlight);
-    const label = createPanelMoveHandle();
+    const label = createPanelMoveHandle(panel);
     label.position.set(0, featureHeight / 2 + .055, .39);
     label.scale.set(.34, .065, 1);
     label.userData.panelHandle = true;
@@ -487,7 +501,7 @@ function createPanelVisual(panel, moduleWidth) {
     bottom.position.set(0, -featureHeight / 2 + .018, .25);
     group.add(front, bottom);
   }
-  const label = createPanelMoveHandle();
+  const label = createPanelMoveHandle(panel);
   label.position.set(0, Math.max(-featureHeight / 2 + .075, featureHeight / 2 - .075), .39);
   label.userData.panelHandle = true;
   group.add(label);
@@ -791,11 +805,19 @@ function removeAccessory(object) {
   accessoryGroup.remove(object);
   updateSummary();
 }
+function renderAccessoryList() {
+  if (!accessoryList) return;
+  accessoryList.innerHTML = placed.length ? placed.map((object, index) =>
+    `<div class="assigned-accessory"><span>${ACCESSORY_LABELS[object.userData.type] || object.userData.type}</span><button data-remove-accessory="${index}" title="Rimuovi accessorio">×</button></div>`
+  ).join("") : '<div class="module-empty">Nessun accessorio posizionato.</div>';
+}
+
 function updateSummary() {
   const panelCount = modules.reduce((sum, module) => sum + module.panels.length, 0);
   countOutput.textContent = `${modules.length} moduli · ${panelCount} pannelli`;
   sizeOutput.textContent = `${Math.round(wallWidth * 1000)} × ${wallHeightMm} mm`;
   widthOutput.textContent = `${Math.round(wallWidth * 1000)} mm`;
+  renderAccessoryList();
   if (measureWidthOutput) measureWidthOutput.textContent = `${Math.round(wallWidth * 1000)} mm`;
   if (measureTotalOutput) measureTotalOutput.textContent = `${Math.round(wallWidth * 1000)} × ${wallHeightMm} mm`;
   renderSidebarSummary();
@@ -939,6 +961,7 @@ function updateMaterialTarget() {
     .forEach((button) => { button.disabled = !label; });
   stage.classList.toggle("panel-selection-mode", Boolean(label));
   if (unlockViewButton) unlockViewButton.hidden = !label;
+  if (stageLockBanner) stageLockBanner.hidden = !label;
   controls.enableRotate = !label;
 }
 
@@ -1027,6 +1050,27 @@ function initializeMaterialCatalog() {
     `<option value="${escapeHtml(family)}">${escapeHtml(family)}</option>`
   ).join("");
   renderMaterialCatalog();
+}
+
+function loadDinocCatalog() {
+  if (dinocCatalogPromise) return dinocCatalogPromise;
+  materialGrid.innerHTML = '<div class="material-empty">Caricamento catalogo materiali…</div>';
+  dinocCatalogPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "assets/dinoc/catalog.js?v=3";
+    script.onload = () => {
+      dinocCatalog = globalThis.IW_DINOC_CATALOG || { families: [], materials: [] };
+      dinocById = new Map(dinocCatalog.materials.map((material) => [material.id, material]));
+      initializeMaterialCatalog();
+      resolve();
+    };
+    script.onerror = (error) => {
+      materialGrid.innerHTML = '<div class="material-empty">Catalogo non disponibile. Riprova più tardi.</div>';
+      reject(error);
+    };
+    document.body.appendChild(script);
+  });
+  return dinocCatalogPromise;
 }
 
 function resize() {
@@ -1187,7 +1231,10 @@ function applyPreset(key) {
 }
 
 document.querySelectorAll("[data-config-open]").forEach((button) => {
-  button.addEventListener("click", () => openConfigPanel(button.dataset.configOpen));
+  button.addEventListener("click", () => {
+    openConfigPanel(button.dataset.configOpen);
+    if (button.dataset.configOpen === "materials") loadDinocCatalog();
+  });
 });
 document.querySelectorAll("[data-config-back]").forEach((button) => {
   button.addEventListener("click", closeConfigPanel);
@@ -1287,6 +1334,12 @@ panelList.addEventListener("click", (event) => {
   if (!row) return;
   setSelectedPanel(Number(row.dataset.selectPanel), Number(row.dataset.selectModule));
 });
+accessoryList?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-remove-accessory]");
+  if (!button) return;
+  const object = placed[Number(button.dataset.removeAccessory)];
+  if (object) removeAccessory(object);
+});
 [panelType, panelWidth, panelHeight, panelVariant].forEach((select) => select.addEventListener("change", updatePanelBuilder));
 panelDragCard.addEventListener("dragstart", (event) => {
   event.dataTransfer.setData("application/x-iw-panel", JSON.stringify({
@@ -1297,6 +1350,87 @@ panelDragCard.addEventListener("dragstart", (event) => {
     material: materialSnapshot(),
   }));
   event.dataTransfer.effectAllowed = "copy";
+});
+panelDragCard.addEventListener("pointerdown", (event) => {
+  event.preventDefault();
+  draggedNewPanel = {
+    type: panelType.value,
+    width: Number(panelWidth.value),
+    height: Number(panelHeight.value),
+    variant: panelVariantField.hidden ? "" : panelVariant.value,
+    material: materialSnapshot(),
+  };
+  panelDragGhost = document.createElement("div");
+  panelDragGhost.className = "drag-ghost panel-drag-ghost";
+  panelDragGhost.innerHTML = `<b>${escapeHtml(panelCardName.textContent)}</b>`;
+  document.body.append(panelDragGhost);
+  panelDragGhost.style.left = `${event.clientX}px`;
+  panelDragGhost.style.top = `${event.clientY}px`;
+  stage.classList.add("drag-over");
+});
+addEventListener("pointermove", (event) => {
+  if (!draggedNewPanel || !panelDragGhost) return;
+  panelDragGhost.style.left = `${event.clientX}px`;
+  panelDragGhost.style.top = `${event.clientY}px`;
+  const overStage = document.elementFromPoint(event.clientX, event.clientY)?.closest("#config-stage");
+  if (!overStage) {
+    stage.classList.remove("drag-over");
+    return;
+  }
+  stage.classList.add("drag-over");
+  const point = pointerToWall(event.clientX, event.clientY);
+  const module = point ? moduleAtPoint(point) : null;
+  stage.querySelector(".drop-message").textContent = module ? "Rilascia per aggiungere il pannello" : "Trascina su un modulo della parete";
+});
+addEventListener("pointerup", (event) => {
+  if (!draggedNewPanel) return;
+  const panelData = draggedNewPanel;
+  draggedNewPanel = null;
+  panelDragGhost?.remove();
+  panelDragGhost = null;
+  stage.classList.remove("drag-over");
+  stage.querySelector(".drop-message").textContent = "Rilascia sulla parete";
+  const overStage = document.elementFromPoint(event.clientX, event.clientY)?.closest("#config-stage");
+  if (!overStage) return;
+  const point = pointerToWall(event.clientX, event.clientY);
+  if (!point) return;
+  const module = moduleAtPoint(point);
+  if (module) assignPanel(module, panelData, point.y);
+});
+document.querySelectorAll(".accessory-card").forEach((card) => {
+  card.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    draggedNewAccessoryType = card.dataset.accessory;
+    accessoryDragGhost = document.createElement("div");
+    accessoryDragGhost.className = "drag-ghost accessory-drag-ghost";
+    accessoryDragGhost.innerHTML = `<b>${escapeHtml(ACCESSORY_LABELS[draggedNewAccessoryType] || draggedNewAccessoryType)}</b>`;
+    document.body.append(accessoryDragGhost);
+    accessoryDragGhost.style.left = `${event.clientX}px`;
+    accessoryDragGhost.style.top = `${event.clientY}px`;
+    stage.classList.add("drag-over");
+  });
+});
+addEventListener("pointermove", (event) => {
+  if (!draggedNewAccessoryType || !accessoryDragGhost) return;
+  accessoryDragGhost.style.left = `${event.clientX}px`;
+  accessoryDragGhost.style.top = `${event.clientY}px`;
+  const overStage = document.elementFromPoint(event.clientX, event.clientY)?.closest("#config-stage");
+  stage.classList.toggle("drag-over", Boolean(overStage));
+  if (overStage) stage.querySelector(".drop-message").textContent = "Rilascia per posizionare l'accessorio";
+});
+addEventListener("pointerup", (event) => {
+  if (!draggedNewAccessoryType) return;
+  const type = draggedNewAccessoryType;
+  draggedNewAccessoryType = null;
+  accessoryDragGhost?.remove();
+  accessoryDragGhost = null;
+  stage.classList.remove("drag-over");
+  stage.querySelector(".drop-message").textContent = "Rilascia sulla parete";
+  const overStage = document.elementFromPoint(event.clientX, event.clientY)?.closest("#config-stage");
+  if (!overStage) return;
+  const point = pointerToWall(event.clientX, event.clientY);
+  if (!point) return;
+  addAccessory(type, point);
 });
 materialGrid.addEventListener("click", (event) => {
   const favorite = event.target.closest("[data-favorite-material]");
@@ -1565,7 +1699,6 @@ document.querySelector("#request-button").addEventListener("click", () => {
 requestFooterButton?.addEventListener("click", () => document.querySelector("#request-button").click());
 
 addEventListener("resize", resize);
-initializeMaterialCatalog();
 applyEnvironmentTransform();
 resize();
 animate();

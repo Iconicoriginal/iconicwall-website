@@ -21,12 +21,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Italiana&display=swap">
   <link rel="stylesheet" href="styles.css?v=44">
-  <link rel="stylesheet" href="configuratore.css?v=13">
+  <link rel="stylesheet" href="configuratore.css?v=15">
   <script src="script.js?v=44" defer></script>
   <script src="assets/three-gltf-bundle.js" defer></script>
   <script src="assets/models/iw-models.js" defer></script>
-  <script src="assets/dinoc/catalog.js?v=3" defer></script>
-  <script src="configuratore.js?v=29" defer></script>
+  <script src="configuratore.js?v=31" defer></script>
 </head>
 <body data-page="configuratore">
   <main class="configurator-page">
@@ -43,10 +42,11 @@
         <nav class="config-main-menu" aria-label="Sezioni configuratore">
           <button data-config-open="modules" aria-expanded="false"><span>01</span><b>Moduli</b><small>Struttura parete</small></button>
           <button data-config-open="panels" aria-expanded="false"><span>02</span><b>Pannelli</b><small>Famiglie IW</small></button>
-          <button data-config-open="materials" aria-expanded="false"><span>03</span><b>Materiali</b><small>Catalogo DI-NOC</small></button>
-          <button data-config-open="presets" aria-expanded="false"><span>04</span><b>Configurazioni standard</b><small>Preset e ambiente</small></button>
-          <button data-config-open="measures" aria-expanded="false"><span>05</span><b>Misure</b><small>Dimensioni tecniche</small></button>
-          <button data-config-open="summary" aria-expanded="false"><span>06</span><b>Riepilogo</b><small>Salva richiesta</small></button>
+          <button data-config-open="accessories" aria-expanded="false"><span>03</span><b>Accessori</b><small>Elementi magnetici</small></button>
+          <button data-config-open="materials" aria-expanded="false"><span>04</span><b>Materiali</b><small>Catalogo DI-NOC</small></button>
+          <button data-config-open="presets" aria-expanded="false"><span>05</span><b>Configurazioni standard</b><small>Preset e ambiente</small></button>
+          <button data-config-open="measures" aria-expanded="false"><span>06</span><b>Misure</b><small>Dimensioni tecniche</small></button>
+          <button data-config-open="summary" aria-expanded="false"><span>07</span><b>Riepilogo</b><small>Salva richiesta</small></button>
         </nav>
 
         <section class="config-panel" data-config-panel="modules" aria-label="Moduli" hidden>
@@ -100,9 +100,23 @@
           <div id="panel-list" class="panel-list"></div>
         </section>
 
+        <section class="config-panel" data-config-panel="accessories" aria-label="Accessori" hidden>
+          <button class="config-back" data-config-back>← Indietro</button>
+          <div class="config-section-head"><span>03</span><h2>Accessori</h2></div>
+          <p class="drag-hint">Trascina un accessorio sulla parete per posizionarlo. Puoi spostarlo in un secondo momento direttamente sul modello, oppure rimuoverlo dall'elenco qui sotto.</p>
+          <div class="accessory-grid" role="listbox" aria-label="Tipo di accessorio">
+            <button class="accessory-card" data-accessory="shelf"><span class="accessory-thumb accessory-thumb-shelf"></span><b>Mensola</b><small>Piano d'appoggio magnetico</small></button>
+            <button class="accessory-card" data-accessory="box"><span class="accessory-thumb accessory-thumb-box"></span><b>Box</b><small>Contenitore a giorno</small></button>
+            <button class="accessory-card" data-accessory="light"><span class="accessory-thumb accessory-thumb-light"></span><b>Luce</b><small>Barra LED verticale</small></button>
+            <button class="accessory-card" data-accessory="mirror"><span class="accessory-thumb accessory-thumb-mirror"></span><b>Specchio</b><small>Elemento riflettente</small></button>
+            <button class="accessory-card" data-accessory="hook"><span class="accessory-thumb accessory-thumb-hook"></span><b>Gancio</b><small>Aggancio magnetico</small></button>
+          </div>
+          <div id="accessory-list" class="accessory-list"></div>
+        </section>
+
         <section class="config-panel" data-config-panel="materials" aria-label="Materiali" hidden>
           <button class="config-back" data-config-back>← Indietro</button>
-          <div class="config-section-head"><span>03</span><h2>Materiali DI-NOC</h2></div>
+          <div class="config-section-head"><span>04</span><h2>Materiali DI-NOC</h2></div>
           <p class="drag-hint">Trascina una finitura su pannello, modulo o parete. Il catalogo resta chiuso finché non entri qui.</p>
           <div class="material-filters">
             <input id="material-search" type="search" placeholder="Cerca codice, es. WG-..." autocomplete="off">
@@ -133,7 +147,7 @@
 
         <section class="config-panel" data-config-panel="presets" aria-label="Configurazioni standard" hidden>
           <button class="config-back" data-config-back>← Indietro</button>
-          <div class="config-section-head"><span>04</span><h2>Configurazioni standard</h2></div>
+          <div class="config-section-head"><span>05</span><h2>Configurazioni standard</h2></div>
           <p class="drag-hint">Preset rapidi e sfondo ambientato. Nessun upload server: la foto resta locale.</p>
           <div class="preset-grid">
             <button data-preset="kitchen"><span></span><b>Cucina lineare</b><small>Fasce operative pulite</small></button>
@@ -164,7 +178,7 @@
 
         <section class="config-panel" data-config-panel="measures" aria-label="Misure" hidden>
           <button class="config-back" data-config-back>← Indietro</button>
-          <div class="config-section-head"><span>05</span><h2>Misure</h2></div>
+          <div class="config-section-head"><span>06</span><h2>Misure</h2></div>
           <div class="dimension-grid">
             <label><span>Larghezza parete</span><output id="measure-width-output">2400 mm</output></label>
             <label><span>Altezza</span><select id="wall-height"><option value="2400">2400 mm</option><option value="2700" selected>2700 mm</option><option value="3000">3000 mm</option></select></label>
@@ -176,7 +190,7 @@
 
         <section class="config-panel" data-config-panel="summary" aria-label="Riepilogo" hidden>
           <button class="config-back" data-config-back>← Indietro</button>
-          <div class="config-section-head"><span>06</span><h2>Riepilogo</h2></div>
+          <div class="config-section-head"><span>07</span><h2>Riepilogo</h2></div>
           <div id="sidebar-summary" class="sidebar-summary"></div>
           <button id="request-button">Salva configurazione e richiedi proposta <span>↗</span></button>
         </section>
@@ -201,6 +215,10 @@
           <div class="stage-background" aria-hidden="true"></div>
           <div class="stage-loading"><span></span><p>Preparazione studio 3D</p></div>
           <div class="drop-message">Rilascia sulla parete</div>
+          <div id="stage-lock-banner" class="stage-lock-banner" hidden>
+            <span>Pannello selezionato · vista bloccata</span>
+            <span class="stage-lock-banner-hint">Premi <kbd>Esc</kbd> o «Sblocca vista» per tornare a ruotare</span>
+          </div>
           <div class="stage-tip">Preview: trascina nello spazio vuoto per ruotare · rotella per zoom</div>
         </div>
 

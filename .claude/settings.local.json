@@ -29,7 +29,10 @@
       "Bash(cat .claude/launch.json)",
       "Bash(node -e \"console.log\\('CSS syntax check via brace count'\\)\")",
       "Bash(node add-seo-meta.js)",
-      "Bash(xargs sed -i 's/script\\\\.js?v=43/script.js?v=44/g')"
+      "Bash(xargs sed -i 's/script\\\\.js?v=43/script.js?v=44/g')",
+      "Bash(grep -n \"^function \\\\|^const .*= function\\\\|^  function \\\\|// ===\\\\|/\\\\*\\\\*\" configuratore.js)",
+      "Bash(xargs -I{} du -h \"{}\")",
+      "Bash(grep -oE \"#[0-9a-fA-F]{3,6}\" configuratore.css)"
     ]
   }
 }

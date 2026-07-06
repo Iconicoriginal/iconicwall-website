@@ -10,6 +10,32 @@ const navItems = [
   ["contatti", "Contatti", "contatti.html"],
 ];
 
+const organizationSchema = document.createElement("script");
+organizationSchema.type = "application/ld+json";
+organizationSchema.textContent = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "IconicWall",
+  "legalName": "Iconic S.r.l.",
+  "url": "https://www.iconicwall.it/",
+  "logo": "https://www.iconicwall.it/assets/logos/iconicwall-logo-black.svg",
+  "email": "info@iconicoriginal.it",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Via Guido Rossa, 39",
+    "addressLocality": "Ponte San Nicolò",
+    "postalCode": "35020",
+    "addressRegion": "PD",
+    "addressCountry": "IT",
+  },
+  "sameAs": [
+    "https://www.instagram.com/iconic_dressyourinteriors/",
+    "https://www.facebook.com/iconicoriginal/",
+    "https://www.linkedin.com/company/iconicoriginal/",
+  ],
+});
+document.head.appendChild(organizationSchema);
+
 const header = document.createElement("header");
 header.className = "site-header";
 header.innerHTML = `

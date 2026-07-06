@@ -109,6 +109,17 @@ button, input, textarea, select { font: inherit; }
 .main-nav a:hover::after, .main-nav a.active::after { right: 0; }
 .nav-contact { border: 1px solid currentColor; padding: .7rem 1rem; }
 .nav-contact span { margin-left: 1.2rem; }
+.lang-switcher {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding-left: .9rem;
+  margin-left: -.4rem;
+  border-left: 1px solid rgba(128,128,128,.35);
+}
+.lang-switcher a { opacity: .55; font-size: .6rem; }
+.lang-switcher a.active { opacity: 1; font-weight: 700; }
+.lang-switcher a:not(.active):hover { opacity: .85; }
 .menu-toggle { display: none; border: 0; background: none; padding: 10px; color: currentColor; }
 .menu-toggle i { display: block; width: 25px; height: 1px; background: currentColor; margin: 6px; }
 
@@ -2235,6 +2246,8 @@ footer a:focus-visible {
   .main-nav.open { transform: none; }
   .main-nav a { font: 400 2.6rem var(--serif); letter-spacing: 0; text-transform: none; }
   .nav-contact { margin-top: 1rem; font: 500 .7rem var(--sans) !important; letter-spacing: .12em !important; text-transform: uppercase !important; }
+  .lang-switcher { margin-top: .5rem; padding-left: 0; margin-left: 0; border-left: 0; }
+  .lang-switcher a { font: 600 .75rem var(--sans) !important; letter-spacing: .05em !important; text-transform: uppercase !important; }
   .section { padding: 6rem 7vw; }
   .section-tight { padding: 4rem 7vw; }
   .display { font-size: clamp(3.7rem, 17vw, 6rem); }

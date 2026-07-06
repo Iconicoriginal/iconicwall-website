@@ -1,13 +1,154 @@
+const supportedLangs = ["it", "en"]; // fr, de, es verranno aggiunte nelle fasi successive
+const langMatch = location.pathname.match(/^\/(en|fr|de|es)(\/|$)/);
+const lang = langMatch && supportedLangs.includes(langMatch[1]) ? langMatch[1] : "it";
+
+const translatedPages = {
+  home: "index.html",
+  sistema: "sistema.html",
+  collezione: "collezione.html",
+  materiali: "materiali.html",
+  accessori: "accessori.html",
+  applicazioni: "applicazioni.html",
+  origine: "origine.html",
+  contatti: "contatti.html",
+  tecnologia: "tecnologia-proprietaria.html",
+};
+
+function urlForLang(targetLang, filename) {
+  return targetLang === "it" ? `/${filename}` : `/${targetLang}/${filename}`;
+}
+
+function pageUrl(filename) {
+  return urlForLang(lang, filename);
+}
+
+const i18n = {
+  it: {
+    nav: { sistema: "Sistema", collezione: "Collezione", materiali: "Materiali", accessori: "Accessori", applicazioni: "Applicazioni", origine: "Origine", contatti: "Contatti" },
+    navCta: "Parliamone",
+    menuToggle: "Apri il menu",
+    homeAria: "IconicWall home",
+    iconicAria: "Iconic home",
+    footerIntroAria: "IconicWall",
+    footerCompanyAria: "Iconic S.R.L.",
+    footerIntro: "Una struttura permanente progettata<br>per accogliere superfici, luce, accessori<br>e funzioni che evolvono nel tempo.",
+    footerCompanyName: "ICONIC S.R.L. a socio unico",
+    footerAddress: "Via Guido Rossa, 39<br>35020 Ponte San Nicolò (PD)",
+    footerVat: "P.IVA / C.F. 04683100988",
+    footerResources: "Risorse",
+    footerDocs: "Documentazione",
+    footerFaq: "FAQ",
+    footerMaintenance: "Manutenzione",
+    footerInstructions: "Istruzioni di montaggio",
+    footerTech: "Tecnologia proprietaria",
+    footerLegal: "Legali",
+    footerPrivacy: "Privacy Policy",
+    footerCookie: "Cookie Policy",
+    footerCookiePrefs: "Preferenze Cookie",
+    footerTerms: "Termini e condizioni",
+    footerSocial: "Social",
+    instagramAria: "Instagram IconicWall",
+    facebookAria: "Facebook IconicOriginal",
+    linkedinAria: "LinkedIn IconicOriginal",
+    footerRights: "Tutti i diritti riservati.",
+    footerTagline: "Designed & Made in Italy",
+    cookieAria: "Preferenze cookie",
+    cookieText1: "Utilizziamo cookie tecnici necessari al funzionamento del sito e, solo con il tuo consenso, cookie analytics e marketing per migliorare l’esperienza, misurare le visite e proporti contenuti più pertinenti.",
+    cookieText2: "Puoi accettare tutti i cookie, rifiutare quelli non necessari o personalizzare le tue preferenze.",
+    cookiePolicyAria: "Informative cookie",
+    cookieReject: "Rifiuta non necessari",
+    cookieCustomize: "Personalizza",
+    cookieAcceptAll: "Accetta tutti",
+    cookiePrefsSaved: "Le tue preferenze sono state salvate. Puoi modificarle in qualsiasi momento tornando su questa pagina.",
+    videoPause: "Pausa",
+    videoPlay: "Play",
+    formErrorName: "Inserisci nome e cognome.",
+    formErrorEmailEmpty: "Inserisci un indirizzo email.",
+    formErrorEmailInvalid: "Inserisci un indirizzo email valido.",
+    formErrorMessage: "Scrivi un messaggio.",
+    formErrorPrivacy: "Devi accettare l'informativa privacy.",
+    formSending: "INVIO IN CORSO…",
+    formSubmit: "INVIA RICHIESTA",
+    formSuccess: "Richiesta inviata. Ti risponderemo appena possibile.",
+    formError: "Non siamo riusciti a inviare la richiesta. Riprova tra poco o scrivici via email.",
+    configDimLabel: "Dimensioni",
+    configFinishLabel: "Finitura",
+    configElementsLabel: "Elementi",
+    configNoAccessory: "nessun accessorio",
+    configTBD: "da definire",
+    configSampleMsg: "Vorrei richiedere un campionario dei materiali IconicWall.",
+    configDocsMsg: "Vorrei ricevere la documentazione tecnica IconicWall.",
+  },
+  en: {
+    nav: { sistema: "System", collezione: "Collection", materiali: "Materials", accessori: "Accessories", applicazioni: "Applications", origine: "Origin", contatti: "Contact" },
+    navCta: "Let's talk",
+    menuToggle: "Open menu",
+    homeAria: "IconicWall home",
+    iconicAria: "Iconic home",
+    footerIntroAria: "IconicWall",
+    footerCompanyAria: "Iconic S.R.L.",
+    footerIntro: "A permanent structure designed<br>to host surfaces, light, accessories<br>and functions that evolve over time.",
+    footerCompanyName: "ICONIC S.R.L. a socio unico",
+    footerAddress: "Via Guido Rossa, 39<br>35020 Ponte San Nicolò (PD), Italy",
+    footerVat: "VAT / Tax ID 04683100988",
+    footerResources: "Resources",
+    footerDocs: "Documentation",
+    footerFaq: "FAQ",
+    footerMaintenance: "Maintenance",
+    footerInstructions: "Assembly instructions",
+    footerTech: "Proprietary technology",
+    footerLegal: "Legal",
+    footerPrivacy: "Privacy Policy",
+    footerCookie: "Cookie Policy",
+    footerCookiePrefs: "Cookie Preferences",
+    footerTerms: "Terms & Conditions",
+    footerSocial: "Social",
+    instagramAria: "Instagram IconicWall",
+    facebookAria: "Facebook IconicOriginal",
+    linkedinAria: "LinkedIn IconicOriginal",
+    footerRights: "All rights reserved.",
+    footerTagline: "Designed & Made in Italy",
+    cookieAria: "Cookie preferences",
+    cookieText1: "We use technical cookies necessary for the site to function and, only with your consent, analytics and marketing cookies to improve your experience, measure visits and offer more relevant content.",
+    cookieText2: "You can accept all cookies, reject non-essential ones, or customize your preferences.",
+    cookiePolicyAria: "Cookie policies",
+    cookieReject: "Reject non-essential",
+    cookieCustomize: "Customize",
+    cookieAcceptAll: "Accept all",
+    cookiePrefsSaved: "Your preferences have been saved. You can change them at any time by returning to this page.",
+    videoPause: "Pause",
+    videoPlay: "Play",
+    formErrorName: "Please enter your full name.",
+    formErrorEmailEmpty: "Please enter an email address.",
+    formErrorEmailInvalid: "Please enter a valid email address.",
+    formErrorMessage: "Please write a message.",
+    formErrorPrivacy: "You must accept the privacy policy.",
+    formSending: "SENDING…",
+    formSubmit: "SEND REQUEST",
+    formSuccess: "Request sent. We'll get back to you as soon as possible.",
+    formError: "We couldn't send your request. Please try again shortly or email us directly.",
+    configDimLabel: "Dimensions",
+    configFinishLabel: "Finish",
+    configElementsLabel: "Elements",
+    configNoAccessory: "no accessories",
+    configTBD: "to be defined",
+    configSampleMsg: "I would like to request an IconicWall materials sample kit.",
+    configDocsMsg: "I would like to receive IconicWall technical documentation.",
+  },
+};
+
+const t = i18n[lang] || i18n.it;
+
 const page = document.body.dataset.page || "home";
 
 const navItems = [
-  ["sistema", "Sistema", "sistema.html"],
-  ["collezione", "Collezione", "collezione.html"],
-  ["materiali", "Materiali", "materiali.html"],
-  ["accessori", "Accessori", "accessori.html"],
-  ["applicazioni", "Applicazioni", "applicazioni.html"],
-  ["origine", "Origine", "origine.html"],
-  ["contatti", "Contatti", "contatti.html"],
+  ["sistema", t.nav.sistema, "sistema.html"],
+  ["collezione", t.nav.collezione, "collezione.html"],
+  ["materiali", t.nav.materiali, "materiali.html"],
+  ["accessori", t.nav.accessori, "accessori.html"],
+  ["applicazioni", t.nav.applicazioni, "applicazioni.html"],
+  ["origine", t.nav.origine, "origine.html"],
+  ["contatti", t.nav.contatti, "contatti.html"],
 ];
 
 const organizationSchema = document.createElement("script");
@@ -36,18 +177,24 @@ organizationSchema.textContent = JSON.stringify({
 });
 document.head.appendChild(organizationSchema);
 
+const langSwitcherLinks = supportedLangs.map((targetLang) => {
+  const filename = translatedPages[page] || "index.html";
+  return `<a href="${urlForLang(targetLang, filename)}" ${targetLang === lang ? 'class="active"' : ""}>${targetLang.toUpperCase()}</a>`;
+}).join("");
+
 const header = document.createElement("header");
 header.className = "site-header";
 header.innerHTML = `
-  <a class="brand" href="index.html" aria-label="IconicWall home">
-    <img src="assets/logos/iconicwall-logo-black.svg" alt="Logo IconicWall">
+  <a class="brand" href="${pageUrl("index.html")}" aria-label="${t.homeAria}">
+    <img src="/assets/logos/iconicwall-logo-black.svg" alt="Logo IconicWall">
   </a>
-  <button class="menu-toggle" aria-expanded="false" aria-label="Apri il menu">
+  <button class="menu-toggle" aria-expanded="false" aria-label="${t.menuToggle}">
     <i></i><i></i>
   </button>
   <nav class="main-nav">
-    ${navItems.map(([id, label, href]) => `<a ${page === id ? 'class="active"' : ""} href="${href}">${label}</a>`).join("")}
-    <a class="nav-contact" href="contatti.html">Parliamone <span>↗</span></a>
+    ${navItems.map(([id, label, href]) => `<a ${page === id ? 'class="active"' : ""} href="${pageUrl(href)}">${label}</a>`).join("")}
+    <a class="nav-contact" href="${pageUrl("contatti.html")}">${t.navCta} <span>↗</span></a>
+    <div class="lang-switcher" aria-label="Language">${langSwitcherLinks}</div>
   </nav>`;
 document.body.prepend(header);
 
@@ -55,26 +202,26 @@ const footer = document.createElement("footer");
 footer.innerHTML = `
   <div class="footer-inner">
     <div class="footer-columns">
-      <section class="footer-column footer-intro" aria-label="IconicWall">
-        <a class="footer-brand footer-brand-wall" href="index.html" aria-label="IconicWall home">
-          <img src="assets/logos/iconicwall-logo-white.svg" alt="Logo IconicWall">
+      <section class="footer-column footer-intro" aria-label="${t.footerIntroAria}">
+        <a class="footer-brand footer-brand-wall" href="${pageUrl("index.html")}" aria-label="${t.homeAria}">
+          <img src="/assets/logos/iconicwall-logo-white.svg" alt="Logo IconicWall">
         </a>
-        <p>Una struttura permanente progettata<br>per accogliere superfici, luce, accessori<br>e funzioni che evolvono nel tempo.</p>
+        <p>${t.footerIntro}</p>
       </section>
 
-      <section class="footer-column footer-company" aria-label="Iconic S.R.L.">
-        <a class="footer-iconic-mark" href="index.html" aria-label="Iconic home">
-          <img src="assets/logos/iconic-logo-white.svg" alt="Logo Iconic">
+      <section class="footer-column footer-company" aria-label="${t.footerCompanyAria}">
+        <a class="footer-iconic-mark" href="${pageUrl("index.html")}" aria-label="${t.iconicAria}">
+          <img src="/assets/logos/iconic-logo-white.svg" alt="Logo Iconic">
         </a>
-        <strong>ICONIC S.R.L. a socio unico</strong>
+        <strong>${t.footerCompanyName}</strong>
         <ul class="footer-contact-list">
           <li>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-            <span>Via Guido Rossa, 39<br>35020 Ponte San Nicolò (PD)</span>
+            <span>${t.footerAddress}</span>
           </li>
           <li>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h8M8 9h2"/></svg>
-            <span>P.IVA / C.F. 04683100988</span>
+            <span>${t.footerVat}</span>
           </li>
           <li>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4Z"/><path d="m22 6-10 7L2 6"/></svg>
@@ -83,34 +230,34 @@ footer.innerHTML = `
         </ul>
       </section>
 
-      <nav class="footer-column footer-nav" aria-label="Risorse">
-        <h2>Risorse</h2>
-        <a href="documentazione/index.html">Documentazione</a>
-        <a href="faq.html">FAQ</a>
-        <a href="manutenzione.html">Manutenzione</a>
-        <a href="istruzioni-montaggio.html">Istruzioni di montaggio</a>
-        <a href="tecnologia-proprietaria.html">Tecnologia proprietaria</a>
+      <nav class="footer-column footer-nav" aria-label="${t.footerResources}">
+        <h2>${t.footerResources}</h2>
+        <a href="/documentazione/index.html">${t.footerDocs}</a>
+        <a href="/faq.html">${t.footerFaq}</a>
+        <a href="/manutenzione.html">${t.footerMaintenance}</a>
+        <a href="/istruzioni-montaggio.html">${t.footerInstructions}</a>
+        <a href="${pageUrl("tecnologia-proprietaria.html")}">${t.footerTech}</a>
       </nav>
 
-      <nav class="footer-column footer-nav" aria-label="Legali">
-        <h2>Legali</h2>
-        <a href="privacy.html">Privacy Policy</a>
-        <a href="cookie.html">Cookie Policy</a>
-        <a href="preferenze-cookie.html">Preferenze Cookie</a>
-        <a href="termini.html">Termini e condizioni</a>
+      <nav class="footer-column footer-nav" aria-label="${t.footerLegal}">
+        <h2>${t.footerLegal}</h2>
+        <a href="/privacy.html">${t.footerPrivacy}</a>
+        <a href="/cookie.html">${t.footerCookie}</a>
+        <a href="/preferenze-cookie.html">${t.footerCookiePrefs}</a>
+        <a href="/termini.html">${t.footerTerms}</a>
       </nav>
 
-      <nav class="footer-column footer-nav footer-social" aria-label="Social">
-        <h2>Social</h2>
-        <a href="https://www.instagram.com/iconic_dressyourinteriors/" target="_blank" rel="noopener noreferrer" aria-label="Instagram IconicWall">
+      <nav class="footer-column footer-nav footer-social" aria-label="${t.footerSocial}">
+        <h2>${t.footerSocial}</h2>
+        <a href="https://www.instagram.com/iconic_dressyourinteriors/" target="_blank" rel="noopener noreferrer" aria-label="${t.instagramAria}">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg>
           <span>Instagram</span>
         </a>
-        <a href="https://www.facebook.com/iconicoriginal/" target="_blank" rel="noopener noreferrer" aria-label="Facebook IconicOriginal">
+        <a href="https://www.facebook.com/iconicoriginal/" target="_blank" rel="noopener noreferrer" aria-label="${t.facebookAria}">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3Z"/></svg>
           <span>Facebook</span>
         </a>
-        <a href="https://www.linkedin.com/company/iconicoriginal/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn IconicOriginal">
+        <a href="https://www.linkedin.com/company/iconicoriginal/" target="_blank" rel="noopener noreferrer" aria-label="${t.linkedinAria}">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 11v6M8 8v.01M12 17v-6M12 14a3 3 0 0 1 6 0v3"/></svg>
           <span>LinkedIn</span>
         </a>
@@ -118,8 +265,8 @@ footer.innerHTML = `
     </div>
 
     <div class="footer-bottom">
-      <span>© ${new Date().getFullYear()} IconicWall.<br>Tutti i diritti riservati.</span>
-      <span>Designed & Made in Italy</span>
+      <span>© ${new Date().getFullYear()} IconicWall.<br>${t.footerRights}</span>
+      <span>${t.footerTagline}</span>
     </div>
   </div>`;
 document.body.append(footer);
@@ -203,10 +350,10 @@ if (video) {
   videoButton?.addEventListener("click", () => {
     if (video.paused) {
       video.play();
-      videoButton.textContent = "Pausa";
+      videoButton.textContent = t.videoPause;
     } else {
       video.pause();
-      videoButton.textContent = "Play";
+      videoButton.textContent = t.videoPlay;
     }
   });
 }
@@ -265,21 +412,21 @@ const cookieConsent = (() => {
 
     const banner = document.createElement("section");
     banner.className = "cookie-banner";
-    banner.setAttribute("aria-label", "Preferenze cookie");
+    banner.setAttribute("aria-label", t.cookieAria);
     banner.innerHTML = `
       <div class="cookie-banner-copy">
-        <p>Utilizziamo cookie tecnici necessari al funzionamento del sito e, solo con il tuo consenso, cookie analytics e marketing per migliorare l’esperienza, misurare le visite e proporti contenuti più pertinenti.</p>
-        <p>Puoi accettare tutti i cookie, rifiutare quelli non necessari o personalizzare le tue preferenze.</p>
-        <nav aria-label="Informative cookie">
-          <a href="privacy.html">Privacy Policy</a>
-          <a href="cookie.html">Cookie Policy</a>
-          <a href="preferenze-cookie.html">Preferenze Cookie</a>
+        <p>${t.cookieText1}</p>
+        <p>${t.cookieText2}</p>
+        <nav aria-label="${t.cookiePolicyAria}">
+          <a href="/privacy.html">${t.footerPrivacy}</a>
+          <a href="/cookie.html">${t.footerCookie}</a>
+          <a href="/preferenze-cookie.html">${t.footerCookiePrefs}</a>
         </nav>
       </div>
       <div class="cookie-banner-actions">
-        <button type="button" data-cookie-reject>Rifiuta non necessari</button>
-        <a class="cookie-secondary-action" href="preferenze-cookie.html">Personalizza</a>
-        <button type="button" data-cookie-accept>Accetta tutti</button>
+        <button type="button" data-cookie-reject>${t.cookieReject}</button>
+        <a class="cookie-secondary-action" href="/preferenze-cookie.html">${t.cookieCustomize}</a>
+        <button type="button" data-cookie-accept>${t.cookieAcceptAll}</button>
       </div>
     `;
     document.body.append(banner);
@@ -314,7 +461,7 @@ if (cookiePreferencesForm) {
 
   function showCookiePreferenceStatus() {
     if (!status) return;
-    status.textContent = "Le tue preferenze sono state salvate. Puoi modificarle in qualsiasi momento tornando su questa pagina.";
+    status.textContent = t.cookiePrefsSaved;
     status.className = "form-status success";
   }
 
@@ -346,22 +493,22 @@ const contactForm = document.querySelector(".contact-form");
 if (contactForm) {
   const params = new URLSearchParams(location.search);
   const tipoParam = params.get("tipo");
-  if (tipoParam === "Configurazione 3D") {
+  if (tipoParam === "config3d") {
     const message = document.querySelector("#message");
     if (message) {
-      const components = params.get("elementi") || "nessun accessorio";
-      message.value = `Configurazione IconicWall 3D\nDimensioni: ${params.get("dimensioni") || "da definire"} cm\nFinitura: ${params.get("finitura") || "da definire"}\nElementi: ${components}`;
+      const components = params.get("elementi") || t.configNoAccessory;
+      message.value = `IconicWall 3D — ${document.title}\n${t.configDimLabel}: ${params.get("dimensioni") || t.configTBD} cm\n${t.configFinishLabel}: ${params.get("finitura") || t.configTBD}\n${t.configElementsLabel}: ${components}`;
     }
-  } else if (tipoParam === "Richiesta campionario materiali") {
+  } else if (tipoParam === "campionario") {
     const wantsSamples = document.querySelector("#wants_samples");
     const message = document.querySelector("#message");
     if (wantsSamples) wantsSamples.checked = true;
-    if (message && !message.value) message.value = "Vorrei richiedere un campionario dei materiali IconicWall.";
-  } else if (tipoParam === "Richiesta documentazione tecnica") {
+    if (message && !message.value) message.value = t.configSampleMsg;
+  } else if (tipoParam === "documentazione") {
     const wantsDocs = document.querySelector("#wants_docs");
     const message = document.querySelector("#message");
     if (wantsDocs) wantsDocs.checked = true;
-    if (message && !message.value) message.value = "Vorrei ricevere la documentazione tecnica IconicWall.";
+    if (message && !message.value) message.value = t.configDocsMsg;
   }
 
   const status = contactForm.querySelector(".form-status");
@@ -399,22 +546,22 @@ if (contactForm) {
     const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
     if (!fullName) {
-      setFieldError("full_name", "Inserisci nome e cognome.");
+      setFieldError("full_name", t.formErrorName);
       valid = false;
     }
     if (!email) {
-      setFieldError("email", "Inserisci un indirizzo email.");
+      setFieldError("email", t.formErrorEmailEmpty);
       valid = false;
     } else if (!emailValid) {
-      setFieldError("email", "Inserisci un indirizzo email valido.");
+      setFieldError("email", t.formErrorEmailInvalid);
       valid = false;
     }
     if (!message) {
-      setFieldError("message", "Scrivi un messaggio.");
+      setFieldError("message", t.formErrorMessage);
       valid = false;
     }
     if (!privacy) {
-      setFieldError("privacy", "Devi accettare l'informativa privacy.");
+      setFieldError("privacy", t.formErrorPrivacy);
       valid = false;
     }
 
@@ -435,11 +582,12 @@ if (contactForm) {
       company: contactForm.elements.company?.value.trim() || "",
       wants_samples: Boolean(contactForm.elements.wants_samples?.checked),
       wants_docs: Boolean(contactForm.elements.wants_docs?.checked),
+      lingua: lang,
     };
 
     if (submitButton) {
       submitButton.disabled = true;
-      if (submitLabel) submitLabel.textContent = "INVIO IN CORSO…";
+      if (submitLabel) submitLabel.textContent = t.formSending;
     }
 
     try {
@@ -453,13 +601,13 @@ if (contactForm) {
 
       contactForm.reset();
       fields.forEach((name) => setFieldError(name, ""));
-      setStatus("Richiesta inviata. Ti risponderemo appena possibile.", "success");
+      setStatus(t.formSuccess, "success");
     } catch {
-      setStatus("Non siamo riusciti a inviare la richiesta. Riprova tra poco o scrivici via email.", "error");
+      setStatus(t.formError, "error");
     } finally {
       if (submitButton) {
         submitButton.disabled = false;
-        if (submitLabel) submitLabel.textContent = "INVIA RICHIESTA";
+        if (submitLabel) submitLabel.textContent = t.formSubmit;
       }
     }
   });

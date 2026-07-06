@@ -1701,7 +1701,7 @@ document.querySelector("#request-button").addEventListener("click", () => {
     return `modulo ${module.width}: ${panels}`;
   }).join(", ");
   const params = new URLSearchParams({
-    tipo: "Configurazione 3D",
+    tipo: "config3d",
     dimensioni: `${Math.round(wallWidth * 1000)}x${wallHeightMm}`,
     elementi: `${description}; accessori: ${placed.map((item) => item.userData.type).join(", ")}`,
     finitura: "DI-NOC specificata per ciascun pannello",

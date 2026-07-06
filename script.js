@@ -2,6 +2,7 @@ const page = document.body.dataset.page || "home";
 
 const navItems = [
   ["sistema", "Sistema", "sistema.html"],
+  ["collezione", "Collezione", "collezione.html"],
   ["materiali", "Materiali", "materiali.html"],
   ["accessori", "Accessori", "accessori.html"],
   ["applicazioni", "Applicazioni", "applicazioni.html"],

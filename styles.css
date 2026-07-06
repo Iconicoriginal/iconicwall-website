@@ -359,7 +359,7 @@ button, input, textarea, select { font: inherit; }
   padding-left: 7vw;
   padding-right: 7vw;
 }
-.portal-grid { display: grid; grid-template-columns: repeat(4, 25%); gap: 0; }
+.portal-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; }
 .portal-section .portal-grid {
   width: 100%;
 }
@@ -405,6 +405,12 @@ button, input, textarea, select { font: inherit; }
 .portal-copy span { font-size: .62rem; letter-spacing: .13em; text-transform: uppercase; }
 .portal-copy h3 { font: 400 clamp(1.9rem, 2.7vw, 3.2rem)/1 var(--serif); margin: 0; }
 .portal-copy p { max-width: 26rem; margin: 0; font-weight: 300; color: rgba(255,255,255,.78); }
+.portal-copy .portal-cta {
+  margin-top: .35rem;
+  color: rgba(255,255,255,.92);
+  font-size: .68rem;
+  letter-spacing: .14em;
+}
 .portal-card[data-cursor]::before {
   content: "Esplora ↗";
   position: absolute;
@@ -2094,6 +2100,7 @@ footer a:focus-visible {
   .story-frame, .technical-grid, .magnet-demo { grid-template-columns: 1fr; }
   .story-image img { min-height: 58vh; }
   .story-content { padding: 5rem 7vw; }
+  .portal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .portal-card:nth-child(n) { grid-column: auto; }
   .accessory-section-intro,
   .accessory-feature-block { grid-template-columns: 1fr; }
@@ -4328,16 +4335,38 @@ footer a:focus-visible {
   color: var(--bronze);
 }
 .system-page--modular .system-hero {
-  grid-template-columns: minmax(0, .46fr) minmax(0, .54fr);
-  min-height: 94vh;
+  position: relative;
+  display: flex;
+  min-height: 100vh;
+  overflow: hidden;
+}
+.system-page--modular .system-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(90deg, rgba(5,5,5,.82) 0%, rgba(5,5,5,.55) 42%, rgba(5,5,5,.18) 100%),
+    linear-gradient(0deg, rgba(5,5,5,.38) 0%, rgba(5,5,5,0) 42%);
+  pointer-events: none;
 }
 .system-page--modular .system-hero-copy {
+  position: relative;
+  z-index: 2;
+  width: min(760px, 58vw);
+  min-height: 100vh;
   padding-top: clamp(7rem, 11vw, 11rem);
 }
 .system-page--modular .system-hero-media {
-  min-height: 94vh;
+  position: absolute;
+  inset: 0;
+  min-height: 100vh;
+  width: 100%;
+  z-index: 0;
 }
 .system-page--modular .system-hero-media img {
+  width: 100%;
+  height: 100%;
   filter: saturate(.92) brightness(.9);
 }
 .system-numbers-band {
@@ -4552,10 +4581,16 @@ footer a:focus-visible {
   font-size: .9rem;
 }
 .system-page--modular .element-visual--technical {
-  min-height: clamp(220px, 19vw, 300px);
+  height: clamp(220px, 19vw, 300px);
+  min-height: 0;
   margin-bottom: 1.45rem;
   border-color: rgba(17,17,15,.12);
   background: #ebe4da;
+}
+.system-page--modular .element-visual--technical img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 .system-page--modular .element-ambient {
   height: clamp(190px, 17vw, 280px);
@@ -4631,6 +4666,18 @@ footer a:focus-visible {
   .system-inspiration {
     grid-template-columns: 1fr;
   }
+  .system-page--modular .system-hero {
+    min-height: 100svh;
+  }
+  .system-page--modular .system-hero-copy {
+    width: 100%;
+    min-height: 100svh;
+    padding: 8rem 7vw 5rem;
+    justify-content: flex-end;
+  }
+  .system-page--modular .system-hero-media {
+    min-height: 100svh;
+  }
   .system-page--modular .system-split {
     width: 100%;
     margin-left: 0;
@@ -4677,7 +4724,6 @@ footer a:focus-visible {
   .system-page--modular .system-technical-media-stack .system-section-image img {
     padding: clamp(1rem, 3vw, 2rem);
   }
-  .system-page--modular .system-hero-media,
   .system-inspiration-media {
     min-height: 58vh;
   }
@@ -4694,7 +4740,7 @@ footer a:focus-visible {
     grid-template-columns: 1fr;
   }
   .system-page--modular .element-visual--technical {
-    min-height: 240px;
+    height: 240px;
   }
   .system-page--modular .element-ambient {
     height: 230px;

@@ -2,17 +2,16 @@ const supportedLangs = ["it", "en"]; // fr, de, es verranno aggiunte nelle fasi 
 const langMatch = location.pathname.match(/^\/(en|fr|de|es)(\/|$)/);
 const lang = langMatch && supportedLangs.includes(langMatch[1]) ? langMatch[1] : "it";
 
-const translatedPages = {
-  home: "index.html",
-  sistema: "sistema.html",
-  collezione: "collezione.html",
-  materiali: "materiali.html",
-  accessori: "accessori.html",
-  applicazioni: "applicazioni.html",
-  origine: "origine.html",
-  contatti: "contatti.html",
-  tecnologia: "tecnologia-proprietaria.html",
-};
+// Percorso della pagina corrente senza prefisso di lingua, usato dallo switcher
+// (piu' affidabile di data-page: piu' pagine di supporto condividono lo stesso data-page="info")
+const currentPath = location.pathname.replace(/^\/(en|fr|de|es)\//, "").replace(/^\//, "") || "index.html";
+
+const translatedPaths = new Set([
+  "index.html", "sistema.html", "collezione.html", "materiali.html", "accessori.html",
+  "applicazioni.html", "origine.html", "contatti.html", "tecnologia-proprietaria.html",
+  "faq.html", "manutenzione.html", "istruzioni-montaggio.html",
+  "documentazione/index.html", "savhotel-mantegna-padova/index.html",
+]);
 
 function urlForLang(targetLang, filename) {
   return targetLang === "it" ? `/${filename}` : `/${targetLang}/${filename}`;
@@ -178,8 +177,8 @@ organizationSchema.textContent = JSON.stringify({
 document.head.appendChild(organizationSchema);
 
 const langSwitcherLinks = supportedLangs.map((targetLang) => {
-  const filename = translatedPages[page] || "index.html";
-  return `<a href="${urlForLang(targetLang, filename)}" ${targetLang === lang ? 'class="active"' : ""}>${targetLang.toUpperCase()}</a>`;
+  const path = translatedPaths.has(currentPath) ? currentPath : "index.html";
+  return `<a href="${urlForLang(targetLang, path)}" ${targetLang === lang ? 'class="active"' : ""}>${targetLang.toUpperCase()}</a>`;
 }).join("");
 
 const header = document.createElement("header");
@@ -232,10 +231,10 @@ footer.innerHTML = `
 
       <nav class="footer-column footer-nav" aria-label="${t.footerResources}">
         <h2>${t.footerResources}</h2>
-        <a href="/documentazione/index.html">${t.footerDocs}</a>
-        <a href="/faq.html">${t.footerFaq}</a>
-        <a href="/manutenzione.html">${t.footerMaintenance}</a>
-        <a href="/istruzioni-montaggio.html">${t.footerInstructions}</a>
+        <a href="${pageUrl("documentazione/index.html")}">${t.footerDocs}</a>
+        <a href="${pageUrl("faq.html")}">${t.footerFaq}</a>
+        <a href="${pageUrl("manutenzione.html")}">${t.footerMaintenance}</a>
+        <a href="${pageUrl("istruzioni-montaggio.html")}">${t.footerInstructions}</a>
         <a href="${pageUrl("tecnologia-proprietaria.html")}">${t.footerTech}</a>
       </nav>
 

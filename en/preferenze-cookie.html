@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Manage cookie preferences for the Iconic website.">
+  <link rel="canonical" href="https://www.iconicwall.it/en/preferenze-cookie.html">
+  <link rel="alternate" hreflang="it" href="https://www.iconicwall.it/preferenze-cookie.html">
+  <link rel="alternate" hreflang="en" href="https://www.iconicwall.it/en/preferenze-cookie.html">
+  <link rel="alternate" hreflang="fr" href="https://www.iconicwall.it/fr/preferenze-cookie.html">
+  <link rel="alternate" hreflang="de" href="https://www.iconicwall.it/de/preferenze-cookie.html">
+  <link rel="alternate" hreflang="es" href="https://www.iconicwall.it/es/preferenze-cookie.html">
+  <link rel="alternate" hreflang="x-default" href="https://www.iconicwall.it/preferenze-cookie.html">
+  <meta name="robots" content="noindex, follow">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="IconicWall">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:title" content="Cookie Preferences | Iconic">
+  <meta property="og:description" content="Manage cookie preferences for the Iconic website.">
+  <meta property="og:url" content="https://www.iconicwall.it/en/preferenze-cookie.html">
+  <meta property="og:image" content="https://www.iconicwall.it/assets/gallery/system-reveal.webp">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Cookie Preferences | Iconic">
+  <meta name="twitter:description" content="Manage cookie preferences for the Iconic website.">
+  <meta name="twitter:image" content="https://www.iconicwall.it/assets/gallery/system-reveal.webp">
+  <title>Cookie Preferences | Iconic</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Italiana&display=swap">
+  <link rel="stylesheet" href="/styles.css?v=46"><script src="/script.js?v=52" defer></script>
+</head>
+<body data-page="info">
+  <main class="page-main info-main">
+    <section class="info-hero">
+      <p class="eyebrow reveal">Legal</p>
+      <h1 class="display reveal">Cookie Preferences</h1>
+      <p class="lead reveal">Manage your cookie choices for the Iconic website at any time.</p>
+    </section>
+
+    <section class="info-content section">
+      <form class="info-panel cookie-preferences reveal" data-cookie-preferences>
+        <p>You can choose which categories of cookies to allow. Necessary technical cookies are always active because they enable the correct functioning of the site. Preferences can be changed at any time.</p>
+
+        <section class="cookie-preference-group" aria-labelledby="necessary-cookie-title">
+          <div>
+            <h2 id="necessary-cookie-title">Necessary cookies</h2>
+            <p>These cookies are used for the technical functioning of the site, security, navigation and storing the preferences expressed. They cannot be disabled through this panel.</p>
+          </div>
+          <span class="cookie-status">Always active</span>
+        </section>
+
+        <section class="cookie-preference-group" aria-labelledby="analytics-cookie-title">
+          <div>
+            <h2 id="analytics-cookie-title">Analytics cookies</h2>
+            <p>These cookies or tools help us understand how the site is used, which pages are visited and how to improve content and performance.</p>
+          </div>
+          <label class="cookie-toggle">
+            <input type="checkbox" name="analytics">
+            <span aria-hidden="true"></span>
+            <strong>I accept analytics cookies</strong>
+          </label>
+        </section>
+
+        <section class="cookie-preference-group" aria-labelledby="marketing-cookie-title">
+          <div>
+            <h2 id="marketing-cookie-title">Marketing cookies</h2>
+            <p>These cookies allow us to measure advertising campaigns and offer content more relevant to the user's interests.</p>
+          </div>
+          <label class="cookie-toggle">
+            <input type="checkbox" name="marketing">
+            <span aria-hidden="true"></span>
+            <strong>I accept marketing cookies</strong>
+          </label>
+        </section>
+
+        <div class="cookie-preferences-actions">
+          <button class="button dark" type="submit">Save preferences <span>→</span></button>
+          <button class="button" type="button" data-cookie-preferences-accept>Accept all <span>→</span></button>
+          <button class="cookie-link-button" type="button" data-cookie-preferences-reject>Reject non-necessary</button>
+        </div>
+        <p class="form-status" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+  </main>
+</body>
+</html>

@@ -11,6 +11,7 @@ const translatedPaths = new Set([
   "applicazioni.html", "origine.html", "contatti.html", "tecnologia-proprietaria.html",
   "faq.html", "manutenzione.html", "istruzioni-montaggio.html",
   "documentazione/index.html", "savhotel-mantegna-padova/index.html",
+  "privacy.html", "cookie.html", "termini.html", "preferenze-cookie.html",
 ]);
 
 function urlForLang(targetLang, filename) {

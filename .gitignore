@@ -4,4 +4,3 @@ tmp/
 .vercel
 .claude/settings.local.json
 tmp_asset_contact_sheet.jpg
-tools/pdf-gen/node_modules/

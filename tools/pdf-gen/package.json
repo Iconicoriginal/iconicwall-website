@@ -1,0 +1,11 @@
+{
+  "name": "iconicwall-pdf-gen",
+  "private": true,
+  "description": "Genera i PDF scaricabili della sezione Documentazione a partire da template HTML con lo stile del sito. Uso locale, non fa parte del deploy Vercel.",
+  "scripts": {
+    "build": "node build.js"
+  },
+  "dependencies": {
+    "puppeteer": "^23.0.0"
+  }
+}

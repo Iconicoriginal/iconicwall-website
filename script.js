@@ -408,10 +408,10 @@ footer.innerHTML = `
 
       <nav class="footer-column footer-nav" aria-label="${t.footerLegal}">
         <h2>${t.footerLegal}</h2>
-        <a href="/privacy.html">${t.footerPrivacy}</a>
-        <a href="/cookie.html">${t.footerCookie}</a>
-        <a href="/preferenze-cookie.html">${t.footerCookiePrefs}</a>
-        <a href="/termini.html">${t.footerTerms}</a>
+        <a href="${pageUrl("privacy.html")}">${t.footerPrivacy}</a>
+        <a href="${pageUrl("cookie.html")}">${t.footerCookie}</a>
+        <a href="${pageUrl("preferenze-cookie.html")}">${t.footerCookiePrefs}</a>
+        <a href="${pageUrl("termini.html")}">${t.footerTerms}</a>
       </nav>
 
       <nav class="footer-column footer-nav footer-social" aria-label="${t.footerSocial}">
@@ -585,14 +585,14 @@ const cookieConsent = (() => {
         <p>${t.cookieText1}</p>
         <p>${t.cookieText2}</p>
         <nav aria-label="${t.cookiePolicyAria}">
-          <a href="/privacy.html">${t.footerPrivacy}</a>
-          <a href="/cookie.html">${t.footerCookie}</a>
-          <a href="/preferenze-cookie.html">${t.footerCookiePrefs}</a>
+          <a href="${pageUrl("privacy.html")}">${t.footerPrivacy}</a>
+          <a href="${pageUrl("cookie.html")}">${t.footerCookie}</a>
+          <a href="${pageUrl("preferenze-cookie.html")}">${t.footerCookiePrefs}</a>
         </nav>
       </div>
       <div class="cookie-banner-actions">
         <button type="button" data-cookie-reject>${t.cookieReject}</button>
-        <a class="cookie-secondary-action" href="/preferenze-cookie.html">${t.cookieCustomize}</a>
+        <a class="cookie-secondary-action" href="${pageUrl("preferenze-cookie.html")}">${t.cookieCustomize}</a>
         <button type="button" data-cookie-accept>${t.cookieAcceptAll}</button>
       </div>
     `;

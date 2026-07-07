@@ -78,6 +78,17 @@ const i18n = {
     configTBD: "da definire",
     configSampleMsg: "Vorrei richiedere un campionario dei materiali IconicWall.",
     configDocsMsg: "Vorrei ricevere la documentazione tecnica IconicWall.",
+    chatToggleAria: "Apri la chat",
+    chatCloseAria: "Chiudi la chat",
+    chatTitle: "Assistente IconicWall",
+    chatSubtitle: "Domande su sistema, materiali e prodotti",
+    chatWelcome: "Ciao! Sono l'assistente virtuale di IconicWall. Posso rispondere a domande su sistema, collezione, materiali, accessori e installazione. Come posso aiutarti?",
+    chatPlaceholder: "Scrivi un messaggio…",
+    chatSendAria: "Invia messaggio",
+    chatDisclaimer: "Risposte generate automaticamente. Per richieste commerciali o progetti specifici, usa il modulo contatti.",
+    chatError: "Non riesco a rispondere in questo momento. Riprova tra poco o scrivici tramite il modulo contatti.",
+    chatRateLimit: "Hai inviato troppi messaggi. Riprova tra qualche minuto.",
+    chatThinking: "sta scrivendo…",
   },
   en: {
     nav: { sistema: "System", collezione: "Collection", materiali: "Materials", accessori: "Accessories", applicazioni: "Applications", origine: "Origin", contatti: "Contact" },
@@ -134,6 +145,17 @@ const i18n = {
     configTBD: "to be confirmed",
     configSampleMsg: "I would like to request an IconicWall materials sample kit.",
     configDocsMsg: "I would like to receive IconicWall technical documentation.",
+    chatToggleAria: "Open chat",
+    chatCloseAria: "Close chat",
+    chatTitle: "IconicWall Assistant",
+    chatSubtitle: "Questions about the system, materials and products",
+    chatWelcome: "Hi! I'm the IconicWall virtual assistant. I can answer questions about the system, collection, materials, accessories and installation. How can I help you?",
+    chatPlaceholder: "Type a message…",
+    chatSendAria: "Send message",
+    chatDisclaimer: "Answers are generated automatically. For commercial requests or specific projects, please use the contact form.",
+    chatError: "I can't reply right now. Please try again shortly or reach us through the contact form.",
+    chatRateLimit: "You've sent too many messages. Please try again in a few minutes.",
+    chatThinking: "typing…",
   },
   fr: {
     nav: { sistema: "Système", collezione: "Collection", materiali: "Matériaux", accessori: "Accessoires", applicazioni: "Applications", origine: "Origine", contatti: "Contact" },
@@ -190,6 +212,17 @@ const i18n = {
     configTBD: "à définir",
     configSampleMsg: "Je souhaite demander un jeu d'échantillons des matériaux IconicWall.",
     configDocsMsg: "Je souhaite recevoir la documentation technique IconicWall.",
+    chatToggleAria: "Ouvrir le chat",
+    chatCloseAria: "Fermer le chat",
+    chatTitle: "Assistant IconicWall",
+    chatSubtitle: "Questions sur le système, les matériaux et les produits",
+    chatWelcome: "Bonjour ! Je suis l'assistant virtuel d'IconicWall. Je peux répondre à vos questions sur le système, la collection, les matériaux, les accessoires et la pose. Comment puis-je vous aider ?",
+    chatPlaceholder: "Écrivez un message…",
+    chatSendAria: "Envoyer le message",
+    chatDisclaimer: "Réponses générées automatiquement. Pour toute demande commerciale ou projet spécifique, utilisez le formulaire de contact.",
+    chatError: "Je ne peux pas répondre pour le moment. Réessayez dans un instant ou écrivez-nous via le formulaire de contact.",
+    chatRateLimit: "Vous avez envoyé trop de messages. Réessayez dans quelques minutes.",
+    chatThinking: "est en train d'écrire…",
   },
   de: {
     nav: { sistema: "System", collezione: "Kollektion", materiali: "Materialien", accessori: "Zubehör", applicazioni: "Anwendungen", origine: "Ursprung", contatti: "Kontakt" },
@@ -246,6 +279,17 @@ const i18n = {
     configTBD: "noch festzulegen",
     configSampleMsg: "Ich möchte ein Materialmuster von IconicWall anfordern.",
     configDocsMsg: "Ich möchte die technische Dokumentation von IconicWall erhalten.",
+    chatToggleAria: "Chat öffnen",
+    chatCloseAria: "Chat schließen",
+    chatTitle: "IconicWall Assistent",
+    chatSubtitle: "Fragen zu System, Materialien und Produkten",
+    chatWelcome: "Hallo! Ich bin der virtuelle Assistent von IconicWall. Ich beantworte Fragen zu System, Kollektion, Materialien, Zubehör und Montage. Wie kann ich Ihnen helfen?",
+    chatPlaceholder: "Nachricht schreiben…",
+    chatSendAria: "Nachricht senden",
+    chatDisclaimer: "Antworten werden automatisch generiert. Für kommerzielle Anfragen oder konkrete Projekte nutzen Sie bitte das Kontaktformular.",
+    chatError: "Ich kann gerade nicht antworten. Versuchen Sie es später erneut oder schreiben Sie uns über das Kontaktformular.",
+    chatRateLimit: "Sie haben zu viele Nachrichten gesendet. Bitte versuchen Sie es in ein paar Minuten erneut.",
+    chatThinking: "schreibt…",
   },
   es: {
     nav: { sistema: "Sistema", collezione: "Colección", materiali: "Materiales", accessori: "Accesorios", applicazioni: "Aplicaciones", origine: "Origen", contatti: "Contacto" },
@@ -302,6 +346,17 @@ const i18n = {
     configTBD: "por definir",
     configSampleMsg: "Me gustaría solicitar un muestrario de materiales de IconicWall.",
     configDocsMsg: "Me gustaría recibir la documentación técnica de IconicWall.",
+    chatToggleAria: "Abrir el chat",
+    chatCloseAria: "Cerrar el chat",
+    chatTitle: "Asistente IconicWall",
+    chatSubtitle: "Preguntas sobre el sistema, los materiales y los productos",
+    chatWelcome: "¡Hola! Soy el asistente virtual de IconicWall. Puedo responder preguntas sobre el sistema, la colección, los materiales, los accesorios y la instalación. ¿En qué puedo ayudarte?",
+    chatPlaceholder: "Escribe un mensaje…",
+    chatSendAria: "Enviar mensaje",
+    chatDisclaimer: "Las respuestas se generan automáticamente. Para solicitudes comerciales o proyectos específicos, utiliza el formulario de contacto.",
+    chatError: "Ahora mismo no puedo responder. Inténtalo de nuevo en un momento o escríbenos a través del formulario de contacto.",
+    chatRateLimit: "Has enviado demasiados mensajes. Inténtalo de nuevo en unos minutos.",
+    chatThinking: "está escribiendo…",
   },
 };
 
@@ -780,3 +835,170 @@ if (contactForm) {
     }
   });
 }
+
+const iconicChat = (() => {
+  const STORAGE_KEY = "iconic_chat_history";
+  const MAX_STORED_MESSAGES = 20;
+
+  function loadHistory() {
+    try {
+      const raw = sessionStorage.getItem(STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveHistory(nextHistory) {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(nextHistory.slice(-MAX_STORED_MESSAGES)));
+    } catch {
+      // storage non disponibile (es. modalita' privata): la conversazione resta solo in memoria
+    }
+  }
+
+  let history = loadHistory();
+  let sending = false;
+
+  const toggle = document.createElement("button");
+  toggle.type = "button";
+  toggle.className = "chat-toggle";
+  toggle.setAttribute("aria-label", t.chatToggleAria);
+  toggle.setAttribute("aria-expanded", "false");
+  toggle.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z"/></svg>`;
+  document.body.append(toggle);
+
+  const panel = document.createElement("section");
+  panel.className = "chat-panel";
+  panel.setAttribute("aria-label", t.chatTitle);
+  panel.hidden = true;
+  panel.innerHTML = `
+    <header class="chat-panel-header">
+      <div>
+        <strong>${t.chatTitle}</strong>
+        <span>${t.chatSubtitle}</span>
+      </div>
+      <button type="button" class="chat-close" aria-label="${t.chatCloseAria}">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </header>
+    <div class="chat-messages" role="log" aria-live="polite"></div>
+    <form class="chat-input-row">
+      <label class="sr-only" for="chat-input">${t.chatPlaceholder}</label>
+      <input id="chat-input" type="text" placeholder="${t.chatPlaceholder}" maxlength="1000" autocomplete="off">
+      <button type="submit" class="chat-send" aria-label="${t.chatSendAria}">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/></svg>
+      </button>
+    </form>
+    <p class="chat-disclaimer">${t.chatDisclaimer}</p>`;
+  document.body.append(panel);
+
+  const messagesEl = panel.querySelector(".chat-messages");
+  const inputForm = panel.querySelector(".chat-input-row");
+  const input = panel.querySelector("#chat-input");
+  const closeButton = panel.querySelector(".chat-close");
+
+  function renderMessage(role, content) {
+    const bubble = document.createElement("div");
+    bubble.className = `chat-message chat-message-${role}`;
+    content.split("\n").forEach((line) => {
+      if (!line) return;
+      const p = document.createElement("p");
+      p.textContent = line;
+      bubble.append(p);
+    });
+    messagesEl.append(bubble);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return bubble;
+  }
+
+  function renderThinking() {
+    const bubble = document.createElement("div");
+    bubble.className = "chat-message chat-message-assistant chat-message-thinking";
+    bubble.innerHTML = `<span class="sr-only">${t.chatThinking}</span><span class="chat-dot"></span><span class="chat-dot"></span><span class="chat-dot"></span>`;
+    messagesEl.append(bubble);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return bubble;
+  }
+
+  function renderHistory() {
+    messagesEl.innerHTML = "";
+    if (history.length === 0) {
+      renderMessage("assistant", t.chatWelcome);
+    } else {
+      history.forEach((message) => renderMessage(message.role, message.content));
+    }
+  }
+
+  renderHistory();
+
+  function openPanel() {
+    panel.hidden = false;
+    toggle.setAttribute("aria-expanded", "true");
+    document.body.classList.add("chat-open");
+    requestAnimationFrame(() => input.focus());
+  }
+
+  function closePanel() {
+    panel.hidden = true;
+    toggle.setAttribute("aria-expanded", "false");
+    document.body.classList.remove("chat-open");
+    toggle.focus();
+  }
+
+  toggle.addEventListener("click", () => {
+    if (panel.hidden) openPanel(); else closePanel();
+  });
+  closeButton.addEventListener("click", closePanel);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !panel.hidden) closePanel();
+  });
+
+  inputForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const value = input.value.trim();
+    if (!value || sending) return;
+
+    input.value = "";
+    renderMessage("user", value);
+    history.push({ role: "user", content: value });
+    saveHistory(history);
+
+    const thinking = renderThinking();
+    sending = true;
+    input.disabled = true;
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lang, messages: history }),
+      });
+
+      thinking.remove();
+
+      if (response.status === 429) {
+        renderMessage("assistant", t.chatRateLimit);
+        return;
+      }
+      if (!response.ok) throw new Error("Request failed");
+
+      const data = await response.json();
+      if (!data.reply) throw new Error("Empty reply");
+
+      renderMessage("assistant", data.reply);
+      history.push({ role: "assistant", content: data.reply });
+      saveHistory(history);
+    } catch {
+      thinking.remove();
+      renderMessage("assistant", t.chatError);
+    } finally {
+      sending = false;
+      input.disabled = false;
+      input.focus();
+    }
+  });
+
+  return { openPanel, closePanel };
+})();

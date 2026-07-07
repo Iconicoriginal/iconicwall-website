@@ -2,3 +2,5 @@ tmp/
 .env
 .env.*
 .vercel
+.claude/settings.local.json
+tmp_asset_contact_sheet.jpg

@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Scheda Prodotto IconicWall</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Italiana&display=swap">
+<style>
+  :root {
+    --ink: #11110f;
+    --paper: #f2f0eb;
+    --paper-2: #e7e3dc;
+    --white: #fff;
+    --bronze: #aa8b68;
+    --bronze-ink: #776149;
+    --muted: #66645f;
+    --line: rgba(17, 17, 15, .18);
+    --serif: "Italiana", Georgia, serif;
+    --sans: "DM Sans", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; font-family: var(--sans); color: var(--ink); font-weight: 300; }
+  @page { size: A4; margin: 0; }
+  .page {
+    width: 210mm;
+    height: 297mm;
+    position: relative;
+    page-break-after: always;
+    overflow: hidden;
+    background: var(--paper);
+  }
+  .page:last-child { page-break-after: auto; }
+
+  /* Cover */
+  .cover {
+    background: var(--ink);
+    color: var(--white);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 22mm;
+  }
+  .cover .eyebrow { font-size: 10pt; letter-spacing: .18em; text-transform: uppercase; color: var(--bronze); margin: 0 0 8mm; }
+  .cover .logo { width: 78mm; margin-bottom: 14mm; }
+  .cover h1 { font-family: var(--serif); font-weight: 400; font-size: 34pt; line-height: 1.12; margin: 0 0 6mm; }
+  .cover .lead { font-size: 12pt; font-weight: 300; color: rgba(255,255,255,.78); max-width: 120mm; line-height: 1.5; margin: 0; }
+  .cover .cover-footer { display: flex; justify-content: space-between; align-items: flex-end; font-size: 9pt; color: rgba(255,255,255,.6); border-top: 1px solid rgba(255,255,255,.2); padding-top: 6mm; }
+  .cover .cover-footer strong { color: white; font-weight: 500; }
+
+  /* Content pages */
+  .content { padding: 18mm 20mm 24mm; display: flex; flex-direction: column; }
+  .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10mm; }
+  .page-header img { width: 32mm; }
+  .page-header span { font-size: 8pt; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .eyebrow { font-size: 9pt; letter-spacing: .16em; text-transform: uppercase; color: var(--bronze-ink); margin: 0 0 3mm; }
+  h2 { font-family: var(--serif); font-weight: 400; font-size: 22pt; margin: 0 0 6mm; line-height: 1.15; }
+  h3 { font-family: var(--serif); font-weight: 400; font-size: 14pt; margin: 0 0 3mm; }
+  p { font-size: 10pt; line-height: 1.55; margin: 0 0 4mm; color: #29281f; }
+  .lead-text { font-size: 11.5pt; line-height: 1.6; color: var(--ink); margin-bottom: 8mm; }
+
+  .spec-table { width: 100%; border-collapse: collapse; margin: 4mm 0 8mm; font-size: 9.5pt; }
+  .spec-table th, .spec-table td { text-align: left; padding: 3mm 4mm; border-bottom: 1px solid var(--line); }
+  .spec-table th { font-weight: 500; color: var(--muted); text-transform: uppercase; font-size: 8pt; letter-spacing: .08em; }
+
+  .collection-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; }
+  .collection-card { border: 1px solid var(--line); background: var(--white); padding: 6mm; }
+  .collection-card .num { font-size: 8pt; letter-spacing: .12em; color: var(--bronze-ink); text-transform: uppercase; margin: 0 0 2mm; }
+  .collection-card h3 { margin-bottom: 1mm; }
+  .collection-card .tagline { font-size: 9.5pt; font-style: italic; color: var(--muted); margin-bottom: 3mm; }
+  .collection-card p { font-size: 9pt; margin-bottom: 3mm; }
+  .collection-card ul { margin: 0; padding-left: 4mm; font-size: 8.5pt; color: #33322a; }
+  .collection-card li { margin-bottom: 1mm; }
+
+  .app-list { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm 8mm; margin-top: 4mm; }
+  .app-list .app-item h3 { font-size: 12pt; margin-bottom: 1.5mm; }
+  .app-list .app-item p { font-size: 9pt; }
+
+  .footer-note { margin-top: auto; padding-top: 6mm; border-top: 1px solid var(--line); font-size: 7.5pt; color: var(--muted); line-height: 1.5; display: flex; justify-content: space-between; gap: 8mm; }
+  .footer-note .page-num { flex: none; white-space: nowrap; }
+
+  .divider { height: 1px; background: var(--line); margin: 6mm 0; border: none; }
+</style>
+</head>
+<body>
+
+  <section class="page cover">
+    <div>
+      <p class="eyebrow">Documentazione tecnica</p>
+      <img class="logo" src="{{LOGO_WHITE}}" alt="IconicWall">
+      <h1>Scheda Prodotto<br>IconicWall</h1>
+      <p class="lead">Il sistema modulare che separa ciò che resta da ciò che può evolvere: struttura permanente, superfici intercambiabili, accessori integrati.</p>
+    </div>
+    <div class="cover-footer">
+      <span><strong>ICONIC S.R.L.</strong> a socio unico<br>Via Guido Rossa, 39 — 35020 Ponte San Nicolò (PD)</span>
+      <span>info@iconicoriginal.it<br>+39 340 354 9344</span>
+    </div>
+  </section>
+
+  <section class="page">
+    <div class="content">
+      <div class="page-header"><img src="{{LOGO_BLACK}}" alt="IconicWall"><span>Scheda Prodotto</span></div>
+      <p class="eyebrow">Il sistema</p>
+      <h2>Non una parete.<br>Una struttura permanente.</h2>
+      <p class="lead-text">IconicWall è un sistema modulare di rivestimento per interni che integra struttura, superfici e accessori in un'unica architettura sottile, precisa e senza tempo. Non è una boiserie decorativa e non è un rivestimento tradizionale: è una parete progettata per integrare pannelli, finiture, accessori, elementi funzionali e, dove previsto, illuminazione.</p>
+
+      <p><strong>Principio costruttivo.</strong> IconicWall separa ciò che resta da ciò che può evolvere. Una struttura tecnica permanente rimane installata e ispezionabile nel tempo; superfici, materiali, luce, accessori e funzioni possono cambiare senza demolizioni e senza opere murarie, mantenendo qualità architettonica.</p>
+
+      <p><strong>Prodotto standard o su misura.</strong> IconicWall nasce da una logica modulare ma viene sempre adattato al progetto reale: dimensioni, finiture, composizione, accessori e integrazioni sono definiti in base allo spazio, all'utilizzo previsto e all'obiettivo estetico. Non è un prodotto da scegliere solo a catalogo: è un sistema da progettare.</p>
+
+      <hr class="divider">
+
+      <h3>Struttura tecnica e componenti</h3>
+      <p>Schema costruttivo generale, in successione dalla parete esistente verso l'esterno: parete esistente → piattine metalliche verticali → cremagliere → pannelli Flat in acciaio zincato 15/10 → pannello Lux in acciaio zincato 15/10. Tutti i pannelli sono in acciaio zincato 15/10; le altezze possono essere realizzate su progetto con passo di 50 mm.</p>
+
+      <table class="spec-table">
+        <tr><th>Sezione</th><th>Spessore totale</th><th>Intercapedine tecnica</th><th>Note</th></tr>
+        <tr><td>Sezione centrale (incontro tra due pannelli)</td><td>15 mm</td><td>11 mm (passaggio cavi)</td><td>Pannello in acciaio zincato 15/10</td></tr>
+        <tr><td>Sezione laterale / fine parete</td><td>15 mm</td><td>11 mm (passaggio cavi)</td><td>Profilo di chiusura, acciaio zincato 15/10</td></tr>
+      </table>
+
+      <table class="spec-table">
+        <tr><th>Elementi strutturali</th><th>Integrazione tecnica</th><th>Superfici intercambiabili</th><th>Composizioni</th></tr>
+        <tr><td>3 tipologie</td><td>100%</td><td>5 (Flat, Lux, Shelf, Frame, Box)</td><td>Su misura, infinite</td></tr>
+      </table>
+
+      <div class="footer-note">
+        <span>Le informazioni tecniche hanno scopo descrittivo. Dimensioni, materiali, compatibilità e prestazioni devono essere verificati caso per caso in relazione al progetto specifico.</span>
+        <span class="page-num">02</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="page">
+    <div class="content">
+      <div class="page-header"><img src="{{LOGO_BLACK}}" alt="IconicWall"><span>Scheda Prodotto</span></div>
+      <p class="eyebrow">La collezione</p>
+      <h2>Cinque modi di essere parete.</h2>
+      <p class="lead-text">Cinque famiglie di pannelli ed elementi, con un'unica logica compositiva in cui materia, luce e funzione si integrano nella stessa superficie. Ogni elemento può cambiare posto, ruolo o finitura mantenendo la parete coerente nel complesso.</p>
+
+      <div class="collection-grid">
+        <div class="collection-card">
+          <p class="num">01 · Flat</p>
+          <h3>La base</h3>
+          <p class="tagline">Superficie continua, modulare e sostituibile.</p>
+          <p>Il pannello che costruisce il campo visivo della parete, pensato per accogliere materia, colore e texture senza interrompere il progetto.</p>
+          <ul>
+            <li>Spessore: 3 mm</li>
+            <li>Larghezze: 300 / 600 / 900 mm</li>
+            <li>Altezze standard: 150 / 300 / 450 / 600 / 750 / 1200 / 1500 mm</li>
+          </ul>
+        </div>
+        <div class="collection-card">
+          <p class="num">02 · Lux</p>
+          <h3>La luce</h3>
+          <p class="tagline">Rilievo con luce integrata, senza cavi visibili.</p>
+          <p>Crea accenti verticali e profondità architettonica, aggiungendo atmosfera e orientamento visivo alla composizione.</p>
+          <ul>
+            <li>Spessore: 11 mm — sporgenza da Flat: 10 mm</li>
+            <li>Posizione LED: sopra / sotto / sopra e sotto</li>
+            <li>Larghezze: 300 / 600 / 900 mm — Altezze: 150 / 300 / 600 / 900 mm</li>
+          </ul>
+        </div>
+        <div class="collection-card">
+          <p class="num">03 · Shelf</p>
+          <h3>Il piano</h3>
+          <p class="tagline">Mensola sottile, magnetica e riposizionabile.</p>
+          <p>Aggiunge funzione d'appoggio alla parete senza introdurre mobili o staffe visibili.</p>
+          <ul>
+            <li>Profondità: 150 mm</li>
+            <li>Larghezze: 300 / 600 / 900 mm</li>
+            <li>Altezze standard: 300 / 450 / 600 mm</li>
+          </ul>
+        </div>
+        <div class="collection-card">
+          <p class="num">04 · Frame</p>
+          <h3>Il vuoto</h3>
+          <p class="tagline">Cornice/volume aperto, con presenza grafica.</p>
+          <p>Adatta a esporre, contenere e custodire oggetti e libri mantenendo il linguaggio modulare IconicWall.</p>
+          <ul>
+            <li>Profondità: 150 mm</li>
+            <li>Larghezze: 300 / 600 / 900 mm</li>
+            <li>Altezze standard: 300 / 450 / 600 mm</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-note">
+        <span>Dimensioni e passi standard; ogni composizione viene comunque definita su progetto specifico.</span>
+        <span class="page-num">03</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="page">
+    <div class="content">
+      <div class="page-header"><img src="{{LOGO_BLACK}}" alt="IconicWall"><span>Scheda Prodotto</span></div>
+
+      <div class="collection-grid" style="margin-bottom: 10mm;">
+        <div class="collection-card">
+          <p class="num">05 · Box</p>
+          <h3>Il volume</h3>
+          <p class="tagline">Elemento contenitore integrato e sostituibile.</p>
+          <p>Pensato per organizzare e contenere, coerente con la parete; può essere sostituito quando cambiano le esigenze.</p>
+          <ul>
+            <li>Profondità: 150 mm</li>
+            <li>Larghezze: 300 / 600 / 900 mm</li>
+            <li>Altezze standard: 300 / 450 / 600 mm</li>
+          </ul>
+        </div>
+        <div class="collection-card" style="background: transparent; border: none;">
+          <p class="num">Materiali</p>
+          <h3>La materia segue il progetto</h3>
+          <p>IconicWall dialoga principalmente con la libreria materica <strong>3M Di-NOC</strong> — legni, metalli, pietre, tessuti e texture decorative. Oltre al catalogo standard: verniciature, laccature, impiallacciature e finiture speciali valutate su progetto.</p>
+          <p style="font-size: 8.5pt; color: var(--muted);">Colori e texture reali possono variare rispetto a immagini e render: si raccomanda la valutazione di campioni fisici.</p>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <p class="eyebrow">Applicazioni</p>
+      <h2>Dal living al contract.</h2>
+      <p class="lead-text">Un'unica infrastruttura che cambia linguaggio, funzione e materia seguendo il contesto.</p>
+
+      <div class="app-list">
+        <div class="app-item"><h3>Living</h3><p>Una parete che cambia insieme alla casa: TV, luce, contenimento, mensole e materia in una composizione aggiornabile nel tempo.</p></div>
+        <div class="app-item"><h3>Hospitality</h3><p>Camere, corridoi, reception e aree comuni: manutenzione selettiva e superfici rinnovabili riducono tempi di fermo.</p></div>
+        <div class="app-item"><h3>Retail</h3><p>Lo spazio vendita si riconfigura senza perdere identità: mensole e accessori magnetici seguono collezioni e campagne.</p></div>
+        <div class="app-item"><h3>Workspace</h3><p>Ordine, tecnologia e flessibilità per uffici e spazi condivisi che si adattano ai nuovi modi di lavorare.</p></div>
+      </div>
+
+      <div class="footer-note">
+        <span>Documento informativo: non costituisce offerta vincolante né preventivo automatico. Per una valutazione di progetto: <strong>info@iconicoriginal.it</strong></span>
+        <span class="page-num">04</span>
+      </div>
+    </div>
+  </section>
+
+</body>
+</html>

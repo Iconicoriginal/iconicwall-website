@@ -80,6 +80,7 @@ const i18n = {
     configDocsMsg: "Vorrei ricevere la documentazione tecnica IconicWall.",
     chatToggleAria: "Apri la chat",
     chatCloseAria: "Chiudi la chat",
+    chatMinimizeAria: "Riduci a icona",
     chatTitle: "Assistente IconicWall",
     chatSubtitle: "Domande su sistema, materiali e prodotti",
     chatWelcome: "Ciao! Sono l'assistente virtuale di IconicWall. Posso rispondere a domande su sistema, collezione, materiali, accessori e installazione. Come posso aiutarti?",
@@ -147,6 +148,7 @@ const i18n = {
     configDocsMsg: "I would like to receive IconicWall technical documentation.",
     chatToggleAria: "Open chat",
     chatCloseAria: "Close chat",
+    chatMinimizeAria: "Minimize chat",
     chatTitle: "IconicWall Assistant",
     chatSubtitle: "Questions about the system, materials and products",
     chatWelcome: "Hi! I'm the IconicWall virtual assistant. I can answer questions about the system, collection, materials, accessories and installation. How can I help you?",
@@ -214,6 +216,7 @@ const i18n = {
     configDocsMsg: "Je souhaite recevoir la documentation technique IconicWall.",
     chatToggleAria: "Ouvrir le chat",
     chatCloseAria: "Fermer le chat",
+    chatMinimizeAria: "Réduire le chat",
     chatTitle: "Assistant IconicWall",
     chatSubtitle: "Questions sur le système, les matériaux et les produits",
     chatWelcome: "Bonjour ! Je suis l'assistant virtuel d'IconicWall. Je peux répondre à vos questions sur le système, la collection, les matériaux, les accessoires et la pose. Comment puis-je vous aider ?",
@@ -281,6 +284,7 @@ const i18n = {
     configDocsMsg: "Ich möchte die technische Dokumentation von IconicWall erhalten.",
     chatToggleAria: "Chat öffnen",
     chatCloseAria: "Chat schließen",
+    chatMinimizeAria: "Chat minimieren",
     chatTitle: "IconicWall Assistent",
     chatSubtitle: "Fragen zu System, Materialien und Produkten",
     chatWelcome: "Hallo! Ich bin der virtuelle Assistent von IconicWall. Ich beantworte Fragen zu System, Kollektion, Materialien, Zubehör und Montage. Wie kann ich Ihnen helfen?",
@@ -348,6 +352,7 @@ const i18n = {
     configDocsMsg: "Me gustaría recibir la documentación técnica de IconicWall.",
     chatToggleAria: "Abrir el chat",
     chatCloseAria: "Cerrar el chat",
+    chatMinimizeAria: "Minimizar el chat",
     chatTitle: "Asistente IconicWall",
     chatSubtitle: "Preguntas sobre el sistema, los materiales y los productos",
     chatWelcome: "¡Hola! Soy el asistente virtual de IconicWall. Puedo responder preguntas sobre el sistema, la colección, los materiales, los accesorios y la instalación. ¿En qué puedo ayudarte?",
@@ -838,6 +843,7 @@ if (contactForm) {
 
 const iconicChat = (() => {
   const STORAGE_KEY = "iconic_chat_history";
+  const POSITION_KEY = "iconic_chat_position";
   const MAX_STORED_MESSAGES = 20;
 
   function loadHistory() {
@@ -858,6 +864,25 @@ const iconicChat = (() => {
     }
   }
 
+  function loadPosition() {
+    try {
+      const raw = localStorage.getItem(POSITION_KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (parsed && Number.isFinite(parsed.left) && Number.isFinite(parsed.top)) return parsed;
+    } catch {
+      // ignora, si usa la posizione di default
+    }
+    return null;
+  }
+
+  function savePosition(position) {
+    try {
+      localStorage.setItem(POSITION_KEY, JSON.stringify(position));
+    } catch {
+      // storage non disponibile: la posizione custom vale solo per questa sessione
+    }
+  }
+
   let history = loadHistory();
   let sending = false;
 
@@ -872,32 +897,96 @@ const iconicChat = (() => {
   const panel = document.createElement("section");
   panel.className = "chat-panel";
   panel.setAttribute("aria-label", t.chatTitle);
-  panel.hidden = true;
   panel.innerHTML = `
     <header class="chat-panel-header">
       <div>
         <strong>${t.chatTitle}</strong>
         <span>${t.chatSubtitle}</span>
       </div>
-      <button type="button" class="chat-close" aria-label="${t.chatCloseAria}">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
-      </button>
+      <div class="chat-panel-actions">
+        <button type="button" class="chat-minimize" aria-label="${t.chatMinimizeAria}">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>
+        </button>
+        <button type="button" class="chat-close" aria-label="${t.chatCloseAria}">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
     </header>
-    <div class="chat-messages" role="log" aria-live="polite"></div>
-    <form class="chat-input-row">
-      <label class="sr-only" for="chat-input">${t.chatPlaceholder}</label>
-      <input id="chat-input" type="text" placeholder="${t.chatPlaceholder}" maxlength="1000" autocomplete="off">
-      <button type="submit" class="chat-send" aria-label="${t.chatSendAria}">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/></svg>
-      </button>
-    </form>
-    <p class="chat-disclaimer">${t.chatDisclaimer}</p>`;
+    <div class="chat-body">
+      <div class="chat-messages" role="log" aria-live="polite"></div>
+      <form class="chat-input-row">
+        <label class="sr-only" for="chat-input">${t.chatPlaceholder}</label>
+        <input id="chat-input" type="text" placeholder="${t.chatPlaceholder}" maxlength="1000" autocomplete="off">
+        <button type="submit" class="chat-send" aria-label="${t.chatSendAria}">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4Z"/></svg>
+        </button>
+      </form>
+      <p class="chat-disclaimer">${t.chatDisclaimer}</p>
+    </div>`;
   document.body.append(panel);
 
+  const header = panel.querySelector(".chat-panel-header");
   const messagesEl = panel.querySelector(".chat-messages");
   const inputForm = panel.querySelector(".chat-input-row");
   const input = panel.querySelector("#chat-input");
+  const minimizeButton = panel.querySelector(".chat-minimize");
   const closeButton = panel.querySelector(".chat-close");
+
+  const DRAG_MIN_WIDTH = 760;
+
+  function clampPosition(left, top) {
+    const maxLeft = Math.max(0, innerWidth - panel.offsetWidth);
+    const maxTop = Math.max(0, innerHeight - panel.offsetHeight);
+    return { left: Math.min(Math.max(left, 0), maxLeft), top: Math.min(Math.max(top, 0), maxTop) };
+  }
+
+  function applyPosition(position) {
+    panel.style.left = `${position.left}px`;
+    panel.style.top = `${position.top}px`;
+    panel.style.right = "auto";
+    panel.style.bottom = "auto";
+  }
+
+  function resetPosition() {
+    panel.style.left = "";
+    panel.style.top = "";
+    panel.style.right = "";
+    panel.style.bottom = "";
+  }
+
+  const storedPosition = loadPosition();
+  if (storedPosition && innerWidth >= DRAG_MIN_WIDTH) applyPosition(clampPosition(storedPosition.left, storedPosition.top));
+
+  addEventListener("resize", () => {
+    if (innerWidth < DRAG_MIN_WIDTH) {
+      resetPosition();
+      return;
+    }
+    if (!panel.style.left) return;
+    applyPosition(clampPosition(parseFloat(panel.style.left), parseFloat(panel.style.top)));
+  });
+
+  let dragState = null;
+  header.addEventListener("pointerdown", (event) => {
+    if (event.target.closest("button") || innerWidth < DRAG_MIN_WIDTH) return;
+    const rect = panel.getBoundingClientRect();
+    dragState = { pointerId: event.pointerId, offsetX: event.clientX - rect.left, offsetY: event.clientY - rect.top };
+    header.setPointerCapture(event.pointerId);
+    header.classList.add("dragging");
+  });
+  header.addEventListener("pointermove", (event) => {
+    if (!dragState || event.pointerId !== dragState.pointerId) return;
+    const position = clampPosition(event.clientX - dragState.offsetX, event.clientY - dragState.offsetY);
+    applyPosition(position);
+  });
+  function endDrag(event) {
+    if (!dragState || event.pointerId !== dragState.pointerId) return;
+    header.classList.remove("dragging");
+    dragState = null;
+    savePosition({ left: parseFloat(panel.style.left), top: parseFloat(panel.style.top) });
+  }
+  header.addEventListener("pointerup", endDrag);
+  header.addEventListener("pointercancel", endDrag);
 
   function renderMessage(role, content) {
     const bubble = document.createElement("div");
@@ -934,25 +1023,40 @@ const iconicChat = (() => {
   renderHistory();
 
   function openPanel() {
-    panel.hidden = false;
+    panel.classList.add("is-open");
+    panel.classList.remove("is-minimized");
     toggle.setAttribute("aria-expanded", "true");
-    document.body.classList.add("chat-open");
+    document.body.classList.add("chat-active");
     requestAnimationFrame(() => input.focus());
   }
 
+  function minimizePanel() {
+    panel.classList.add("is-open", "is-minimized");
+    toggle.setAttribute("aria-expanded", "true");
+    document.body.classList.add("chat-active");
+  }
+
   function closePanel() {
-    panel.hidden = true;
+    panel.classList.remove("is-open", "is-minimized");
     toggle.setAttribute("aria-expanded", "false");
-    document.body.classList.remove("chat-open");
+    document.body.classList.remove("chat-active");
     toggle.focus();
   }
 
-  toggle.addEventListener("click", () => {
-    if (panel.hidden) openPanel(); else closePanel();
+  function isOpen() {
+    return panel.classList.contains("is-open");
+  }
+
+  toggle.addEventListener("click", openPanel);
+  minimizeButton.addEventListener("click", () => {
+    if (panel.classList.contains("is-minimized")) openPanel(); else minimizePanel();
+  });
+  header.addEventListener("click", (event) => {
+    if (panel.classList.contains("is-minimized") && !event.target.closest("button")) openPanel();
   });
   closeButton.addEventListener("click", closePanel);
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && !panel.hidden) closePanel();
+    if (event.key === "Escape" && isOpen() && !panel.classList.contains("is-minimized")) closePanel();
   });
 
   inputForm.addEventListener("submit", async (event) => {

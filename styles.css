@@ -1893,21 +1893,27 @@ button, input, textarea, select { font: inherit; }
 .chat-toggle svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .chat-toggle:hover { background: var(--bronze); transform: translateY(-3px); }
 .chat-toggle:focus-visible { outline: 2px solid var(--bronze); outline-offset: 4px; }
-body.chat-open .chat-toggle { display: none; }
+body.chat-active .chat-toggle { display: none; }
 
 .chat-panel {
+  display: none;
   position: fixed;
   left: clamp(1rem, 3vw, 2.5rem);
   bottom: clamp(1rem, 3vw, 2.5rem);
   z-index: 40;
   width: min(380px, calc(100vw - 2rem));
   height: min(600px, calc(100vh - 120px));
-  display: flex;
   flex-direction: column;
   background: var(--paper);
   border: 1px solid var(--line);
   box-shadow: 0 24px 70px rgba(0,0,0,.32);
 }
+.chat-panel.is-open { display: flex; }
+.chat-panel.is-minimized {
+  height: auto;
+  width: min(320px, calc(100vw - 2rem));
+}
+.chat-panel.is-minimized .chat-body { display: none; }
 .chat-panel-header {
   display: flex;
   align-items: flex-start;
@@ -1916,10 +1922,17 @@ body.chat-open .chat-toggle { display: none; }
   padding: 1.2rem 1.3rem;
   background: var(--ink);
   color: white;
+  cursor: grab;
+  touch-action: none;
 }
+.chat-panel-header.dragging { cursor: grabbing; }
 .chat-panel-header div { display: grid; gap: .2rem; }
 .chat-panel-header strong { font-family: var(--serif); font-size: 1.2rem; font-weight: 400; }
 .chat-panel-header span { font-size: .78rem; color: rgba(255,255,255,.68); }
+.chat-panel.is-minimized .chat-panel-header span { display: none; }
+.chat-panel-actions { flex: none; display: flex; gap: .5rem; }
+.chat-body { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.chat-minimize,
 .chat-close {
   flex: none;
   width: 32px;
@@ -1932,7 +1945,9 @@ body.chat-open .chat-toggle { display: none; }
   cursor: pointer;
   transition: background .2s, border-color .2s;
 }
+.chat-minimize svg,
 .chat-close svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
+.chat-minimize:hover,
 .chat-close:hover { background: rgba(255,255,255,.14); border-color: white; }
 .chat-messages {
   flex: 1;

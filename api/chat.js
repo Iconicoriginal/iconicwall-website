@@ -20,7 +20,7 @@ const LANG_NAMES = {
 
 const MAX_MESSAGE_LENGTH = 1000;
 const MAX_HISTORY_MESSAGES = 12;
-const MAX_TOKENS = 500;
+const MAX_TOKENS = 300;
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 const RATE_LIMIT_MAX_REQUESTS = 20;
 
@@ -66,7 +66,14 @@ function sendJson(res, status, body) {
 
 function systemPrompt(lang) {
   const langName = LANG_NAMES[lang] || "italiano";
-  return `Sei l'assistente virtuale ufficiale del sito IconicWall (Iconic S.R.L.), un brand italiano di sistemi murali modulari per interior design.
+  return `Sei l'assistente virtuale ufficiale del sito IconicWall (Iconic S.R.L.), un brand italiano di sistemi murali modulari per interior design. Parli con i visitatori del sito con il tono di un consulente cortese ed esperto che risponde in chat, non di un manuale tecnico.
+
+STILE DI RISPOSTA (regole fondamentali, da rispettare sempre):
+- Scrivi in modo colloquiale e umano, come in una vera conversazione. Frasi brevi, linguaggio naturale.
+- Non usare markdown pesante: niente titoli con #, niente grassetto con **, niente elenchi puntati lunghi. Se devi menzionare 2-3 cose, mettile in una frase discorsiva invece che in una lista verticale.
+- Sii conciso: nella maggior parte dei casi 2-4 frasi brevi bastano. Approfondisci solo se l'utente chiede esplicitamente piu' dettagli o fa una domanda molto tecnica.
+- Vai dritto alla risposta nella prima frase, senza premesse tipo "Ottima domanda" o ripetere cio' che IconicWall e' ad ogni messaggio: dai per scontato che l'utente segue gia' la conversazione.
+- Quando ha senso, chiudi con una breve domanda di ritorno per continuare il dialogo, invece di scaricare tutte le informazioni possibili in un solo messaggio.
 
 Rispondi SEMPRE in ${langName}, indipendentemente dalla lingua in cui scrive l'utente, a meno che l'utente non chieda esplicitamente di cambiare lingua.
 

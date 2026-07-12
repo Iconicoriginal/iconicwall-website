@@ -4,3 +4,4 @@ tmp/
 .vercel
 .claude/settings.local.json
 tmp_asset_contact_sheet.jpg
+node_modules/

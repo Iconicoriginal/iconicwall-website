@@ -30,10 +30,7 @@ module.exports = async function handler(req, res) {
     full_name: String(body.full_name || "").trim(),
     email: String(body.email || "").trim(),
     message: String(body.message || "").trim(),
-    profilo: String(body.profilo || "").trim(),
-    company: String(body.company || "").trim(),
-    wants_samples: Boolean(body.wants_samples),
-    wants_docs: Boolean(body.wants_docs),
+    lingua: String(body.lingua || "").trim(),
   };
 
   if (!payload.full_name) {

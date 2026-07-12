@@ -22,10 +22,18 @@ function pageUrl(filename) {
   return urlForLang(lang, filename);
 }
 
+const langNativeNames = { it: "Italiano", en: "English", fr: "Français", de: "Deutsch", es: "Español" };
+const flagIcons = {
+  it: `<svg viewBox="0 0 3 2" preserveAspectRatio="none"><rect width="1" height="2" fill="#009246"/><rect width="1" height="2" x="1" fill="#fff"/><rect width="1" height="2" x="2" fill="#ce2b37"/></svg>`,
+  en: `<svg viewBox="0 0 60 30" preserveAspectRatio="none"><rect width="60" height="30" fill="#00247d"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#cf142b" stroke-width="2"/><path d="M30,0 V30 M0,15 H60" stroke="#fff" stroke-width="10"/><path d="M30,0 V30 M0,15 H60" stroke="#cf142b" stroke-width="6"/></svg>`,
+  fr: `<svg viewBox="0 0 3 2" preserveAspectRatio="none"><rect width="1" height="2" fill="#0055A4"/><rect width="1" height="2" x="1" fill="#fff"/><rect width="1" height="2" x="2" fill="#EF4135"/></svg>`,
+  de: `<svg viewBox="0 0 3 2" preserveAspectRatio="none"><rect width="3" height=".667" fill="#000"/><rect width="3" height=".667" y=".667" fill="#DD0000"/><rect width="3" height=".667" y="1.333" fill="#FFCE00"/></svg>`,
+  es: `<svg viewBox="0 0 3 2" preserveAspectRatio="none"><rect width="3" height="2" fill="#AA151B"/><rect width="3" height="1" y=".5" fill="#F1BF00"/></svg>`,
+};
+
 const i18n = {
   it: {
     nav: { sistema: "Sistema", collezione: "Collezione", materiali: "Materiali", accessori: "Accessori", applicazioni: "Applicazioni", origine: "Origine", contatti: "Contatti" },
-    navCta: "Parliamone",
     menuToggle: "Apri il menu",
     homeAria: "IconicWall home",
     iconicAria: "Iconic home",
@@ -51,7 +59,7 @@ const i18n = {
     facebookAria: "Facebook IconicOriginal",
     linkedinAria: "LinkedIn IconicOriginal",
     footerRights: "Tutti i diritti riservati.",
-    footerTagline: "Designed & Made in Italy",
+    footerTagline: "Progettato e realizzato in Italia",
     cookieAria: "Preferenze cookie",
     cookieText1: "Utilizziamo cookie tecnici necessari al funzionamento del sito e, solo con il tuo consenso, cookie analytics e marketing per migliorare l’esperienza, misurare le visite e proporti contenuti più pertinenti.",
     cookieText2: "Puoi accettare tutti i cookie, rifiutare quelli non necessari o personalizzare le tue preferenze.",
@@ -93,7 +101,6 @@ const i18n = {
   },
   en: {
     nav: { sistema: "System", collezione: "Collection", materiali: "Materials", accessori: "Accessories", applicazioni: "Applications", origine: "Origin", contatti: "Contact" },
-    navCta: "Let's talk",
     menuToggle: "Open menu",
     homeAria: "IconicWall home",
     iconicAria: "Iconic home",
@@ -119,7 +126,7 @@ const i18n = {
     facebookAria: "Facebook IconicOriginal",
     linkedinAria: "LinkedIn IconicOriginal",
     footerRights: "All rights reserved.",
-    footerTagline: "Designed & Made in Italy",
+    footerTagline: "Progettato e realizzato in Italia",
     cookieAria: "Cookie preferences",
     cookieText1: "We use technical cookies necessary for the site to function and, only with your consent, analytics and marketing cookies to improve your experience, measure visits and offer more relevant content.",
     cookieText2: "You can accept all cookies, reject non-essential ones, or customize your preferences.",
@@ -161,7 +168,6 @@ const i18n = {
   },
   fr: {
     nav: { sistema: "Système", collezione: "Collection", materiali: "Matériaux", accessori: "Accessoires", applicazioni: "Applications", origine: "Origine", contatti: "Contact" },
-    navCta: "Discutons-en",
     menuToggle: "Ouvrir le menu",
     homeAria: "Accueil IconicWall",
     iconicAria: "Accueil Iconic",
@@ -187,7 +193,7 @@ const i18n = {
     facebookAria: "Facebook IconicOriginal",
     linkedinAria: "LinkedIn IconicOriginal",
     footerRights: "Tous droits réservés.",
-    footerTagline: "Designed & Made in Italy",
+    footerTagline: "Progettato e realizzato in Italia",
     cookieAria: "Préférences cookies",
     cookieText1: "Nous utilisons des cookies techniques nécessaires au fonctionnement du site et, uniquement avec votre consentement, des cookies analytiques et marketing pour améliorer l'expérience, mesurer les visites et vous proposer des contenus plus pertinents.",
     cookieText2: "Vous pouvez accepter tous les cookies, refuser ceux qui ne sont pas nécessaires ou personnaliser vos préférences.",
@@ -229,7 +235,6 @@ const i18n = {
   },
   de: {
     nav: { sistema: "System", collezione: "Kollektion", materiali: "Materialien", accessori: "Zubehör", applicazioni: "Anwendungen", origine: "Ursprung", contatti: "Kontakt" },
-    navCta: "Sprechen wir darüber",
     menuToggle: "Menü öffnen",
     homeAria: "IconicWall Startseite",
     iconicAria: "Iconic Startseite",
@@ -255,7 +260,7 @@ const i18n = {
     facebookAria: "Facebook IconicOriginal",
     linkedinAria: "LinkedIn IconicOriginal",
     footerRights: "Alle Rechte vorbehalten.",
-    footerTagline: "Designed & Made in Italy",
+    footerTagline: "Progettato e realizzato in Italia",
     cookieAria: "Cookie-Einstellungen",
     cookieText1: "Wir verwenden technisch notwendige Cookies für den Betrieb der Website und, nur mit Ihrer Zustimmung, Analyse- und Marketing-Cookies, um die Nutzererfahrung zu verbessern, Besuche zu messen und Ihnen relevantere Inhalte anzubieten.",
     cookieText2: "Sie können alle Cookies akzeptieren, nicht notwendige ablehnen oder Ihre Einstellungen anpassen.",
@@ -297,7 +302,6 @@ const i18n = {
   },
   es: {
     nav: { sistema: "Sistema", collezione: "Colección", materiali: "Materiales", accessori: "Accesorios", applicazioni: "Aplicaciones", origine: "Origen", contatti: "Contacto" },
-    navCta: "Hablemos",
     menuToggle: "Abrir menú",
     homeAria: "Inicio de IconicWall",
     iconicAria: "Inicio de Iconic",
@@ -323,7 +327,7 @@ const i18n = {
     facebookAria: "Facebook IconicOriginal",
     linkedinAria: "LinkedIn IconicOriginal",
     footerRights: "Todos los derechos reservados.",
-    footerTagline: "Designed & Made in Italy",
+    footerTagline: "Progettato e realizzato in Italia",
     cookieAria: "Preferencias de cookies",
     cookieText1: "Utilizamos cookies técnicas necesarias para el funcionamiento del sitio y, solo con tu consentimiento, cookies analíticas y de marketing para mejorar la experiencia, medir las visitas y ofrecerte contenidos más relevantes.",
     cookieText2: "Puedes aceptar todas las cookies, rechazar las no necesarias o personalizar tus preferencias.",
@@ -405,10 +409,14 @@ organizationSchema.textContent = JSON.stringify({
 });
 document.head.appendChild(organizationSchema);
 
-const langSwitcherLinks = supportedLangs.map((targetLang) => {
-  const path = translatedPaths.has(currentPath) ? currentPath : "index.html";
-  return `<a href="${urlForLang(targetLang, path)}" ${targetLang === lang ? 'class="active"' : ""}>${targetLang.toUpperCase()}</a>`;
-}).join("");
+const langSwitcherPath = translatedPaths.has(currentPath) ? currentPath : "index.html";
+const langDropdownItems = supportedLangs.map((targetLang) => `
+    <li role="option" aria-selected="${targetLang === lang}">
+      <a href="${urlForLang(targetLang, langSwitcherPath)}" ${targetLang === lang ? 'class="active"' : ""}>
+        <span class="flag">${flagIcons[targetLang]}</span>
+        <span>${langNativeNames[targetLang]}</span>
+      </a>
+    </li>`).join("");
 
 const header = document.createElement("header");
 header.className = "site-header";
@@ -421,8 +429,14 @@ header.innerHTML = `
   </button>
   <nav class="main-nav">
     ${navItems.map(([id, label, href]) => `<a ${page === id ? 'class="active"' : ""} href="${pageUrl(href)}">${label}</a>`).join("")}
-    <a class="nav-contact" href="${pageUrl("contatti.html")}">${t.navCta} <span>↗</span></a>
-    <div class="lang-switcher" aria-label="Language">${langSwitcherLinks}</div>
+    <div class="lang-switcher" aria-label="Language">
+      <button type="button" class="lang-current" aria-haspopup="listbox" aria-expanded="false">
+        <span class="flag">${flagIcons[lang]}</span>
+        <span class="lang-code">${lang.toUpperCase()}</span>
+        <svg class="lang-caret" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
+      </button>
+      <ul class="lang-dropdown" role="listbox">${langDropdownItems}</ul>
+    </div>
   </nav>`;
 document.body.prepend(header);
 
@@ -515,6 +529,27 @@ document.querySelectorAll(".main-nav a").forEach((link) => {
     document.body.classList.remove("menu-open");
   });
 });
+
+const langSwitcher = document.querySelector(".lang-switcher");
+const langButton = langSwitcher?.querySelector(".lang-current");
+if (langSwitcher && langButton) {
+  function closeLangDropdown() {
+    langButton.setAttribute("aria-expanded", "false");
+    langSwitcher.classList.remove("open");
+  }
+  langButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const open = langButton.getAttribute("aria-expanded") === "true";
+    langButton.setAttribute("aria-expanded", String(!open));
+    langSwitcher.classList.toggle("open", !open);
+  });
+  document.addEventListener("click", (event) => {
+    if (!langSwitcher.contains(event.target)) closeLangDropdown();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeLangDropdown();
+  });
+}
 
 const revealObserver = new IntersectionObserver(
   (entries) => entries.forEach((entry) => {
@@ -728,14 +763,10 @@ if (contactForm) {
       message.value = `IconicWall 3D — ${document.title}\n${t.configDimLabel}: ${params.get("dimensioni") || t.configTBD} cm\n${t.configFinishLabel}: ${params.get("finitura") || t.configTBD}\n${t.configElementsLabel}: ${components}`;
     }
   } else if (tipoParam === "campionario") {
-    const wantsSamples = document.querySelector("#wants_samples");
     const message = document.querySelector("#message");
-    if (wantsSamples) wantsSamples.checked = true;
     if (message && !message.value) message.value = t.configSampleMsg;
   } else if (tipoParam === "documentazione") {
-    const wantsDocs = document.querySelector("#wants_docs");
     const message = document.querySelector("#message");
-    if (wantsDocs) wantsDocs.checked = true;
     if (message && !message.value) message.value = t.configDocsMsg;
   }
 
@@ -806,10 +837,6 @@ if (contactForm) {
       full_name: contactForm.elements.full_name.value.trim(),
       email: contactForm.elements.email.value.trim(),
       message: contactForm.elements.message.value.trim(),
-      profilo: contactForm.elements.profilo?.value.trim() || "",
-      company: contactForm.elements.company?.value.trim() || "",
-      wants_samples: Boolean(contactForm.elements.wants_samples?.checked),
-      wants_docs: Boolean(contactForm.elements.wants_docs?.checked),
       lingua: lang,
     };
 

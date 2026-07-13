@@ -2492,6 +2492,7 @@ footer a:focus-visible {
     width: 100%;
   }
   .site-header { height: 68px; }
+  body.menu-open .site-header.scrolled { backdrop-filter: none; }
   .menu-toggle { display: block; position: relative; z-index: 3; }
   .main-nav {
     position: fixed;

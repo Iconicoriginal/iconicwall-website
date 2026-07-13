@@ -2510,6 +2510,7 @@ footer a:focus-visible {
   .main-nav a { font: 400 2.6rem var(--serif); letter-spacing: 0; text-transform: none; }
   .lang-switcher { margin-top: 1rem; padding-left: 0; margin-left: 0; border-left: 0; }
   .lang-current { font: 600 .75rem var(--sans) !important; letter-spacing: .05em !important; }
+  .lang-dropdown a { font: 500 .85rem var(--sans) !important; letter-spacing: .02em !important; text-transform: none !important; }
   .lang-dropdown { right: auto; left: 50%; transform: translate(-50%, -6px); }
   .lang-switcher.open .lang-dropdown { transform: translateX(-50%); }
   .section { padding: 6rem 7vw; }

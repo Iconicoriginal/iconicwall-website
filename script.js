@@ -707,6 +707,26 @@ const cookieConsent = (() => {
   return { keys, getPreferences, savePreferences, activateConsentScripts, renderBanner };
 })();
 
+// Google Analytics 4 — inerte finché l'utente non acconsente ai cookie "analytics"
+const gaMeasurementId = "G-YEQ1FYZMRB";
+const gaLoader = document.createElement("script");
+gaLoader.setAttribute("type", "text/plain");
+gaLoader.setAttribute("data-cookie-category", "analytics");
+gaLoader.setAttribute("async", "");
+gaLoader.setAttribute("src", `https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`);
+document.head.appendChild(gaLoader);
+
+const gaInit = document.createElement("script");
+gaInit.setAttribute("type", "text/plain");
+gaInit.setAttribute("data-cookie-category", "analytics");
+gaInit.textContent = `
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', '${gaMeasurementId}', { anonymize_ip: true });
+`;
+document.head.appendChild(gaInit);
+
 cookieConsent.activateConsentScripts();
 cookieConsent.renderBanner();
 
@@ -857,6 +877,9 @@ if (contactForm) {
       contactForm.reset();
       fields.forEach((name) => setFieldError(name, ""));
       setStatus(t.formSuccess, "success");
+      if (typeof gtag === "function") {
+        gtag("event", "generate_lead", { form_id: "contact", lingua: lang });
+      }
     } catch {
       setStatus(t.formError, "error");
     } finally {

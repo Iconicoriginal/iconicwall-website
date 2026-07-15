@@ -1,6 +1,6 @@
 # Knowledge base — IconicWall
 
-Documento di riferimento fattuale per il chatbot Q&A del sito IconicWall (iconicoriginal.it / iconicwall.it). Contiene solo informazioni realmente presenti sul sito. Tutto ciò che non è qui documentato (prezzi, tempi di consegna esatti, disponibilità immediata, specifiche non menzionate) va considerato "non specificato sul sito".
+Documento di riferimento fattuale per il chatbot Q&A del sito IconicWall (iconicwall.it / iconicwall.it). Contiene solo informazioni realmente presenti sul sito. Tutto ciò che non è qui documentato (prezzi, tempi di consegna esatti, disponibilità immediata, specifiche non menzionate) va considerato "non specificato sul sito".
 
 ---
 
@@ -291,7 +291,7 @@ Sì. La logica modulare rende IconicWall adatto anche a progetti replicabili su 
 ### Privacy, cookie e contatti
 
 **Come posso richiedere informazioni?**
-Puoi inviare una richiesta tramite il form di contatto del sito o scrivere a info@iconicoriginal.it, indicando il tipo di ambiente, le dimensioni indicative della parete, la città e l'obiettivo del progetto. Più informazioni vengono fornite all'inizio, più precisa sarà la valutazione.
+Puoi inviare una richiesta tramite il form di contatto del sito o scrivere a info@iconicwall.it, indicando il tipo di ambiente, le dimensioni indicative della parete, la città e l'obiettivo del progetto. Più informazioni vengono fornite all'inizio, più precisa sarà la valutazione.
 
 **Come vengono gestiti i dati inviati tramite il sito?**
 I dati inviati tramite il sito vengono trattati secondo quanto indicato nella Privacy Policy.
@@ -390,13 +390,13 @@ Intervento IconicWall installato nei corridoi dell'hotel SavHotel Mantegna a Pad
 
 **Ragione sociale:** ICONIC S.R.L. a socio unico
 **Indirizzo:** Via Guido Rossa, 39 — 35020 Ponte San Nicolò (PD), Italia
-**Email:** info@iconicoriginal.it
+**Email:** info@iconicwall.it
 **Telefono:** +39 340 354 9344
 **P.IVA / C.F.:** 04683100988
 
 ### Modalità di contatto disponibili sul sito
 - **Form contatti** (pagina contatti.html): campi richiesti — nome e cognome, email, "chi sei" (Privato / Progettista-Studio tecnico / Rivenditore-Contract), azienda o studio (facoltativo), messaggio, checkbox opzionali per richiedere un campionario materiali e/o la documentazione tecnica, checkbox obbligatoria di accettazione privacy policy.
-- **Email diretta** a info@iconicoriginal.it.
+- **Email diretta** a info@iconicwall.it.
 - **Richiesta campionario materiali**: disponibile tramite form contatti (link diretto contatti.html?tipo=campionario dalla pagina Materiali) o tramite checkbox nel form.
 - **Richiesta documentazione tecnica**: disponibile tramite form contatti (link diretto contatti.html?tipo=documentazione dalla pagina Documentazione) o tramite checkbox nel form.
 - **Sezione Documentazione** (documentazione/index.html): raccoglie materiali scaricabili — brochure IconicWall (PDF, panoramica introduttiva su sistema, applicazioni e valore della parete), catalogo finiture 3M DI-NOC (PDF, documentazione del produttore, non è una certificazione generale del sistema IconicWall), documentazione tecnica 3M DI-NOC (PDF tecnico sulle caratteristiche dichiarate dal produttore, da leggere in relazione al progetto specifico). Altri contenuti (schede prodotto IconicWall, schede accessori, indicazioni di cura, documentazione per architetti/progettisti, per hotel/retail/contract, certificazioni materiali) sono indicati come "in aggiornamento", quindi non ancora tutti disponibili.
@@ -410,7 +410,7 @@ Per iniziare una valutazione di progetto, il sito suggerisce di fornire: foto de
 Informazioni estratte da Termini e Condizioni (termini.html) e Privacy Policy (privacy.html), rilevanti per la gestione delle richieste dei visitatori.
 
 ### Titolare del sito e del trattamento dati
-Iconic S.R.L. a socio unico, Via Guido Rossa 39, 35020 Ponte San Nicolò (PD), P.IVA/C.F. 04683100988, email info@iconicoriginal.it, telefono +39 340 354 9344. Per richieste sul trattamento dei dati personali si scrive a info@iconicoriginal.it; l'utente può inoltre proporre reclamo al Garante per la protezione dei dati personali.
+Iconic S.R.L. a socio unico, Via Guido Rossa 39, 35020 Ponte San Nicolò (PD), P.IVA/C.F. 04683100988, email info@iconicwall.it, telefono +39 340 354 9344. Per richieste sul trattamento dei dati personali si scrive a info@iconicwall.it; l'utente può inoltre proporre reclamo al Garante per la protezione dei dati personali.
 
 ### Nessuna offerta vincolante automatica
 Le informazioni presenti sul sito **non costituiscono** offerta vincolante, preventivo automatico, proposta contrattuale definitiva o promessa di disponibilità immediata di prodotti, materiali, accessori o servizi. Ogni progetto, fornitura, installazione, consulenza o collaborazione viene definito tramite contatto diretto, valutazione tecnica, eventuale sopralluogo e specifica proposta commerciale. Eventuali prezzi, indicazioni, descrizioni o riferimenti commerciali pubblicati sul sito hanno valore puramente informativo, salvo diversa indicazione espressa.

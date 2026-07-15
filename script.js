@@ -56,8 +56,8 @@ const i18n = {
     footerTerms: "Termini e condizioni",
     footerSocial: "Social",
     instagramAria: "Instagram IconicWall",
-    facebookAria: "Facebook IconicOriginal",
-    linkedinAria: "LinkedIn IconicOriginal",
+    facebookAria: "Facebook IconicWall",
+    linkedinAria: "LinkedIn IconicWall",
     footerRights: "Tutti i diritti riservati.",
     footerTagline: "Progettato e realizzato in Italia",
     cookieAria: "Preferenze cookie",
@@ -123,8 +123,8 @@ const i18n = {
     footerTerms: "Terms & Conditions",
     footerSocial: "Social",
     instagramAria: "Instagram IconicWall",
-    facebookAria: "Facebook IconicOriginal",
-    linkedinAria: "LinkedIn IconicOriginal",
+    facebookAria: "Facebook IconicWall",
+    linkedinAria: "LinkedIn IconicWall",
     footerRights: "All rights reserved.",
     footerTagline: "Progettato e realizzato in Italia",
     cookieAria: "Cookie preferences",
@@ -190,8 +190,8 @@ const i18n = {
     footerTerms: "Conditions générales",
     footerSocial: "Réseaux sociaux",
     instagramAria: "Instagram IconicWall",
-    facebookAria: "Facebook IconicOriginal",
-    linkedinAria: "LinkedIn IconicOriginal",
+    facebookAria: "Facebook IconicWall",
+    linkedinAria: "LinkedIn IconicWall",
     footerRights: "Tous droits réservés.",
     footerTagline: "Progettato e realizzato in Italia",
     cookieAria: "Préférences cookies",
@@ -257,8 +257,8 @@ const i18n = {
     footerTerms: "Allgemeine Geschäftsbedingungen",
     footerSocial: "Social Media",
     instagramAria: "Instagram IconicWall",
-    facebookAria: "Facebook IconicOriginal",
-    linkedinAria: "LinkedIn IconicOriginal",
+    facebookAria: "Facebook IconicWall",
+    linkedinAria: "LinkedIn IconicWall",
     footerRights: "Alle Rechte vorbehalten.",
     footerTagline: "Progettato e realizzato in Italia",
     cookieAria: "Cookie-Einstellungen",
@@ -324,8 +324,8 @@ const i18n = {
     footerTerms: "Términos y condiciones",
     footerSocial: "Redes sociales",
     instagramAria: "Instagram IconicWall",
-    facebookAria: "Facebook IconicOriginal",
-    linkedinAria: "LinkedIn IconicOriginal",
+    facebookAria: "Facebook IconicWall",
+    linkedinAria: "LinkedIn IconicWall",
     footerRights: "Todos los derechos reservados.",
     footerTagline: "Progettato e realizzato in Italia",
     cookieAria: "Preferencias de cookies",
@@ -392,7 +392,7 @@ organizationSchema.textContent = JSON.stringify({
   "legalName": "Iconic S.r.l.",
   "url": "https://www.iconicwall.it/",
   "logo": "https://www.iconicwall.it/assets/logos/iconicwall-logo-black.svg",
-  "email": "info@iconicoriginal.it",
+  "email": "info@iconicwall.it",
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Via Guido Rossa, 39",
@@ -402,9 +402,9 @@ organizationSchema.textContent = JSON.stringify({
     "addressCountry": "IT",
   },
   "sameAs": [
-    "https://www.instagram.com/iconic_dressyourinteriors/",
-    "https://www.facebook.com/iconicoriginal/",
-    "https://www.linkedin.com/company/iconicoriginal/",
+    "https://www.instagram.com/iconicwall.it/",
+    "https://www.facebook.com/profile.php?id=61591808465350",
+    "https://www.linkedin.com/company/iconicwall/",
   ],
 });
 document.head.appendChild(organizationSchema);
@@ -467,7 +467,7 @@ footer.innerHTML = `
           </li>
           <li>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4Z"/><path d="m22 6-10 7L2 6"/></svg>
-            <a href="mailto:info@iconicoriginal.it">info@iconicoriginal.it</a>
+            <a href="mailto:info@iconicwall.it">info@iconicwall.it</a>
           </li>
         </ul>
       </section>
@@ -491,15 +491,15 @@ footer.innerHTML = `
 
       <nav class="footer-column footer-nav footer-social" aria-label="${t.footerSocial}">
         <h2>${t.footerSocial}</h2>
-        <a href="https://www.instagram.com/iconic_dressyourinteriors/" target="_blank" rel="noopener noreferrer" aria-label="${t.instagramAria}">
+        <a href="https://www.instagram.com/iconicwall.it/" target="_blank" rel="noopener noreferrer" aria-label="${t.instagramAria}">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg>
           <span>Instagram</span>
         </a>
-        <a href="https://www.facebook.com/iconicoriginal/" target="_blank" rel="noopener noreferrer" aria-label="${t.facebookAria}">
+        <a href="https://www.facebook.com/profile.php?id=61591808465350" target="_blank" rel="noopener noreferrer" aria-label="${t.facebookAria}">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3Z"/></svg>
           <span>Facebook</span>
         </a>
-        <a href="https://www.linkedin.com/company/iconicoriginal/" target="_blank" rel="noopener noreferrer" aria-label="${t.linkedinAria}">
+        <a href="https://www.linkedin.com/company/iconicwall/" target="_blank" rel="noopener noreferrer" aria-label="${t.linkedinAria}">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 11v6M8 8v.01M12 17v-6M12 14a3 3 0 0 1 6 0v3"/></svg>
           <span>LinkedIn</span>
         </a>

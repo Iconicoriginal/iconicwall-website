@@ -1,379 +1,3056 @@
-const stage = document.querySelector("#config-stage");
-const loading = stage.querySelector(".stage-loading");
-const stageLockBanner = document.querySelector("#stage-lock-banner");
-const announcer = document.querySelector("#config-announcer");
+"use strict";
+/* ============================================================
+   IconicWall Studio — componi in 2D, ammira in 3D
+   ============================================================ */
+
+/* ---------- 1. Regole di sistema IW ---------- */
+
+const FLAT_HEIGHTS = [150, 300, 450, 600, 750, 1200, 1500];
+const IW_TYPES = {
+  flat:  { label: "Flat",  heights: FLAT_HEIGHTS,        variants: [] },
+  lux:   { label: "Lux",   heights: [150, 300, 600, 900], variants: [["LED_B", "LED sotto"], ["LED_T", "LED sopra"], ["LED_TB", "LED sopra e sotto"]] },
+  shelf: { label: "Shelf", heights: [300, 450, 600],      variants: [] },
+  frame: { label: "Frame", heights: [300, 450, 600],      variants: [] },
+  box:   { label: "Box",   heights: [300, 450, 600],      variants: [] },
+  board: { label: "Testiera", heights: [600, 750, 900, 1200], variants: [] },
+};
+const TYPE_ORDER = ["flat", "lux", "shelf", "frame", "box", "board"];
+const COL_WIDTHS = [300, 600, 900];
+const WALL_HEIGHTS = [2400, 2700, 3000];
+const BASELINES = [0, 300, 450, 600, 750, 900, 1050, 1200];
+// Il primo pannello in basso può essere Flat oppure Testiera (pensata per
+// appoggiarsi al letto quando la parete è sollevata da terra).
+const groundOk = (type) => type === "flat" || type === "board";
+const MAX_WALL_WIDTH = 6000;
+const GAP = 8; // fuga tra i pannelli, in mm
+
+const TYPE_ICONS = {
+  flat:  '<svg viewBox="0 0 26 26"><rect x="4" y="4" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>',
+  lux:   '<svg viewBox="0 0 26 26"><rect x="4" y="4" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="6" y="17.5" width="14" height="2.5" rx="1.2" fill="#c99b4f"/></svg>',
+  shelf: '<svg viewBox="0 0 26 26"><rect x="4" y="4" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="4" y="15" width="22" height="2.4" rx="1" fill="currentColor"/></svg>',
+  frame: '<svg viewBox="0 0 26 26"><rect x="4" y="4" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="8" y="8" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>',
+  box:   '<svg viewBox="0 0 26 26"><rect x="4" y="4" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M6 14h14v7H6z" fill="currentColor" opacity=".55"/></svg>',
+  board: '<svg viewBox="0 0 26 26"><rect x="4" y="4" width="18" height="18" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/><line x1="10" y1="5" x2="10" y2="21" stroke="currentColor" stroke-width="1.2" opacity=".65"/><line x1="16" y1="5" x2="16" y2="21" stroke="currentColor" stroke-width="1.2" opacity=".65"/></svg>',
+};
+
+/* ---------- 2. Catalogo finiture curato ---------- */
+
+const CATALOG = globalThis.IW_DINOC_CURATED || { groups: [] };
+const MAT_BY_CODE = new Map();
+CATALOG.groups.forEach((group) => group.materials.forEach((material) => {
+  MAT_BY_CODE.set(material.code, Object.assign({ group: group.id }, material));
+}));
+const ALL_CODES = [...MAT_BY_CODE.keys()];
+const firstOfGroup = (id) => CATALOG.groups.find((g) => g.id === id)?.materials[0]?.code || ALL_CODES[0];
+const DEFAULT_BASE = MAT_BY_CODE.has("WG-1841") ? "WG-1841" : firstOfGroup("legno");
+const DEFAULT_ACCENT = MAT_BY_CODE.has("ST-1920MT") ? "ST-1920MT" : firstOfGroup("pietra");
+
+/* ---------- 3. Riferimenti DOM ---------- */
+
+const $ = (sel) => document.querySelector(sel);
+const stageEl = $("#studio-stage");
+const svgEl = $("#wall-svg");
+const dimsEl = $("#studio-dims");
+const popoverEl = $("#panel-editor");
+const toastEl = $("#studio-toast");
+const coachEl = $("#studio-coach");
+const announcerEl = $("#studio-announcer");
+const dockEl = $("#studio-dock");
+const finishGridEl = $("#finish-grid");
+const finishTabsEl = $("#finish-tabs");
+const finishHintEl = $("#finish-target-hint");
+const envGridEl = $("#env-grid");
+const envCatsEl = $("#env-cats");
+const colListEl = $("#col-list");
+const summaryEl = $("#summary-body");
+const requestEl = $("#btn-request");
+
+/* ---------- 4. Stato ---------- */
+
+let state = null;          // { height, env:{type,id}, photo, photoScale, photoX, photoY, cols:[{width,panels:[{type,height,variant,finish}]}] }
+let selection = null;      // { c, i } pannello selezionato
+let mergeMode = false;     // selezione multipla per "unisci pannelli"
+let mergeSel = [];         // [{ c, i }] pannelli candidati all'unione
+let finishMode = "wall";
+let activeFinishTab = null;
+let activeEnvCat = "casa";
+let activeDock = null;
+const undoStack = [];
+const STORAGE_KEY = "iwStudio.v1";
+
+const clone = (value) => JSON.parse(JSON.stringify(value));
+
+function pushUndo() {
+  undoStack.push(clone(state));
+  if (undoStack.length > 40) undoStack.shift();
+}
+
 function announce(message) {
-  if (announcer) announcer.textContent = message;
-}
-const countOutput = document.querySelector("#configuration-count");
-const sizeOutput = document.querySelector("#configuration-size");
-const widthOutput = document.querySelector("#wall-width-output");
-const heightSelect = document.querySelector("#wall-height");
-const moduleList = document.querySelector("#module-list");
-const panelList = document.querySelector("#panel-list");
-const accessoryList = document.querySelector("#accessory-list");
-const panelType = document.querySelector("#panel-type");
-const panelWidth = document.querySelector("#panel-width");
-const panelHeight = document.querySelector("#panel-height");
-const panelVariant = document.querySelector("#panel-variant");
-const panelVariantField = document.querySelector("#panel-variant-field");
-const panelDragCard = document.querySelector("#panel-drag-card");
-const panelCardName = document.querySelector("#panel-card-name");
-const selectedPanelInfo = document.querySelector("#selected-panel-info");
-const removeSelectedPanelButton = document.querySelector("#remove-selected-panel");
-const materialSearch = document.querySelector("#material-search");
-const materialFamily = document.querySelector("#material-family");
-const materialGrid = document.querySelector("#material-grid");
-const materialMore = document.querySelector("#material-more");
-const materialCurrent = document.querySelector("#material-current");
-const materialTarget = document.querySelector("#material-target");
-const materialRotation = document.querySelector("#material-rotation");
-const materialScale = document.querySelector("#material-scale");
-const sidebarSummary = document.querySelector("#sidebar-summary");
-const measureWidthOutput = document.querySelector("#measure-width-output");
-const measureTotalOutput = document.querySelector("#measure-total-output");
-const requestFooterButton = document.querySelector("#request-button-footer");
-const unlockViewButton = document.querySelector("#unlock-view-button");
-const wallScaleControl = document.querySelector("#wall-scale-control");
-const wallOffsetXControl = document.querySelector("#wall-offset-x-control");
-const wallOffsetYControl = document.querySelector("#wall-offset-y-control");
-const gridToggles = [document.querySelector("#technical-grid-toggle"), document.querySelector("#measure-grid-toggle")].filter(Boolean);
-
-// Unica matrice da aggiornare quando viene consegnata la tabella tecnica IW definitiva.
-const IW_RULES = {
-  flat:  { label: "Flat",  widths: [300, 600, 900], heights: [150, 300, 450, 600, 750, 1200, 1500], variants: [] },
-  lux:   { label: "Lux",   widths: [300, 600, 900], heights: [150, 300, 600, 900], variants: [["LED_T", "LED superiore"], ["LED_B", "LED inferiore"], ["LED_TB", "LED sopra + sotto"]] },
-  shelf: { label: "Shelf", widths: [300, 600, 900], heights: [300, 450, 600], variants: [["BOTTOM", "Mensola inferiore"]] },
-  box:   { label: "Box",   widths: [300, 600, 900], heights: [300, 450, 600], variants: [] },
-  frame: { label: "Frame", widths: [300, 600, 900], heights: [300, 450, 600], variants: [] },
-};
-const ACCESSORY_LABELS = {
-  shelf: "Mensola",
-  box: "Box",
-  light: "Luce",
-  mirror: "Specchio",
-  hook: "Gancio",
-};
-const ORIGINAL_GEOMETRY_SIZE = {
-  shelf: { depth: 152.5 },
-  frame: { depth: 151.2 },
-  box: { depth: 151.3 },
-};
-const STRUCTURE_FRONT_Z = .09;
-const originalModelTemplates = {};
-let dinocCatalog = { families: [], materials: [] };
-let dinocById = new Map();
-let dinocCatalogPromise = null;
-const dinocTexturePromises = new Map();
-
-const scene = new THREE.Scene();
-scene.background = null;
-const camera = new THREE.PerspectiveCamera(34, 1, .1, 100);
-camera.position.set(0, .2, 7.4);
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-renderer.setClearColor(0x000000, 0);
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.05;
-stage.prepend(renderer.domElement);
-
-scene.add(new THREE.HemisphereLight(0xffffff, 0x8b8377, 2.3));
-const keyLight = new THREE.DirectionalLight(0xffffff, 3.4);
-keyLight.position.set(-4, 6, 7);
-keyLight.castShadow = true;
-keyLight.shadow.mapSize.set(2048, 2048);
-scene.add(keyLight);
-const warmLight = new THREE.PointLight(0xffd8aa, 25, 12);
-warmLight.position.set(4, 2.5, 4);
-scene.add(warmLight);
-
-const floor = new THREE.Mesh(
-  new THREE.PlaneGeometry(18, 14),
-  new THREE.MeshStandardMaterial({ color: 0xd5d1c8, roughness: .94 })
-);
-floor.rotation.x = -Math.PI / 2;
-floor.receiveShadow = true;
-scene.add(floor);
-
-const wallGroup = new THREE.Group();
-const moduleGroup = new THREE.Group();
-const accessoryGroup = new THREE.Group();
-wallGroup.add(moduleGroup, accessoryGroup);
-scene.add(wallGroup);
-
-const finishColors = { sand: 0xbfae96, walnut: 0x4e3526, stone: 0xaaa69d, graphite: 0x302f2d };
-let currentFinish = "sand";
-let selectedMaterialId = "";
-let selectedPanelId = null;
-let selectedModuleId = null;
-let nextPanelId = 0;
-let materialTab = "all";
-let materialLimit = 72;
-let draggedMaterial = null;
-let materialDragGhost = null;
-let draggedNewPanel = null;
-let panelDragGhost = null;
-let draggedNewAccessoryType = null;
-let accessoryDragGhost = null;
-const favoriteMaterials = new Set(JSON.parse(localStorage.getItem("iwDinocFavorites") || "[]"));
-let recentMaterials = JSON.parse(localStorage.getItem("iwDinocRecent") || "[]");
-let wallHeightMm = Number(heightSelect.value);
-let wallHeight = wallHeightMm / 1000;
-let wallWidth = 2.4;
-let moduleId = 4;
-let modules = [
-  { id: 1, width: 600, panels: [] },
-  { id: 2, width: 600, panels: [] },
-  { id: 3, width: 900, panels: [] },
-  { id: 4, width: 300, panels: [] },
-];
-const previewPanel = new URLSearchParams(location.search).get("previewPanel");
-const previewWidth = Number(new URLSearchParams(location.search).get("previewWidth")) || 300;
-const previewHeight = Number(new URLSearchParams(location.search).get("previewHeight")) || 450;
-if (ORIGINAL_GEOMETRY_SIZE[previewPanel]) {
-  const remainingTop = 2700 - 1200 - previewHeight - 750;
-  modules = [{
-    id: 1,
-    width: previewWidth,
-    panels: [
-      { type: "flat", width: previewWidth, height: 1200, variant: "" },
-      { type: previewPanel, width: previewWidth, height: previewHeight, variant: previewPanel === "shelf" ? "BOTTOM" : "" },
-      { type: "flat", width: previewWidth, height: 750, variant: "" },
-      { type: "flat", width: previewWidth, height: remainingTop, variant: "" },
-    ],
-  }];
-  moduleId = 1;
-}
-const placed = [];
-const moduleMeshes = new Map();
-const raycaster = new THREE.Raycaster();
-const pointer = new THREE.Vector2();
-const dragPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), -.19);
-const controls = { enableRotate: true };
-let draggedAccessory = null;
-let draggedModule = null;
-let draggedPanel = null;
-let orbiting = false;
-let emptySelectionCandidate = false;
-let pointerStart = { x: 0, y: 0 };
-let pointerDownStart = { x: 0, y: 0 };
-let yaw = 0;
-let targetYaw = previewPanel ? -.68 : 0;
-let zoom = previewPanel ? 3.2 : 7.4;
-let targetZoom = zoom;
-let activePanelName = "";
-let selectedPreset = "Studio neutro";
-let environmentPhotoActive = false;
-let viewMode = "preview";
-let wallScalePercent = 108;
-let wallOffsetX = 0;
-let wallOffsetY = 0;
-
-function meshMaterial(color = finishColors[currentFinish], roughness = .72, metalness = 0) {
-  return new THREE.MeshStandardMaterial({ color, roughness, metalness });
+  if (announcerEl) announcerEl.textContent = message;
 }
 
-function materialRoughness(material) {
-  if (!material) return { roughness: .72, metalness: 0 };
-  if (material.family === "Metal") return { roughness: .42, metalness: .28 };
-  if (material.family === "Solid Color") return { roughness: .58, metalness: 0 };
-  if (material.family === "Carbon") return { roughness: .5, metalness: .08 };
-  return { roughness: .76, metalness: 0 };
+let toastTimer = null;
+function toast(message) {
+  toastEl.textContent = message;
+  toastEl.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { toastEl.hidden = true; }, 2100);
+  announce(message);
 }
 
-function getDinocTexture(material) {
-  if (!dinocTexturePromises.has(material.id)) {
-    dinocTexturePromises.set(material.id, new Promise((resolve, reject) => {
-      // Per il rivestimento 3D non usare mai textureData: è la preview embedded del catalogo.
-      // La pelle del pannello deve usare il file texture pulito in assets/dinoc/textures/.
-      new THREE.TextureLoader().load(material.texture, (texture) => {
-        texture.colorSpace = THREE.SRGBColorSpace;
-        resolve(texture);
-      }, undefined, reject);
-    }));
+/* ---------- 5. Composizione: helper geometrici ---------- */
+
+const colSum = (col) => col.panels.reduce((sum, p) => sum + p.height, 0);
+const wallWidth = () => state.cols.reduce((sum, c) => sum + c.width, 0);
+// L'altezza scelta è il filo superiore; la quota da terra alza il filo
+// inferiore. La quota è PER MODULO (col.baseline); state.baseline resta il
+// valore predefinito per i moduli nuovi e per il comando "tutti i moduli".
+const wallBaseline = () => state.baseline || 0;
+const colBaseline = (col) => (Number.isFinite(col?.baseline) ? col.baseline : wallBaseline());
+const colStackHeight = (col) => state.height - colBaseline(col);
+// quota minima tra i moduli (filo inferiore più basso della parete)
+const minColBaseline = () => (state.cols.length ? Math.min(...state.cols.map(colBaseline)) : 0);
+const maxColBaseline = () => (state.cols.length ? Math.max(...state.cols.map(colBaseline)) : 0);
+// compat: altezza utile del modulo più basso (usata dove serve un valore unico)
+const colHeight = () => state.height - minColBaseline();
+
+// Zona letto (mm dal centro parete): lì la quota non può scendere sotto la
+// minima di scena, altrimenti i pannelli si sovrappongono al letto.
+function bedZoneRange() {
+  const scene = activeScene();
+  if (scene) return { range: scene.bedZone || [-980, 980], min: scene.minBaseline || 450 };
+  if (state.bed && bedAllowed()) return { range: [-980, 980], min: 450 };
+  return null;
+}
+
+// Intervallo X del modulo c rispetto al centro parete
+function colXRange(c) {
+  const W = wallWidth();
+  const x0 = colOffsetMm(c) - W / 2;
+  return [x0, x0 + state.cols[c].width];
+}
+
+function minBaselineFor(c) {
+  const zone = bedZoneRange();
+  if (!zone) return 0;
+  const [x0, x1] = colXRange(c);
+  const overlaps = x1 > zone.range[0] && x0 < zone.range[1];
+  return overlaps ? zone.min : 0;
+}
+
+// Scompone uno spazio (multiplo di 150) in altezze Flat valide, dalla più grande.
+function fillFlats(space, finish) {
+  const result = [];
+  let rest = space;
+  const sizes = [...FLAT_HEIGHTS].sort((a, b) => b - a);
+  while (rest >= 150) {
+    const pick = sizes.find((s) => s <= rest && (rest - s === 0 || rest - s >= 150));
+    if (!pick) break;
+    result.push({ type: "flat", height: pick, variant: "", finish });
+    rest -= pick;
   }
-  return dinocTexturePromises.get(material.id);
+  return result;
 }
 
-function applyDinocMaterial(targetMaterial, panel, dinoc) {
-  if (!dinoc) return targetMaterial;
-  const finish = materialRoughness(dinoc);
-  targetMaterial.color.set(dinoc.averageColor || "#ffffff");
-  targetMaterial.roughness = finish.roughness;
-  targetMaterial.metalness = finish.metalness;
-  targetMaterial.needsUpdate = true;
+function columnBaseFinish(col) {
+  const counts = new Map();
+  col.panels.filter((p) => p.type === "flat").forEach((p) => counts.set(p.finish, (counts.get(p.finish) || 0) + 1));
+  let best = null;
+  counts.forEach((n, code) => { if (!best || n > counts.get(best)) best = code; });
+  return best || currentPalette().base;
+}
 
-  getDinocTexture(dinoc).then((source) => {
-    const texture = source.clone();
-    const scaleMm = Math.max(300, Number(panel.material?.scale) || dinoc.defaultScaleMm || 600);
-    const repeatX = Math.max(.1, panel.width / scaleMm);
-    const repeatY = Math.max(.1, panel.height / scaleMm);
-    texture.wrapS = THREE.RepeatWrapping;
-    texture.wrapT = THREE.RepeatWrapping;
-    texture.repeat.set(repeatX, repeatY);
-    texture.center.set(.5, .5);
-    texture.rotation = Number(panel.material?.rotation) === 90 ? Math.PI / 2 : 0;
-    texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-    texture.needsUpdate = true;
-    targetMaterial.color.setHex(0xffffff);
-    targetMaterial.map = texture;
-    targetMaterial.needsUpdate = true;
-  }).catch((error) => {
-    targetMaterial.color.set(dinoc.averageColor || "#ffffff");
-    targetMaterial.needsUpdate = true;
-    console.warn(`Texture DI-NOC non caricata: ${dinoc.code}`, error);
+function currentPalette() {
+  const flats = new Map(), feats = new Map();
+  state.cols.forEach((col) => col.panels.forEach((p) => {
+    const map = p.type === "flat" ? flats : feats;
+    map.set(p.finish, (map.get(p.finish) || 0) + 1);
+  }));
+  const top = (map, fallback) => {
+    let best = null;
+    map.forEach((n, code) => { if (!best || n > map.get(best)) best = code; });
+    return best || fallback;
+  };
+  const base = top(flats, DEFAULT_BASE);
+  return { base, accent: top(feats, DEFAULT_ACCENT === base ? DEFAULT_BASE : DEFAULT_ACCENT) };
+}
+
+// Riporta una colonna esattamente alla sua altezza utile (filo superiore
+// meno la quota da terra del modulo).
+function reconcileColumn(col, height) {
+  const H = height || colStackHeight(col);
+  while (colSum(col) > H) {
+    const top = col.panels[col.panels.length - 1];
+    const excess = colSum(col) - H;
+    if (top.type === "flat" && top.height > excess) {
+      const finish = top.finish;
+      col.panels.pop();
+      col.panels.push(...fillFlats(top.height - excess, finish));
+    } else {
+      col.panels.pop();
+    }
+    if (!col.panels.length) break;
+  }
+  const missing = H - colSum(col);
+  if (missing > 0) col.panels.push(...fillFlats(missing, columnBaseFinish(col)));
+}
+
+// Cambia l'altezza di un pannello mantenendo la colonna piena.
+function resizePanel(col, index, newHeight) {
+  const panel = col.panels[index];
+  const diff = newHeight - panel.height;
+  if (diff === 0) return true;
+  if (diff < 0) {
+    panel.height = newHeight;
+    const fillers = fillFlats(-diff, columnBaseFinish(col));
+    col.panels.splice(index + 1, 0, ...fillers);
+    return true;
+  }
+  // Serve spazio: lo prendiamo dai Flat vicini (prima sopra, poi sotto).
+  // Il Flat a terra non può sparire del tutto se sopra resterebbe un pannello
+  // speciale: a terra va sempre un Flat.
+  let needed = diff;
+  const order = [];
+  for (let j = index + 1; j < col.panels.length; j++) order.push(j);
+  for (let j = index - 1; j >= 0; j--) order.push(j);
+  const donors = order.filter((j) => col.panels[j].type === "flat");
+  const giveable = (j) => col.panels[j].height - (j === 0 && panel.type !== "flat" && colBaseline(col) === 0 ? 150 : 0);
+  const available = donors.reduce((sum, j) => sum + giveable(j), 0);
+  if (available < needed) return false;
+  const replacements = new Map();
+  for (const j of donors) {
+    if (needed <= 0) break;
+    const donor = col.panels[j];
+    const take = Math.min(giveable(j), needed);
+    if (take <= 0) continue;
+    needed -= take;
+    replacements.set(j, donor.height - take > 0 ? fillFlats(donor.height - take, donor.finish) : []);
+  }
+  [...replacements.keys()].sort((a, b) => b - a).forEach((j) => {
+    col.panels.splice(j, 1, ...replacements.get(j));
   });
-  return targetMaterial;
+  const newIndex = col.panels.indexOf(panel);
+  panel.height = newHeight;
+  if (selection) selection.i = newIndex;
+  return true;
 }
 
-function applyPanelFinish(targetMaterial, panel) {
-  const dinoc = dinocById.get(panel.material?.id);
-  return applyDinocMaterial(targetMaterial, panel, dinoc);
+// Capienza massima raggiungibile da un pannello (propria altezza + Flat sacrificabili).
+// Se il pannello non è Flat, il Flat a terra deve conservare almeno 150 mm.
+function panelMaxHeight(col, index) {
+  const target = col.panels[index];
+  return col.panels.reduce((sum, p, j) => {
+    if (j === index) return sum + p.height;
+    if (p.type !== "flat") return sum;
+    const reserve = j === 0 && target.type !== "flat" && colBaseline(col) === 0 ? 150 : 0;
+    return sum + p.height - reserve;
+  }, 0);
 }
 
-function markPanelVisual(group, panel) {
-  group.traverse((item) => {
-    if (item.isMesh) {
-      item.userData.iwPanelSurface = true;
-      item.userData.panelId = panel.id;
+// Scambia di posto il pannello con quello adiacente (sopra o sotto).
+// Le altezze viaggiano coi pannelli, quindi la colonna resta piena per
+// costruzione; l'unico vincolo è che a terra finisca sempre un Flat.
+function canMovePanel(col, index, dir) {
+  const j = index + dir;
+  if (j < 0 || j >= col.panels.length) return false;
+  if (Math.min(index, j) === 0 && colBaseline(col) === 0) {
+    const groundLander = dir > 0 ? col.panels[j] : col.panels[index];
+    if (!groundOk(groundLander.type)) return false;
+  }
+  return true;
+}
+
+function movePanel(col, index, dir) {
+  if (!canMovePanel(col, index, dir)) return false;
+  const j = index + dir;
+  [col.panels[index], col.panels[j]] = [col.panels[j], col.panels[index]];
+  return true;
+}
+
+// Elimina un pannello: lo spazio viene assorbito dal Flat adiacente
+// (prima quello sotto, poi quello sopra) o riempito con Flat nella finitura
+// di base della colonna. Il modulo resta sempre completo.
+function deletePanel(col, index) {
+  const panel = col.panels[index];
+  if (!panel) return;
+  const below = col.panels[index - 1];
+  const above = col.panels[index + 1];
+  col.panels.splice(index, 1);
+  if (below && below.type === "flat") {
+    col.panels.splice(index - 1, 1, ...fillFlats(below.height + panel.height, below.finish));
+  } else if (above && above.type === "flat") {
+    col.panels.splice(index, 1, ...fillFlats(above.height + panel.height, above.finish));
+  } else {
+    col.panels.splice(index, 0, ...fillFlats(panel.height, columnBaseFinish(col)));
+  }
+}
+
+/* ---------- Pannelli uniti (un pannello su più moduli) ----------
+   I membri restano nei loro moduli (le regole di colonna continuano a
+   valere), ma vengono resi e comandati come un unico pannello. Le famiglie
+   ammesse per un pannello unito sono quelle senza modello 3D vincolato al
+   modulo: Flat, Lux, Testiera. */
+
+const MERGE_TYPES = ["flat", "lux", "board"];
+
+// Quota ASSOLUTA da terra del filo inferiore del pannello (include la quota
+// del modulo): così pannelli su moduli con quote diverse si confrontano bene.
+const panelQuota = (c, i) => colBaseline(state.cols[c]) + state.cols[c].panels.slice(0, i).reduce((s, p) => s + p.height, 0);
+const colOffsetMm = (c) => state.cols.slice(0, c).reduce((s, col) => s + col.width, 0);
+
+function mergeMembers(id) {
+  const out = [];
+  state.cols.forEach((col, c) => col.panels.forEach((p, i) => {
+    if (p.mergeId === id) out.push({ c, i, panel: p });
+  }));
+  return out;
+}
+
+// Descrive (e implicitamente valida) un gruppo unito: un membro per colonna,
+// colonne consecutive, stessa quota e stessa altezza.
+function groupInfo(id) {
+  const members = mergeMembers(id);
+  if (members.length < 2) return null;
+  members.sort((a, b) => a.c - b.c);
+  for (let k = 0; k < members.length; k++) {
+    if (k && members[k].c !== members[k - 1].c + 1) return null;
+    if (members.filter((m) => m.c === members[k].c).length !== 1) return null;
+  }
+  const bottom = panelQuota(members[0].c, members[0].i);
+  const height = members[0].panel.height;
+  for (const m of members) {
+    if (panelQuota(m.c, m.i) !== bottom || m.panel.height !== height) return null;
+  }
+  return {
+    id, members, bottom, height,
+    x0: colOffsetMm(members[0].c),
+    width: members.reduce((s, m) => s + state.cols[m.c].width, 0),
+    panel: members[0].panel,
+  };
+}
+
+function selectedGroup() {
+  const panel = selectedPanel();
+  return panel?.mergeId ? groupInfo(panel.mergeId) : null;
+}
+
+// Se una modifica strutturale rompe l'allineamento, il gruppo si dissolve
+// in pannelli normali (uno per modulo).
+function sanitizeMerges() {
+  const ids = new Set();
+  state.cols.forEach((col) => col.panels.forEach((p) => { if (p.mergeId) ids.add(p.mergeId); }));
+  ids.forEach((id) => {
+    if (!groupInfo(id)) mergeMembers(id).forEach((m) => { delete m.panel.mergeId; });
+  });
+}
+
+// La selezione per l'unione deve formare un rettangolo esatto:
+// per ogni colonna una fetta contigua, stessa quota e stessa altezza totale.
+function validateMergeSelection(sel) {
+  const byCol = new Map();
+  sel.forEach(({ c, i }) => {
+    if (!byCol.has(c)) byCol.set(c, []);
+    byCol.get(c).push(i);
+  });
+  const cols = [...byCol.keys()].sort((a, b) => a - b);
+  if (cols.length < 1) return null;
+  for (let k = 1; k < cols.length; k++) if (cols[k] !== cols[k - 1] + 1) return null;
+  let bottom = null, height = null;
+  const slices = [];
+  for (const c of cols) {
+    const idx = byCol.get(c).sort((a, b) => a - b);
+    for (let k = 1; k < idx.length; k++) if (idx[k] !== idx[k - 1] + 1) return null;
+    const b = panelQuota(c, idx[0]);
+    const h = idx.reduce((s, i) => s + state.cols[c].panels[i].height, 0);
+    if (bottom === null) { bottom = b; height = h; }
+    else if (b !== bottom || h !== height) return null;
+    slices.push({ c, from: idx[0], to: idx[idx.length - 1] });
+  }
+  if (cols.length === 1 && slices[0].from === slices[0].to) return null; // niente da unire
+  return { cols, slices, bottom, height };
+}
+
+function applyMerge(valid, firstSel) {
+  const first = state.cols[firstSel.c].panels[firstSel.i];
+  let type = MERGE_TYPES.includes(first.type) ? first.type : "flat";
+  if (valid.bottom === 0 && !groundOk(type)) type = "flat";
+  let maxId = 0;
+  state.cols.forEach((col) => col.panels.forEach((p) => { if (p.mergeId > maxId) maxId = p.mergeId; }));
+  const id = valid.cols.length > 1 ? maxId + 1 : 0;
+  for (const s of valid.slices) {
+    const panel = {
+      type,
+      height: valid.height,
+      variant: type === "lux" ? (first.variant || "LED_B") : "",
+      finish: first.finish,
+      grain: panelGrain(first),
+    };
+    if (id) panel.mergeId = id;
+    state.cols[s.c].panels.splice(s.from, s.to - s.from + 1, panel);
+  }
+  selection = { c: valid.cols[0], i: valid.slices[0].from };
+}
+
+function canMoveGroup(info, dir) {
+  const heights = [];
+  for (const m of info.members) {
+    const col = state.cols[m.c];
+    const j = m.i + dir;
+    if (j < 0 || j >= col.panels.length) return false;
+    const neighbor = col.panels[j];
+    if (neighbor.mergeId) return false;
+    if (dir > 0 && info.bottom === 0 && !groundOk(neighbor.type)) return false;
+    heights.push(neighbor.height);
+  }
+  if (new Set(heights).size !== 1) return false;
+  if (dir < 0 && info.bottom - heights[0] === 0 && !groundOk(info.panel.type)) return false;
+  return true;
+}
+
+function moveGroup(info, dir) {
+  if (!canMoveGroup(info, dir)) return false;
+  for (const m of info.members) {
+    const col = state.cols[m.c];
+    [col.panels[m.i], col.panels[m.i + dir]] = [col.panels[m.i + dir], col.panels[m.i]];
+  }
+  return true;
+}
+
+// Garantisce che ogni colonna parta da terra con un Flat (stati caricati da
+// link o storage possono arrivare da versioni senza questa regola).
+function sanitizeColumns(cols) {
+  cols.forEach((col) => {
+    const first = col.panels[0];
+    if (first && !groundOk(first.type) && colBaseline(col) === 0) {
+      col.panels.splice(0, 1, ...fillFlats(first.height, first.finish));
     }
   });
 }
 
-function panelSurfaceMaterial(panel) {
-  return applyPanelFinish(meshMaterial(finishColors[currentFinish], .72), panel);
+/* ---------- 6. Generatore di composizioni ---------- */
+
+let rngSeed = Date.now() % 2147483647;
+function rng() {
+  rngSeed = (rngSeed * 48271) % 2147483647;
+  return (rngSeed - 1) / 2147483646;
+}
+const pick = (list) => list[Math.floor(rng() * list.length)];
+
+function randomPalette() {
+  const group = (id) => CATALOG.groups.find((g) => g.id === id)?.materials.map((m) => m.code) || [];
+  const woods = group("legno");
+  const baseChoices = rng() < .74 ? woods : [...group("tinta"), ...group("tessuti")];
+  const base = pick(baseChoices.length ? baseChoices : ALL_CODES);
+  const accentPool = [...group("metallo"), ...group("pietra"), ...group("tessuti"), ...group("astratti"), ...group("tinta")].filter((c) => c !== base);
+  const accent = pick(accentPool.length ? accentPool : ALL_CODES);
+  return { base, accent };
 }
 
-function createFinishSkin(panel, moduleWidthMeters, panelHeightMeters) {
-  const dinoc = dinocById.get(panel.material?.id);
-  if (!dinoc) return null;
-  const material = applyDinocMaterial(
-    new THREE.MeshStandardMaterial({
-      color: dinoc.averageColor || 0xffffff,
-      roughness: materialRoughness(dinoc).roughness,
-      metalness: materialRoughness(dinoc).metalness,
-      polygonOffset: true,
-      polygonOffsetFactor: -1,
-      polygonOffsetUnits: -1,
-    }),
-    panel,
-    dinoc
-  );
-  const skin = new THREE.Mesh(
-    new THREE.PlaneGeometry(Math.max(.01, moduleWidthMeters - .012), Math.max(.01, panelHeightMeters - .012)),
-    material
-  );
-  skin.position.z = STRUCTURE_FRONT_Z + .014;
-  skin.renderOrder = 6;
-  skin.userData.iwPanelSurface = true;
-  skin.userData.panelId = panel.id;
-  skin.userData.finishSkin = true;
-  skin.castShadow = false;
-  skin.receiveShadow = true;
-  return skin;
+function generateColumn(width, palette, baseline) {
+  const b = Number.isFinite(baseline) ? baseline : wallBaseline();
+  const H = state.height - b;
+  const panels = [];
+  const roll = rng();
+  if (roll < .16) {
+    // colonna "quieta": solo flat, magari in finitura accent
+    const finish = rng() < .3 ? palette.accent : palette.base;
+    panels.push(...fillFlats(H, finish));
+  } else {
+    const featureType = pick(roll < .5 ? ["shelf", "lux"] : ["shelf", "lux", "frame", "box"]);
+    const featureHeight = featureType === "lux" ? pick([300, 600]) : pick(IW_TYPES[featureType].heights);
+    const belowChoices = [750, 900, 1050, 1200].filter((b) => b + featureHeight <= H - 150);
+    const below = belowChoices.length ? pick(belowChoices) : 750;
+    const variant = featureType === "lux" ? pick(["LED_B", "LED_T", "LED_TB"]) : "";
+    const featureFinish = featureType === "lux" && rng() < .45 ? palette.base : palette.accent;
+    panels.push(...fillFlats(below, palette.base));
+    panels.push({ type: featureType, height: featureHeight, variant, finish: featureFinish });
+    const above = H - below - featureHeight;
+    // ogni tanto un secondo elemento sopra
+    if (above >= 1050 && rng() < .22) {
+      const second = pick(["lux", "frame"]);
+      const secondHeight = 300;
+      const spacer = 450;
+      panels.push(...fillFlats(spacer, palette.base));
+      panels.push({ type: second, height: secondHeight, variant: second === "lux" ? "LED_B" : "", finish: palette.accent });
+      panels.push(...fillFlats(above - spacer - secondHeight, palette.base));
+    } else {
+      panels.push(...fillFlats(above, palette.base));
+    }
+  }
+  return { width, panels };
 }
 
-function createSelectedPanelHighlight(panel, moduleWidthMeters, panelHeightMeters) {
-  if (panel.id !== selectedPanelId) return null;
-  const group = new THREE.Group();
-  const width = Math.max(.01, moduleWidthMeters - .006);
-  const height = Math.max(.01, panelHeightMeters - .006);
-  const overlay = new THREE.Mesh(
-    new THREE.PlaneGeometry(width, height),
-    new THREE.MeshBasicMaterial({
-      color: 0xb8905f,
-      transparent: true,
-      opacity: .13,
-      depthTest: false,
-      depthWrite: false,
-    })
-  );
-  overlay.position.z = STRUCTURE_FRONT_Z + .022;
-  overlay.renderOrder = 12;
-  const border = new THREE.LineSegments(
-    new THREE.EdgesGeometry(new THREE.PlaneGeometry(width, height)),
-    new THREE.LineBasicMaterial({
-      color: 0xb8905f,
-      transparent: true,
-      opacity: .95,
-      depthTest: false,
-    })
-  );
-  border.position.z = STRUCTURE_FRONT_Z + .024;
-  border.renderOrder = 13;
-  const badge = createLabel("SELEZIONATO", "rgba(184,144,95,.92)", "#ffffff");
-  badge.scale.set(.32, .055, 1);
-  badge.position.set(0, panelHeightMeters / 2 - .035, STRUCTURE_FRONT_Z + .04);
-  badge.visible = true;
-  badge.renderOrder = 14;
-  group.add(overlay, border, badge);
-  group.userData.selectedPanelHighlight = true;
-  group.traverse((item) => {
-    item.userData.iwPanelSurface = true;
-    item.userData.panelId = panel.id;
+function shuffleComposition() {
+  const palette = randomPalette();
+  state.cols = state.cols.map((col) => {
+    const b = colBaseline(col);
+    const fresh = generateColumn(col.width, palette, b);
+    fresh.baseline = b; // la quota del modulo sopravvive al rimescolamento
+    return fresh;
   });
-  return group;
 }
 
-function disposeGroup(group) {
-  while (group.children.length) {
-    const child = group.children.pop();
-    child.traverse((item) => {
-      item.geometry?.dispose();
-      if (Array.isArray(item.material)) item.material.forEach((entry) => entry.dispose());
-      else item.material?.dispose();
-    });
+function defaultState() {
+  const base = DEFAULT_BASE, accent = DEFAULT_ACCENT;
+  return {
+    height: 2700,
+    baseline: 0,
+    bed: false,
+    env: { type: "preset", id: "living" },
+    photo: null, photoScale: 100, photoX: 0, photoY: 0,
+    cols: [
+      { width: 600, panels: [...fillFlats(2700, base)] },
+      { width: 900, panels: [
+        ...fillFlats(900, base),
+        { type: "shelf", height: 450, variant: "", finish: accent },
+        ...fillFlats(1350, base),
+      ] },
+      { width: 600, panels: [
+        ...fillFlats(1050, base),
+        { type: "lux", height: 600, variant: "LED_TB", finish: accent },
+        ...fillFlats(1050, base),
+      ] },
+      { width: 300, panels: [...fillFlats(2700, accent)] },
+    ],
+  };
+}
+
+/* ---------- 7. Ambienti illustrati ---------- */
+
+const ENVIRONMENTS = [
+  { id: "living",     label: "Living",      cat: "casa",     wall: "#cfc8bb", floor: "#b4a68f", glow: "#f3e6cd" },
+  { id: "cucina",     label: "Cucina",      cat: "casa",     wall: "#d3cec6", floor: "#a9a49a", glow: "#f1ead9" },
+  { id: "camera",     label: "Camera",      cat: "casa",     wall: "#c9c2b8", floor: "#a08b74", glow: "#efe0c8" },
+  { id: "ingresso",   label: "Ingresso",    cat: "casa",     wall: "#d6d0c5", floor: "#b1a894", glow: "#f4ecda" },
+  { id: "hotel",      label: "Hotel",       cat: "contract", wall: "#c6bdb0", floor: "#8d7f6d", glow: "#f0dfc2" },
+  { id: "ufficio",    label: "Ufficio",     cat: "contract", wall: "#d0cdc7", floor: "#9fa09b", glow: "#eee9dc" },
+  { id: "retail",     label: "Retail",      cat: "contract", wall: "#cec9c2", floor: "#97918a", glow: "#f2e8d4" },
+  { id: "ristorante", label: "Ristorante",  cat: "contract", wall: "#c2b9ab", floor: "#84766a", glow: "#eeddc0" },
+];
+const ENV_CATS = [["casa", "Casa"], ["contract", "Spazi pubblici"]];
+
+function envById(id) {
+  return ENVIRONMENTS.find((e) => e.id === id) || ENVIRONMENTS[0];
+}
+
+/* ---------- Scene fotografiche calibrate ----------
+   Ogni scena è una fotografia frontale con calibrazione misurata a mano:
+   pxPerMm (scala della parete di fondo), floorY/cx (aggancio pavimento e
+   centro in pixel immagine), minBaseline (la parete parte sopra la testiera),
+   light (direzione della luce per la velatura), backdrop (tono dei margini). */
+
+const PHOTO_SCENES = [
+  {
+    id: "camera-hotel-1", cat: "contract", label: "Camera hotel · Caldo",
+    src: "assets/configurator/backgrounds/camera-hotel-1.webp",
+    w: 2528, h: 1696, pxPerMm: .5063, cx: 1264, floorY: 1512,
+    minBaseline: 1050, defaultBaseline: 1050, light: "left", backdrop: "#cbc4b6",
+    // vista ¾: quadrilatero (px) del rettangolo di parete X ±1650 mm, Y 0–2700
+    quad34: {
+      src: "assets/configurator/backgrounds/camera-hotel-1-34.webp",
+      w: 2528, h: 1696,
+      corners: [[611, 155], [2105, 273], [2105, 1375], [611, 1503]],
+      bounds: [-2550, 1550], // limiti fisici del muro in mm dal centro-letto
+      shade: { dir: 1, strength: .16 },
+    },
+    room3d: {
+      floorTex: "DW-2476MT", wall: 0xcfc8ba, side: 0xd8d2c6, ceiling: 0xece8e0,
+      bed: { frame: 0x6e4f35, linen: 0xefe9dc, pillow: 0xf5f0e5, runner: 0xa98a63, nightstand: 0x6e4f35 },
+      lamps: { on: true, color: 0xffd8a0, intensity: 2.2 },
+      window: "left",
+      light: { hemi: 1.9, hemiColor: 0xfff4e2, key: 2.6, keyColor: 0xffeed2, keyPos: [-5, 5, 6], warm: 6 },
+    },
+  },
+  {
+    id: "camera-hotel-2", cat: "contract", label: "Camera hotel · Chiaro",
+    src: "assets/configurator/backgrounds/camera-hotel-2.webp",
+    w: 2528, h: 1696, pxPerMm: .462, cx: 1264, floorY: 1373,
+    minBaseline: 750, defaultBaseline: 750, light: "left", backdrop: "#e8e6e1",
+    quad34: {
+      src: "assets/configurator/backgrounds/camera-hotel-2-34.webp",
+      w: 2528, h: 1696,
+      corners: [[706, 168], [2029, 93], [2029, 1303], [706, 1221]],
+      bounds: [-2500, 2450],
+      shade: { dir: -1, strength: .1 },
+    },
+    room3d: {
+      floorTex: "CN-1622", wall: 0xefedea, side: 0xf2f0ec, ceiling: 0xf6f4f1,
+      bed: { frame: 0xb9b5ae, linen: 0xf2f1ee, pillow: 0xfafafa, runner: 0xd9d5cd, nightstand: 0xfbfbfb },
+      lamps: { on: false, color: 0xffffff, intensity: 0 },
+      window: "left",
+      light: { hemi: 2.6, hemiColor: 0xffffff, key: 2.2, keyColor: 0xf2f6ff, keyPos: [-5, 6, 5], warm: 2 },
+    },
+  },
+  {
+    id: "camera-hotel-3", cat: "contract", label: "Camera hotel · Sera",
+    src: "assets/configurator/backgrounds/camera-hotel-3.webp",
+    w: 2528, h: 1696, pxPerMm: .49, cx: 1264, floorY: 1487,
+    minBaseline: 1050, defaultBaseline: 1050, light: "left", backdrop: "#232019",
+    quad34: {
+      src: "assets/configurator/backgrounds/camera-hotel-3-34.webp",
+      w: 2528, h: 1696,
+      corners: [[365, 97], [1940, 234], [1940, 1338], [365, 1482]],
+      bounds: [-1700, 1850],
+      shade: { dir: 1, strength: .22 },
+    },
+    room3d: {
+      floorTex: "FW-1127", wall: 0x4a453f, side: 0x413c36, ceiling: 0x26221d,
+      bed: { frame: 0x4a3a30, linen: 0x413b34, pillow: 0x4a423a, runner: 0x8a6f4e, nightstand: 0x5a4433 },
+      lamps: { on: true, color: 0xffc27a, intensity: 3.2 },
+      window: null,
+      light: { hemi: .5, hemiColor: 0xcdb9a0, key: .55, keyColor: 0xffdcae, keyPos: [-3, 4, 6], warm: 5 },
+    },
+  },
+];
+
+function sceneById(id) {
+  return PHOTO_SCENES.find((s) => s.id === id) || null;
+}
+
+function activeScene() {
+  return state.env.type === "scene" ? sceneById(state.env.id) : null;
+}
+
+// Il letto centrato ha senso solo dove c'è un letto: camera, hotel o la
+// foto dell'utente. Negli altri ambienti non viene né mostrato né proposto.
+function bedAllowed() {
+  if (state.env.type === "scene") return false; // la foto ha già il suo letto
+  // il letto ci sta solo se i moduli sopra di lui sono sollevati abbastanza
+  if (bedZoneBaseline() < 450) return false;
+  if (state.env.type === "photo" && state.photo) return true;
+  return state.env.id === "camera" || state.env.id === "hotel";
+}
+
+// Quota più bassa tra i moduli che stanno sopra la zona letto.
+function bedZoneBaseline() {
+  const zoneCols = state.cols.filter((col, c) => {
+    const [x0, x1] = colXRange(c);
+    return x1 > -980 && x0 < 980;
+  });
+  return zoneCols.length ? Math.min(...zoneCols.map(colBaseline)) : maxColBaseline();
+}
+
+// Scena dietro la parete (muro, pavimento, luci) e davanti (silhouette d'arredo).
+function envBack(env, VW, VH, FY) {
+  const parts = [];
+  parts.push(`<rect x="0" y="0" width="${VW}" height="${FY}" fill="${env.wall}"/>`);
+  parts.push(`<rect x="0" y="0" width="${VW}" height="${FY}" fill="url(#env-wall-shade)"/>`);
+  parts.push(`<rect x="0" y="${FY}" width="${VW}" height="${VH - FY}" fill="${env.floor}"/>`);
+  parts.push(`<rect x="0" y="${FY}" width="${VW}" height="${VH - FY}" fill="url(#env-floor-shade)"/>`);
+  parts.push(`<rect x="0" y="${FY - 26}" width="${VW}" height="26" fill="rgba(17,17,15,.16)"/>`);
+  // finestra / taglio di luce laterale
+  const wx = VW - 760;
+  parts.push(`<g opacity=".85"><rect x="${wx}" y="${FY - 2350}" width="520" height="1900" fill="${env.glow}"/>
+    <rect x="${wx}" y="${FY - 2350}" width="520" height="1900" fill="none" stroke="rgba(17,17,15,.28)" stroke-width="14"/>
+    <line x1="${wx + 260}" y1="${FY - 2350}" x2="${wx + 260}" y2="${FY - 450}" stroke="rgba(17,17,15,.22)" stroke-width="10"/>
+    <line x1="${wx}" y1="${FY - 1400}" x2="${wx + 520}" y2="${FY - 1400}" stroke="rgba(17,17,15,.22)" stroke-width="10"/></g>`);
+  parts.push(`<rect x="${wx - 90}" y="${FY}" width="700" height="${VH - FY}" fill="${env.glow}" opacity=".2"/>`);
+  if (env.id === "cucina" || env.id === "ristorante") {
+    // lampade a sospensione
+    for (const lx of [430, 850]) {
+      parts.push(`<g><line x1="${lx}" y1="0" x2="${lx}" y2="560" stroke="rgba(17,17,15,.5)" stroke-width="8"/>
+        <path d="M${lx - 130} 700 A130 130 0 0 1 ${lx + 130} 700 Z" fill="rgba(24,22,20,.78)"/>
+        <ellipse cx="${lx}" cy="705" rx="86" ry="26" fill="${env.glow}" opacity=".9"/></g>`);
+    }
+  }
+  if (env.id === "hotel") {
+    parts.push(`<rect x="120" y="0" width="150" height="${FY}" fill="rgba(17,17,15,.18)"/>`);
+    parts.push(`<rect x="${VW - 1020}" y="0" width="150" height="${FY}" fill="rgba(17,17,15,.12)"/>`);
+    parts.push(`<ellipse cx="330" cy="${FY - 1750}" rx="60" ry="120" fill="${env.glow}" opacity=".75"/>`);
+  }
+  if (env.id === "ufficio") {
+    parts.push(`<g stroke="rgba(17,17,15,.2)" stroke-width="10" opacity=".8">
+      <line x1="60" y1="${FY - 2200}" x2="60" y2="${FY}"/><line x1="360" y1="${FY - 2200}" x2="360" y2="${FY}"/>
+      <line x1="40" y1="${FY - 2200}" x2="380" y2="${FY - 2200}"/><line x1="40" y1="${FY - 1150}" x2="380" y2="${FY - 1150}"/></g>`);
+  }
+  if (env.id === "retail") {
+    parts.push(`<g opacity=".85"><path d="M300 130 L390 130 L470 620 L220 620 Z" fill="${env.glow}" opacity=".5"/>
+      <circle cx="345" cy="120" r="46" fill="rgba(24,22,20,.8)"/></g>`);
+  }
+  return `<g>${parts.join("")}</g>`;
+}
+
+function envFront(env, VW, VH, FY, options = {}) {
+  const dark = "rgba(28,26,23,.86)";
+  const mid = "rgba(28,26,23,.5)";
+  const parts = [];
+  const rugW = Math.min(2600, VW * .44);
+  parts.push(`<ellipse cx="${VW / 2}" cy="${FY + 190}" rx="${rugW / 2}" ry="120" fill="rgba(17,17,15,.1)"/>`);
+  // col letto centrato attivo, la camera non disegna il proprio letto di scena
+  if (env.id === "camera" && options.hideBed) {
+    parts.push(`<rect x="0" y="0" width="${VW}" height="${VH}" fill="url(#env-vignette)" pointer-events="none"/>`);
+    return `<g pointer-events="none">${parts.join("")}</g>`;
+  }
+  switch (env.id) {
+    case "living":
+      parts.push(`<g fill="${dark}"><rect x="-140" y="${FY - 700}" width="1120" height="450" rx="90"/>
+        <rect x="-140" y="${FY - 900}" width="330" height="420" rx="80"/>
+        <rect x="30" y="${FY - 260}" width="120" height="260" rx="24"/><rect x="760" y="${FY - 260}" width="120" height="260" rx="24"/></g>
+        <g><ellipse cx="${VW - 330}" cy="${FY - 1250}" rx="260" ry="330" fill="rgba(52,66,44,.85)"/>
+        <rect x="${VW - 380}" y="${FY - 960}" width="100" height="960" fill="${dark}"/>
+        <path d="M${VW - 470} ${FY} l190 0 l-28 190 l-134 0 Z" fill="${dark}"/></g>`);
+      break;
+    case "cucina":
+      parts.push(`<g><rect x="-60" y="${FY - 950}" width="1500" height="950" fill="${dark}"/>
+        <rect x="-60" y="${FY - 990}" width="1560" height="60" fill="rgba(60,56,50,.95)"/>
+        <rect x="90" y="${FY - 830}" width="420" height="330" rx="14" fill="rgba(255,255,255,.06)"/>
+        <rect x="610" y="${FY - 830}" width="420" height="330" rx="14" fill="rgba(255,255,255,.06)"/></g>`);
+      break;
+    case "camera":
+      parts.push(`<g><rect x="-100" y="${FY - 620}" width="1750" height="620" rx="60" fill="${dark}"/>
+        <rect x="60" y="${FY - 760}" width="620" height="220" rx="60" fill="rgba(240,234,222,.92)"/>
+        <rect x="780" y="${FY - 745}" width="620" height="205" rx="60" fill="rgba(240,234,222,.8)"/>
+        <rect x="-100" y="${FY - 300}" width="1750" height="300" fill="rgba(210,198,178,.9)" rx="40"/></g>`);
+      break;
+    case "ingresso":
+      parts.push(`<g><rect x="${VW - 1150}" y="${FY - 900}" width="880" height="80" fill="${dark}"/>
+        <rect x="${VW - 1110}" y="${FY - 820}" width="60" height="820" fill="${dark}"/>
+        <rect x="${VW - 420}" y="${FY - 820}" width="60" height="820" fill="${dark}"/>
+        <ellipse cx="${VW - 710}" cy="${FY - 1010}" rx="130" ry="95" fill="rgba(52,66,44,.8)"/></g>`);
+      break;
+    case "hotel":
+      parts.push(`<g fill="${dark}"><rect x="-120" y="${FY - 640}" width="760" height="420" rx="120"/>
+        <rect x="700" y="${FY - 640}" width="760" height="420" rx="120"/>
+        <rect x="-120" y="${FY - 240}" width="760" height="240" rx="30"/><rect x="700" y="${FY - 240}" width="760" height="240" rx="30"/></g>
+        <circle cx="620" cy="${FY - 850}" r="90" fill="rgba(201,155,79,.65)"/>`);
+      break;
+    case "ufficio":
+      parts.push(`<g><rect x="-80" y="${FY - 760}" width="1500" height="70" fill="${dark}"/>
+        <rect x="60" y="${FY - 690}" width="70" height="690" fill="${dark}"/><rect x="1240" y="${FY - 690}" width="70" height="690" fill="${dark}"/>
+        <rect x="240" y="${FY - 1060}" width="560" height="310" rx="20" fill="${mid}"/></g>`);
+      break;
+    case "retail":
+      parts.push(`<g fill="${dark}"><rect x="60" y="${FY - 520}" width="520" height="520" rx="16"/>
+        <rect x="${VW - 640}" y="${FY - 760}" width="440" height="760" rx="16" opacity=".92"/></g>
+        <ellipse cx="320" cy="${FY - 560}" rx="130" ry="34" fill="rgba(240,223,194,.8)"/>`);
+      break;
+    case "ristorante":
+      parts.push(`<g><circle cx="560" cy="${FY - 20}" r="360" fill="rgba(240,234,222,.9)"/>
+        <rect x="520" y="${FY - 40}" width="80" height="480" fill="${dark}"/>
+        <g fill="${dark}"><rect x="120" y="${FY - 660}" width="90" height="640" rx="30"/><rect x="900" y="${FY - 660}" width="90" height="640" rx="30"/>
+        <rect x="90" y="${FY - 700}" width="950" height="60" rx="28" opacity=".55"/></g></g>`);
+      break;
+  }
+  parts.push(`<rect x="0" y="0" width="${VW}" height="${VH}" fill="url(#env-vignette)" pointer-events="none"/>`);
+  return `<g pointer-events="none">${parts.join("")}</g>`;
+}
+
+/* ---------- 8. Rendering SVG della parete ---------- */
+
+const VIEW_H = 3200;
+const FLOOR_Y = 2900;
+
+function svgDefs(VW) {
+  const defs = [];
+  defs.push(`<linearGradient id="env-wall-shade" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="rgba(17,17,15,.22)"/><stop offset=".35" stop-color="rgba(17,17,15,0)"/>
+    <stop offset="1" stop-color="rgba(17,17,15,.1)"/></linearGradient>`);
+  defs.push(`<linearGradient id="env-floor-shade" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="rgba(17,17,15,.28)"/><stop offset="1" stop-color="rgba(255,255,255,.08)"/></linearGradient>`);
+  defs.push(`<radialGradient id="env-vignette" cx=".5" cy=".42" r=".85">
+    <stop offset=".62" stop-color="rgba(17,17,15,0)"/><stop offset="1" stop-color="rgba(17,17,15,.2)"/></radialGradient>`);
+  defs.push(`<linearGradient id="led-glow" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#ffe7b8"/><stop offset="1" stop-color="#f0b96a"/></linearGradient>`);
+  defs.push(`<filter id="soft-led" x="-80%" y="-400%" width="260%" height="900%">
+    <feGaussianBlur stdDeviation="26"/></filter>`);
+  defs.push(`<filter id="wall-shadow" x="-20%" y="-10%" width="140%" height="130%">
+    <feDropShadow dx="0" dy="26" stdDeviation="46" flood-color="#11110f" flood-opacity=".38"/></filter>`);
+  defs.push(`<filter id="panel-shadow" x="-30%" y="-30%" width="160%" height="160%">
+    <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#11110f" flood-opacity=".28"/></filter>`);
+  // Luce unica e coerente sull'intera parete, dal lato della luce di scena:
+  // i riflessi "per pannello" delle miniature renderebbero la parete finta.
+  const lightLeft = activeScene()?.light === "left";
+  defs.push(`<linearGradient id="wall-sheen" x1="${lightLeft ? 0 : 1}" y1="0" x2="${lightLeft ? 1 : 0}" y2="1">
+    <stop offset="0" stop-color="rgba(255,255,255,.16)"/>
+    <stop offset=".45" stop-color="rgba(255,255,255,0)"/>
+    <stop offset="1" stop-color="rgba(17,17,15,.14)"/></linearGradient>`);
+  // Bisello: bordo alto illuminato e bordo basso in ombra, come un pannello
+  // con spessore reale.
+  defs.push(`<linearGradient id="panel-bevel" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="rgba(255,255,255,.15)"/>
+    <stop offset=".06" stop-color="rgba(255,255,255,0)"/>
+    <stop offset=".93" stop-color="rgba(17,17,15,0)"/>
+    <stop offset="1" stop-color="rgba(17,17,15,.22)"/></linearGradient>`);
+  // Un pattern per ogni combinazione finitura+verso effettivamente in parete.
+  const combos = new Set();
+  state.cols.forEach((col) => col.panels.forEach((p) => combos.add(`${p.finish}|${panelGrain(p)}`)));
+  combos.forEach((combo) => {
+    const [code, grain] = combo.split("|");
+    const mat = MAT_BY_CODE.get(code);
+    if (mat) defs.push(finishPatternSVG(mat, grain));
+  });
+  return `<defs>${defs.join("")}</defs>`;
+}
+
+function cssSafe(code) {
+  return String(code).replace(/[^a-z0-9]/gi, "_");
+}
+
+// Ogni famiglia ha la strategia di posa del materiale reale:
+// - sheet: fogli di tranciato verticali alti quanto la parete, book-match
+//   solo in orizzontale (legni) — la vena non si specchia mai in verticale;
+// - bookmatch: lastre grandi specchiate nei due sensi (marmi, pietre);
+// - seamless: materiale omogeneo reso senza giunture e posato in continuo
+//   (tessuti, pelli, metalli, carbon, cemento, tinte): nessun motivo replicato.
+function finishMapping(mat) {
+  switch (mat?.family) {
+    case "Wood": return { mode: "sheet", w: 1250, h: 3000 };
+    case "Stone": return { mode: "bookmatch", s: 1600 };
+    case "Abstract": return { mode: "bookmatch", s: 1000 };
+    case "Concrete": return { mode: "seamless", s: 1200 };
+    case "Metal": return { mode: "seamless", s: 1100 };
+    case "Textile": return { mode: "seamless", s: 620 };
+    case "Leather": return { mode: "seamless", s: 620 };
+    case "Carbon": return { mode: "seamless", s: 420 };
+    default: return { mode: "seamless", s: 600 };
   }
 }
 
-function roundedBox(width, height, depth, radius, material) {
-  const shape = new THREE.Shape();
-  const x = -width / 2;
-  const y = -height / 2;
-  shape.moveTo(x + radius, y);
-  shape.lineTo(x + width - radius, y);
-  shape.quadraticCurveTo(x + width, y, x + width, y + radius);
-  shape.lineTo(x + width, y + height - radius);
-  shape.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-  shape.lineTo(x + radius, y + height);
-  shape.quadraticCurveTo(x, y + height, x, y + height - radius);
-  shape.lineTo(x, y + radius);
-  shape.quadraticCurveTo(x, y, x + radius, y);
-  const geometry = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: false });
-  geometry.center();
-  return new THREE.Mesh(geometry, material);
+// Texture HD generate proceduralmente (tono-fedeli al campione 3M):
+// se presenti hanno priorità sui campioni 512px; quelle "tileable" sono
+// già senza giunture per costruzione.
+const HD_TEXTURES = () => globalThis.IW_HD_TEXTURES || {};
+const matSrc = (mat) => HD_TEXTURES()[mat.code]?.src || mat.texture;
+const matHDTileable = (mat) => Boolean(HD_TEXTURES()[mat.code]?.tileable);
+
+// Rende un campione piastrellabile senza giunture: i bordi vengono fusi con
+// una copia traslata di mezzo periodo (cross-fade), così la ripetizione
+// diventa invisibile sui materiali omogenei.
+const seamlessCache = new Map();
+const seamlessPending = new Map();
+
+function ensureSeamless(mat) {
+  if (seamlessCache.has(mat.code)) return Promise.resolve(seamlessCache.get(mat.code));
+  if (seamlessPending.has(mat.code)) return seamlessPending.get(mat.code);
+  const promise = new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const S = Math.min(img.naturalWidth, img.naturalHeight) || 512;
+        const half = S >> 1;
+        const c1 = document.createElement("canvas");
+        c1.width = S; c1.height = S;
+        const x1 = c1.getContext("2d");
+        x1.drawImage(img, 0, 0, S, S);
+        const c2 = document.createElement("canvas");
+        c2.width = S; c2.height = S;
+        const x2 = c2.getContext("2d");
+        for (const [ox, oy] of [[-half, -half], [half, -half], [-half, half], [half, half]]) {
+          x2.drawImage(img, ox, oy, S, S);
+        }
+        const d1 = x1.getImageData(0, 0, S, S).data;
+        const d2 = x2.getImageData(0, 0, S, S).data;
+        const out = x1.createImageData(S, S);
+        for (let y = 0; y < S; y++) {
+          const fy = Math.min(y, S - 1 - y) / half;
+          for (let x = 0; x < S; x++) {
+            const fx = Math.min(x, S - 1 - x) / half;
+            const edge = 1 - Math.min(fx, fy);       // 1 al bordo, 0 al centro
+            let m = (edge - .5) / .5;                 // fusione solo vicino ai bordi
+            m = m < 0 ? 0 : m > 1 ? 1 : m * m * (3 - 2 * m);
+            const o = (y * S + x) * 4;
+            out.data[o] = d1[o] * (1 - m) + d2[o] * m;
+            out.data[o + 1] = d1[o + 1] * (1 - m) + d2[o + 1] * m;
+            out.data[o + 2] = d1[o + 2] * (1 - m) + d2[o + 2] * m;
+            out.data[o + 3] = 255;
+          }
+        }
+        x1.putImageData(out, 0, 0);
+        const url = c1.toDataURL("image/jpeg", .92);
+        seamlessCache.set(mat.code, url);
+        resolve(url);
+      } catch {
+        resolve(matSrc(mat));
+      }
+    };
+    img.onerror = () => resolve(matSrc(mat));
+    img.src = matSrc(mat); // preferisci l'originale a risoluzione piena
+  });
+  seamlessPending.set(mat.code, promise);
+  return promise;
 }
 
-function createLabel(text, background = "rgba(20,20,18,.82)", foreground = "#ffffff") {
+const isDirectional = (mat) => Boolean(mat && (mat.directional || mat.family === "Wood"));
+const panelGrain = (panel) => (panel.grain === "h" ? "h" : "v");
+
+// Le finiture sono ancorate alle coordinate della parete (userSpaceOnUse):
+// il materiale prosegue da un pannello all'altro come fosse un'unica posa.
+function finishPatternSVG(mat, grain) {
+  const map = finishMapping(mat);
+  const id = `fin-${cssSafe(mat.code)}-${grain}`;
+  const rot = grain === "h" ? ' patternTransform="rotate(90)"' : "";
+  const fallback = mat.averageColor || "#c9c2b6";
+
+  if (map.mode === "seamless") {
+    let src;
+    if (matHDTileable(mat)) {
+      src = matSrc(mat);
+    } else {
+      src = seamlessCache.get(mat.code) || mat.texture;
+      if (!seamlessCache.has(mat.code)) ensureSeamless(mat).then(() => renderWall());
+    }
+    return `<pattern id="${id}" patternUnits="userSpaceOnUse" width="${map.s}" height="${map.s}"${rot}>
+      <rect width="${map.s}" height="${map.s}" fill="${fallback}"/>
+      <image href="${src}" x="0" y="0" width="${map.s}" height="${map.s}" preserveAspectRatio="none"/>
+    </pattern>`;
+  }
+
+  if (map.mode === "sheet") {
+    const img = (transform) => `<image href="${matSrc(mat)}" x="0" y="0" width="${map.w}" height="${map.h}" preserveAspectRatio="none"${transform ? ` transform="${transform}"` : ""}/>`;
+    return `<pattern id="${id}" patternUnits="userSpaceOnUse" width="${map.w * 2}" height="${map.h}"${rot}>
+      <rect width="${map.w * 2}" height="${map.h}" fill="${fallback}"/>
+      ${img("")}
+      ${img(`translate(${map.w * 2} 0) scale(-1 1)`)}
+    </pattern>`;
+  }
+
+  const S = map.s;
+  const img = (transform) => `<image href="${matSrc(mat)}" x="0" y="0" width="${S}" height="${S}" preserveAspectRatio="none"${transform ? ` transform="${transform}"` : ""}/>`;
+  return `<pattern id="${id}" patternUnits="userSpaceOnUse" width="${S * 2}" height="${S * 2}"${rot}>
+    <rect width="${S * 2}" height="${S * 2}" fill="${fallback}"/>
+    ${img("")}
+    ${img(`translate(${S * 2} 0) scale(-1 1)`)}
+    ${img(`translate(0 ${S * 2}) scale(1 -1)`)}
+    ${img(`translate(${S * 2} ${S * 2}) scale(-1 -1)`)}
+  </pattern>`;
+}
+
+function panelSkinSVG(panel, px, py, pw, ph) {
+  const mat = MAT_BY_CODE.get(panel.finish);
+  const base = `<rect x="${px}" y="${py}" width="${pw}" height="${ph}" rx="6" fill="${mat?.averageColor || "#c9c2b6"}" filter="url(#panel-shadow)"/>`;
+  if (!mat) return base;
+  return base +
+    `<rect x="${px}" y="${py}" width="${pw}" height="${ph}" rx="6" fill="url(#fin-${cssSafe(mat.code)}-${panelGrain(panel)})"/>` +
+    `<rect x="${px}" y="${py}" width="${pw}" height="${ph}" rx="6" fill="url(#panel-bevel)"/>`;
+}
+
+function renderPanelSVG(panel, x, y, w, h, c, i) {
+  const px = x + GAP / 2, py = y + GAP / 2, pw = w - GAP, ph = h - GAP;
+  const parts = [];
+  const selected = selection && selection.c === c && selection.i === i;
+  parts.push(panelSkinSVG(panel, px, py, pw, ph, c, i));
+  parts.push(`<rect x="${px}" y="${py}" width="${pw}" height="${ph}" rx="6" fill="none" stroke="rgba(17,17,15,.28)" stroke-width="3"/>`);
+  if (panel.type === "lux") {
+    const glow = (gy) => {
+      parts.push(`<rect x="${px + 26}" y="${gy - 30}" width="${pw - 52}" height="60" fill="url(#led-glow)" filter="url(#soft-led)" opacity=".95"/>`);
+      parts.push(`<rect x="${px + 30}" y="${gy - 9}" width="${pw - 60}" height="18" rx="9" fill="#ffedc4"/>`);
+    };
+    if (panel.variant === "LED_T" || panel.variant === "LED_TB") glow(py + 34);
+    if (panel.variant !== "LED_T") glow(py + ph - 34);
+    parts.push(`<rect x="${px}" y="${py}" width="${pw}" height="${ph}" rx="6" fill="none" stroke="rgba(17,17,15,.4)" stroke-width="5"/>`);
+  } else if (panel.type === "shelf") {
+    const sy = py + ph - 44;
+    parts.push(`<rect x="${px - 14}" y="${sy}" width="${pw + 28}" height="34" rx="8" fill="#2c2823"/>`);
+    parts.push(`<rect x="${px - 14}" y="${sy + 34}" width="${pw + 28}" height="16" fill="rgba(17,17,15,.24)"/>`);
+    parts.push(`<rect x="${px - 14}" y="${sy - 7}" width="${pw + 28}" height="8" fill="rgba(255,255,255,.24)" rx="4"/>`);
+  } else if (panel.type === "frame") {
+    parts.push(`<rect x="${px + 34}" y="${py + 34}" width="${pw - 68}" height="${ph - 68}" fill="rgba(17,17,15,.16)"/>`);
+    parts.push(`<rect x="${px + 34}" y="${py + 34}" width="${pw - 68}" height="${ph - 68}" fill="none" stroke="#2c2823" stroke-width="26"/>`);
+  } else if (panel.type === "box") {
+    // contenitore a quota fissa (la più bassa): identico su tutti i formati Box
+    const bh = Math.min(ph - 40, 234);
+    parts.push(`<rect x="${px + 10}" y="${py + ph - bh}" width="${pw - 20}" height="${bh}" rx="8" fill="#2c2823"/>`);
+    parts.push(`<rect x="${px + 10}" y="${py + ph - bh}" width="${pw - 20}" height="14" fill="rgba(255,255,255,.16)"/>`);
+    parts.push(`<rect x="${px + 26}" y="${py + ph - bh + 22}" width="${pw - 52}" height="${bh - 44}" rx="6" fill="rgba(17,17,15,.5)"/>`);
+  } else if (panel.type === "board") {
+    // testiera imbottita liscia: bordi morbidi, luce in alto e ombra in basso
+    parts.push(`<rect x="${px + 10}" y="${py + 10}" width="${pw - 20}" height="34" rx="16" fill="rgba(255,255,255,.14)"/>`);
+    parts.push(`<rect x="${px + 10}" y="${py + ph - 46}" width="${pw - 20}" height="36" rx="16" fill="rgba(17,17,15,.14)"/>`);
+    parts.push(`<rect x="${px}" y="${py}" width="${pw}" height="${ph}" rx="16" fill="none" stroke="rgba(17,17,15,.34)" stroke-width="6"/>`);
+    parts.push(`<rect x="${px - 8}" y="${py + ph - 6}" width="${pw + 16}" height="20" rx="8" fill="rgba(17,17,15,.3)"/>`);
+  }
+  if (selected) {
+    parts.push(`<rect x="${px - 5}" y="${py - 5}" width="${pw + 10}" height="${ph + 10}" rx="9" fill="none" stroke="#b8905f" stroke-width="14"/>`);
+  }
+  parts.push(`<rect class="iw-panel-hit" data-c="${c}" data-i="${i}" x="${x}" y="${y}" width="${w}" height="${h}" fill="transparent"/>`);
+  return parts.join("");
+}
+
+// Letto matrimoniale stilizzato, disegnato nelle coordinate della parete:
+// resta centrato sulla parete in ogni ambiente, foto compresa.
+function bedSVG(cx, floorY, baseline) {
+  const bw = 1800;
+  const frameTop = floorY - Math.min(baseline - 60, 420);
+  const parts = [];
+  parts.push(`<ellipse cx="${cx}" cy="${floorY + 150}" rx="${bw / 2 + 160}" ry="120" fill="rgba(17,17,15,.18)"/>`);
+  // comodini simmetrici con abat-jour
+  for (const side of [-1, 1]) {
+    const nx = cx + side * (bw / 2 + 330);
+    parts.push(`<rect x="${nx - 240}" y="${floorY - 460}" width="480" height="460" rx="18" fill="#3a342c"/>`);
+    parts.push(`<rect x="${nx - 240}" y="${floorY - 460}" width="480" height="26" rx="10" fill="rgba(255,255,255,.14)"/>`);
+    parts.push(`<rect x="${nx - 28}" y="${floorY - 690}" width="56" height="230" fill="#26231f"/>`);
+    parts.push(`<path d="M${nx - 150} ${floorY - 660} L${nx + 150} ${floorY - 660} L${nx + 110} ${floorY - 840} L${nx - 110} ${floorY - 840} Z" fill="#efe0c4"/>`);
+    parts.push(`<ellipse cx="${nx}" cy="${floorY - 655}" rx="120" ry="34" fill="#ffe9bd" filter="url(#soft-led)" opacity=".8"/>`);
+  }
+  // cuscini appoggiati alla parete
+  parts.push(`<rect x="${cx - bw / 2 + 120}" y="${frameTop - 300}" width="700" height="270" rx="90" fill="#f4efe4" transform="rotate(-4 ${cx - bw / 2 + 470} ${frameTop - 165})"/>`);
+  parts.push(`<rect x="${cx + bw / 2 - 820}" y="${frameTop - 300}" width="700" height="270" rx="90" fill="#efe9db" transform="rotate(3 ${cx + bw / 2 - 470} ${frameTop - 165})"/>`);
+  // materasso e piumone
+  parts.push(`<rect x="${cx - bw / 2 - 30}" y="${frameTop - 60}" width="${bw + 60}" height="240" rx="70" fill="#f1ebdf"/>`);
+  parts.push(`<rect x="${cx - bw / 2 - 40}" y="${frameTop + 120}" width="${bw + 80}" height="230" rx="60" fill="#e4dccb"/>`);
+  // fascia decorativa a fondo letto
+  parts.push(`<rect x="${cx - bw / 2 - 40}" y="${frameTop + 240}" width="${bw + 80}" height="110" rx="40" fill="#a98a63" opacity=".85"/>`);
+  // giroletto
+  parts.push(`<rect x="${cx - bw / 2 - 70}" y="${frameTop + 330}" width="${bw + 140}" height="150" rx="30" fill="#2c2823"/>`);
+  return `<g>${parts.join("")}</g>`;
+}
+
+function renderWall() {
+  const W = wallWidth();
+  const H = colHeight();
+  const baseline = wallBaseline();
+  const VW = Math.max(4800, W + 1700);
+  const wallX = (VW - W) / 2;
+  const wallBottom = FLOOR_Y - baseline;
+  const wallY = wallBottom - H;
+  const env = envById(state.env.id);
+
+  const body = [];
+  body.push(svgDefs(VW));
+
+  const scene = activeScene();
+  if (scene) {
+    // fotografia calibrata: la scala della foto viene agganciata ai mm reali
+    const s = scene.pxPerMm;
+    body.push(`<rect x="0" y="0" width="${VW}" height="${VIEW_H}" fill="${scene.backdrop}"/>`);
+    body.push(`<image href="${scene.src}" x="${VW / 2 - scene.cx / s}" y="${FLOOR_Y - scene.floorY / s}" width="${scene.w / s}" height="${scene.h / s}" preserveAspectRatio="none"/>`);
+  } else if (state.env.type === "photo" && state.photo) {
+    body.push(`<image href="${state.photo}" x="0" y="0" width="${VW}" height="${VIEW_H}" preserveAspectRatio="xMidYMid slice"/>`);
+  } else {
+    body.push(envBack(env, VW, VIEW_H, FLOOR_Y));
+  }
+
+  // gruppo parete (trasformabile sulla foto)
+  const cx = VW / 2;
+  const s = state.env.type === "photo" ? state.photoScale / 100 : 1;
+  const tx = state.env.type === "photo" ? (state.photoX / 100) * (VW / 3) : 0;
+  const ty = state.env.type === "photo" ? (state.photoY / 100) * 700 : 0;
+  const transform = `translate(${cx + tx} ${FLOOR_Y + ty}) scale(${s}) translate(${-cx} ${-FLOOR_Y})`;
+
+  const wall = [];
+  // Cornici di fondo: una per ogni gruppo di moduli adiacenti a pari quota,
+  // così i moduli laterali possono scendere a terra e quelli centrali restare
+  // sospesi sopra il letto, ognuno con la propria cornice e ombra.
+  {
+    let runStart = 0;
+    for (let c = 1; c <= state.cols.length; c++) {
+      if (c === state.cols.length || colBaseline(state.cols[c]) !== colBaseline(state.cols[runStart])) {
+        const b = colBaseline(state.cols[runStart]);
+        const rx0 = wallX + colOffsetMm(runStart);
+        const rw = state.cols.slice(runStart, c).reduce((s, col) => s + col.width, 0);
+        const ry = FLOOR_Y - state.height;
+        const rh = state.height - b;
+        wall.push(`<rect x="${rx0 - 14}" y="${ry - 14}" width="${rw + 28}" height="${rh + (b > 0 ? 28 : 14)}" rx="10" fill="#1d1b18" filter="url(#wall-shadow)"/>`);
+        runStart = c;
+      }
+    }
+  }
+  let cursor = wallX;
+  state.cols.forEach((col, c) => {
+    let y = FLOOR_Y - colBaseline(col);
+    col.panels.forEach((panel, i) => {
+      y -= panel.height;
+      if (!panel.mergeId) wall.push(renderPanelSVG(panel, cursor, y, col.width, panel.height, c, i));
+    });
+    cursor += col.width;
+  });
+  // pannelli uniti: un'unica pelle sull'intero rettangolo, sopra i moduli
+  const mergeIds = new Set();
+  state.cols.forEach((col) => col.panels.forEach((p) => { if (p.mergeId) mergeIds.add(p.mergeId); }));
+  mergeIds.forEach((id) => {
+    const info = groupInfo(id);
+    if (!info) return;
+    const first = info.members[0];
+    wall.push(renderPanelSVG(info.panel, wallX + info.x0, FLOOR_Y - info.bottom - info.height, info.width, info.height, first.c, first.i));
+  });
+  // velatura di luce per modulo (rispetta le quote diverse)
+  {
+    let sx0 = wallX;
+    state.cols.forEach((col) => {
+      const b = colBaseline(col);
+      wall.push(`<rect x="${sx0}" y="${FLOOR_Y - state.height}" width="${col.width}" height="${state.height - b}" fill="url(#wall-sheen)" pointer-events="none"/>`);
+      sx0 += col.width;
+    });
+  }
+  // modalità unione: evidenzia i pannelli scelti con tratteggio oro
+  if (mergeMode) {
+    mergeSel.forEach(({ c, i }) => {
+      const panel = state.cols[c]?.panels[i];
+      if (!panel) return;
+      const mx = wallX + colOffsetMm(c);
+      const my = FLOOR_Y - panelQuota(c, i) - panel.height;
+      wall.push(`<rect x="${mx + 8}" y="${my + 8}" width="${state.cols[c].width - 16}" height="${panel.height - 16}" rx="8" fill="rgba(184,144,95,.14)" stroke="#b8905f" stroke-width="12" stroke-dasharray="40 26" pointer-events="none"/>`);
+    });
+  }
+  const showBed = state.bed && bedAllowed();
+  if (showBed) {
+    wall.push(bedSVG(cx, FLOOR_Y, bedZoneBaseline()));
+  } else if (!scene) {
+    wall.push(`<ellipse cx="${cx}" cy="${FLOOR_Y + 40}" rx="${W / 2 + 120}" ry="70" fill="rgba(17,17,15,.22)"/>`);
+  }
+  body.push(`<g transform="${transform}">${wall.join("")}</g>`);
+
+  if (state.env.type !== "photo" && !scene) {
+    body.push(envFront(env, VW, VIEW_H, FLOOR_Y, { hideBed: showBed }));
+  }
+
+  svgEl.setAttribute("viewBox", `0 0 ${VW} ${VIEW_H}`);
+  svgEl.setAttribute("preserveAspectRatio", "xMidYMid slice");
+  svgEl.innerHTML = body.join("");
+
+  const bMin = minColBaseline(), bMax = maxColBaseline();
+  dimsEl.textContent = bMax === 0
+    ? `${W} × ${state.height} mm`
+    : bMin === bMax
+      ? `${W} × ${state.height - bMin} mm · da ${bMin} a ${state.height} mm`
+      : `${W} × ${state.height} mm · quote ${bMin}–${bMax} mm`;
+}
+
+/* ---------- 9. Aggiornamento globale ---------- */
+
+function refresh(options = {}) {
+  // la zona letto è inviolabile: se un modulo ci finisce sopra troppo basso
+  // (per uno spostamento o un allargamento), viene rialzato alla quota minima
+  state.cols.forEach((col, c) => {
+    const minB = minBaselineFor(c);
+    if (colBaseline(col) < minB) {
+      col.baseline = minB;
+      reconcileColumn(col);
+    }
+  });
+  sanitizeMerges();
+  renderWall();
+  renderColList();
+  renderWallHeights();
+  renderSummary();
+  updateRequestLink();
+  if (!options.keepPopover) closePopover();
+  renderFinishGrid();
+  saveState();
+}
+
+function mutate(fn, message) {
+  pushUndo();
+  fn();
+  refresh();
+  if (message) toast(message);
+}
+
+// Variante per le azioni dal popover: selezione e popover restano attivi.
+function mutateKeep(fn, message) {
+  pushUndo();
+  fn();
+  refresh({ keepPopover: true });
+  if (message) toast(message);
+}
+
+/* ---------- 10. Scheda di modifica pannello (nel dock: mai sopra la parete) ---------- */
+
+function openPopover(c, i) {
+  // se il pannello fa parte di un gruppo unito, seleziona il gruppo
+  const tapped = state.cols[c]?.panels[i];
+  if (tapped?.mergeId) {
+    const info = groupInfo(tapped.mergeId);
+    if (info) { c = info.members[0].c; i = info.members[0].i; }
+  }
+  selection = { c, i };
+  // la selezione NON cambia scheda: evidenzia parete e modulo,
+  // la modifica avviene nella scheda "Pannello" quando l'utente ci va
+  renderWall();
+  renderColList();
+  renderPopover();
+  updateFinishHint();
+  updatePanelTabBadge();
+}
+
+function closePopover() {
+  mergeMode = false;
+  mergeSel = [];
+  if (selection) {
+    selection = null;
+    renderWall();
+    renderColList();
+    updateFinishHint();
+  }
+  renderPopover();
+  updatePanelTabBadge();
+}
+
+// puntino oro sulla scheda Pannello quando c'è una selezione attiva
+function updatePanelTabBadge() {
+  const tab = dockEl.querySelector('.dock-tabs button[data-dock="pannello"]');
+  if (tab) tab.classList.toggle("has-selection", Boolean(selectedPanel()));
+}
+
+function selectedPanel() {
+  if (!selection) return null;
+  return state.cols[selection.c]?.panels[selection.i] || null;
+}
+
+function renderPopover() {
+  const panel = selectedPanel();
+  const editorRows = ["#popover-families", "#popover-heights", "#popover-grain", "#popover-move", "#popover-variants"];
+  const emptyEl = $("#panel-empty");
+  if (!panel) {
+    // stato vuoto della scheda Pannello
+    if (emptyEl) emptyEl.hidden = false;
+    editorRows.forEach((sel) => { const el = $(sel); if (el) el.hidden = true; });
+    document.querySelector("#panel-editor .popover-foot").hidden = true;
+    document.querySelector("#panel-editor .popover-merge-row").hidden = true;
+    document.querySelector("#panel-editor .panel-edit-hint").hidden = true;
+    $("#popover-close").hidden = true;
+    $("#popover-title").textContent = "Pannello";
+    return;
+  }
+  if (emptyEl) emptyEl.hidden = true;
+  document.querySelector("#panel-editor .popover-foot").hidden = false;
+  document.querySelector("#panel-editor .popover-merge-row").hidden = false;
+  document.querySelector("#panel-editor .panel-edit-hint").hidden = false;
+  $("#popover-close").hidden = false;
+  $("#popover-families").hidden = false;
+  $("#popover-move").hidden = false;
+  const col = state.cols[selection.c];
+  const mat = MAT_BY_CODE.get(panel.finish);
+  const group = selectedGroup();
+  $("#popover-title").textContent = group
+    ? `Pannello unito ${group.width} × ${group.height} · ${mat ? mat.code : "—"}`
+    : `${IW_TYPES[panel.type].label} ${col.width} × ${panel.height} · ${mat ? mat.code : "—"}`;
+
+  const isGround = group ? group.bottom === 0 : (selection.i === 0 && colBaseline(col) === 0);
+  const families = $("#popover-families");
+  families.innerHTML = TYPE_ORDER.map((type) => {
+    const blocked = (isGround && !groundOk(type)) || (group && !MERGE_TYPES.includes(type));
+    const reason = group && !MERGE_TYPES.includes(type)
+      ? "Non disponibile su pannelli uniti"
+      : "In basso possono stare solo Flat o Testiera";
+    return `<button type="button" data-type="${type}" aria-selected="${type === panel.type}" ${blocked ? "disabled" : ""} title="${blocked ? reason : IW_TYPES[type].label}">${TYPE_ICONS[type]}${IW_TYPES[type].label}</button>`;
+  }).join("") + (isGround && !group ? '<i class="popover-ground-note">Il pannello più in basso può essere Flat o Testiera; gli altri elementi partono dal secondo.</i>' : "");
+
+  const heights = $("#popover-heights");
+  if (group) {
+    heights.hidden = true;
+    heights.innerHTML = "";
+  } else {
+    heights.hidden = false;
+    const maxH = panelMaxHeight(col, selection.i);
+    heights.innerHTML = `<span class="popover-row-label">Altezza</span>` + IW_TYPES[panel.type].heights.map((h) =>
+      `<button type="button" data-h="${h}" aria-pressed="${h === panel.height}" ${h > maxH ? "disabled" : ""}>${h}</button>`
+    ).join("");
+  }
+
+  $("#popover-move").querySelectorAll("button[data-move]").forEach((btn) => {
+    const dir = Number(btn.dataset.move);
+    btn.disabled = group ? !canMoveGroup(group, dir) : !canMovePanel(col, selection.i, dir);
+  });
+
+  // pulsanti di unione/divisione
+  const mergeBtn = $("#popover-merge");
+  const cancelBtn = $("#popover-merge-cancel");
+  const splitBtn = $("#popover-split");
+  if (mergeMode) {
+    mergeBtn.hidden = false;
+    mergeBtn.textContent = `✓ Unisci ${mergeSel.length} pannelli`;
+    mergeBtn.disabled = !validateMergeSelection(mergeSel);
+    cancelBtn.hidden = false;
+    splitBtn.hidden = true;
+  } else if (group) {
+    mergeBtn.hidden = true;
+    cancelBtn.hidden = true;
+    splitBtn.hidden = false;
+  } else {
+    mergeBtn.hidden = false;
+    mergeBtn.textContent = "⧉ Unisci con altri pannelli";
+    mergeBtn.disabled = false;
+    cancelBtn.hidden = true;
+    splitBtn.hidden = true;
+  }
+
+  const grainRow = $("#popover-grain");
+  if (isDirectional(mat)) {
+    grainRow.hidden = false;
+    grainRow.querySelectorAll("button[data-grain]").forEach((btn) => {
+      btn.setAttribute("aria-pressed", String(btn.dataset.grain === panelGrain(panel)));
+    });
+  } else {
+    grainRow.hidden = true;
+  }
+
+  const variants = $("#popover-variants");
+  const list = IW_TYPES[panel.type].variants;
+  if (list.length) {
+    variants.hidden = false;
+    variants.innerHTML = `<span class="popover-row-label">Luce</span>` + list.map(([value, label]) =>
+      `<button type="button" data-v="${value}" aria-pressed="${value === panel.variant}">${label}</button>`
+    ).join("");
+  } else {
+    variants.hidden = true;
+    variants.innerHTML = "";
+  }
+}
+
+popoverEl.addEventListener("click", (event) => {
+  const btn = event.target.closest("button");
+  if (!btn) return;
+  if (btn.id === "popover-close") { closePopover(); return; }
+  if (btn.id === "popover-merge") {
+    if (!mergeMode) {
+      mergeMode = true;
+      mergeSel = [{ ...selection }];
+      renderPopover();
+      renderWall();
+      toast("Tocca gli altri pannelli da unire, poi conferma");
+    } else {
+      const valid = validateMergeSelection(mergeSel);
+      if (!valid) { toast("I pannelli scelti devono formare un rettangolo"); return; }
+      const firstSel = mergeSel[0];
+      mergeMode = false;
+      mergeSel = [];
+      mutateKeep(() => { applyMerge(valid, firstSel); });
+      reopenPopover();
+      toast("Pannello unito! Da qui puoi anche ridividerlo");
+    }
+    return;
+  }
+  if (btn.id === "popover-merge-cancel") {
+    mergeMode = false;
+    mergeSel = [];
+    renderPopover();
+    renderWall();
+    return;
+  }
+  if (btn.id === "popover-split") {
+    const group = selectedGroup();
+    if (group) {
+      mutateKeep(() => {
+        group.members.forEach((m) => { delete m.panel.mergeId; });
+      }, "Pannello diviso nei moduli");
+      reopenPopover();
+    }
+    return;
+  }
+  if (btn.id === "popover-delete") {
+    const group = selectedGroup();
+    if (group) {
+      mutate(() => {
+        group.members.forEach((m) => { delete m.panel.mergeId; });
+        group.members.forEach((m) => {
+          const col = state.cols[m.c];
+          deletePanel(col, col.panels.indexOf(m.panel));
+        });
+      }, "Pannello unito rimosso: lo spazio è tornato liscio");
+      return;
+    }
+    const col = state.cols[selection.c];
+    mutate(() => { deletePanel(col, selection.i); }, "Pannello rimosso: lo spazio è tornato liscio");
+    return;
+  }
+  if (btn.id === "popover-finish") {
+    finishMode = "panel";
+    renderFinishModes();
+    renderFinishGrid();
+    openDock("finiture");
+    toast("Ora tocca una finitura: la applico al pannello scelto");
+    return;
+  }
+  const panel = selectedPanel();
+  if (!panel) return;
+  const col = state.cols[selection.c];
+  const group = selectedGroup();
+  if (group && btn.dataset.type && btn.dataset.type !== panel.type) {
+    const type = btn.dataset.type;
+    if (!MERGE_TYPES.includes(type) || (group.bottom === 0 && !groundOk(type))) return;
+    mutateKeep(() => {
+      group.members.forEach((m) => {
+        m.panel.type = type;
+        m.panel.variant = type === "lux" ? "LED_B" : "";
+      });
+    });
+    reopenPopover();
+    return;
+  }
+  if (group && btn.dataset.v) {
+    mutateKeep(() => { group.members.forEach((m) => { m.panel.variant = btn.dataset.v; }); });
+    reopenPopover();
+    return;
+  }
+  if (group && btn.dataset.grain) {
+    mutateKeep(() => { group.members.forEach((m) => { m.panel.grain = btn.dataset.grain; }); });
+    reopenPopover();
+    return;
+  }
+  if (group && btn.dataset.move) {
+    mutateKeep(() => {
+      if (moveGroup(group, Number(btn.dataset.move))) {
+        selection.i = state.cols[selection.c].panels.indexOf(group.panel);
+      }
+    });
+    reopenPopover();
+    return;
+  }
+  if (btn.dataset.type && btn.dataset.type !== panel.type) {
+    const type = btn.dataset.type;
+    if (selection.i === 0 && colBaseline(col) === 0 && !groundOk(type)) {
+      toast("In basso possono stare solo Flat o Testiera");
+      return;
+    }
+    const allowed = IW_TYPES[type].heights;
+    const maxH = panelMaxHeight(col, selection.i);
+    if (!allowed.some((h) => h <= maxH)) {
+      toast("Non c'è abbastanza spazio in colonna per questo pannello");
+      return;
+    }
+    mutateKeep(() => {
+      let target = allowed.includes(panel.height) ? panel.height
+        : [...allowed].reverse().find((h) => h <= panel.height) || allowed[0];
+      if (target > maxH) target = [...allowed].reverse().find((h) => h <= maxH);
+      panel.type = type;
+      panel.variant = type === "lux" ? "LED_B" : "";
+      resizePanel(col, selection.i, target);
+      reconcileColumn(col);
+    });
+    reopenPopover();
+  } else if (btn.dataset.h) {
+    mutateKeep(() => {
+      if (!resizePanel(col, selection.i, Number(btn.dataset.h))) toast("Non c'è abbastanza spazio nella colonna");
+      reconcileColumn(col);
+    });
+    reopenPopover();
+  } else if (btn.dataset.v) {
+    mutateKeep(() => { panel.variant = btn.dataset.v; });
+    reopenPopover();
+  } else if (btn.dataset.move) {
+    mutateKeep(() => {
+      if (movePanel(col, selection.i, Number(btn.dataset.move))) {
+        selection.i = col.panels.indexOf(panel);
+      }
+    });
+    reopenPopover();
+  } else if (btn.dataset.grain) {
+    mutateKeep(() => { panel.grain = btn.dataset.grain; });
+    reopenPopover();
+  }
+});
+
+function reopenPopover() {
+  if (!selection) return;
+  const panel = selectedPanel();
+  if (!panel) { closePopover(); return; }
+  if (activeDock !== "pannello") openDock("pannello");
+  renderPopover();
+  renderWall();
+}
+
+/* ---------- 11. Interazione sullo stage ---------- */
+
+svgEl.addEventListener("click", (event) => {
+  const hit = event.target.closest(".iw-panel-hit");
+  dismissCoach();
+  if (mergeMode) {
+    if (!hit) return;
+    const c = Number(hit.dataset.c), i = Number(hit.dataset.i);
+    if (c === mergeSel[0].c && i === mergeSel[0].i) return; // il primo resta
+    if (state.cols[c]?.panels[i]?.mergeId) { toast("Quel pannello fa già parte di un'unione"); return; }
+    const at = mergeSel.findIndex((s) => s.c === c && s.i === i);
+    if (at >= 0) mergeSel.splice(at, 1);
+    else mergeSel.push({ c, i });
+    renderPopover();
+    renderWall();
+    return;
+  }
+  if (!hit) { closePopover(); return; }
+  openPopover(Number(hit.dataset.c), Number(hit.dataset.i));
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    if (!$("#render-overlay").hidden) {
+      renderOverlay.hidden = true;
+      document.body.style.overflow = "";
+    }
+    else if (!$("#photo-editor").hidden) closePhotoEditor();
+    else if (!$("#studio-3d").hidden) close3D();
+    else if (mergeMode) {
+      mergeMode = false;
+      mergeSel = [];
+      renderPopover();
+      renderWall();
+    } else closePopover();
+  }
+});
+
+/* ---------- 12. Dock ---------- */
+
+let lastDock = "ambiente"; // ultima sezione "vera", per uscire dalla scheda pannello
+
+function openDock(name) {
+  activeDock = name;
+  if (name !== "pannello") lastDock = name;
+  dockEl.querySelectorAll(".dock-tabs button").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.dock === name);
+  });
+  dockEl.querySelectorAll(".dock-panel").forEach((panel) => {
+    panel.hidden = panel.dataset.dockPanel !== name;
+  });
+}
+
+dockEl.querySelector(".dock-tabs").addEventListener("click", (event) => {
+  const btn = event.target.closest("button[data-dock]");
+  if (btn) openDock(btn.dataset.dock);
+});
+
+/* ---------- 13. Ambiente UI ---------- */
+
+function renderEnvCats() {
+  envCatsEl.innerHTML = ENV_CATS.map(([id, label]) =>
+    `<button type="button" data-cat="${id}" class="${id === activeEnvCat ? "active" : ""}" role="tab">${label}</button>`
+  ).join("");
+}
+
+function envCardSVG(env) {
+  const VW = 4800;
+  const sampleWall = `<g>
+    <rect x="1600" y="500" width="1600" height="2400" fill="#1d1b18"/>
+    <rect x="1640" y="540" width="740" height="2320" fill="${env.floor}" opacity=".85"/>
+    <rect x="2420" y="540" width="740" height="1150" fill="#8d867c"/>
+    <rect x="2420" y="1730" width="740" height="1130" fill="${env.glow}"/>
+  </g>`;
+  return `<svg viewBox="0 0 ${VW} ${VIEW_H}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    ${svgMiniDefs()}${envBack(env, VW, VIEW_H, FLOOR_Y)}${sampleWall}${envFront(env, VW, VIEW_H, FLOOR_Y)}</svg>`;
+}
+
+// I gradienti condivisi (env-*) vivono nell'SVG principale: le card li riusano via url(#id).
+function svgMiniDefs() {
+  return "";
+}
+
+function renderEnvGrid() {
+  const sceneCards = PHOTO_SCENES.filter((s) => s.cat === activeEnvCat).map((scene) =>
+    `<button type="button" class="env-card env-card-photo ${state.env.type === "scene" && state.env.id === scene.id ? "active" : ""}" data-scene="${scene.id}">
+      <img src="${scene.src}" alt="" loading="lazy"><b>${scene.label}</b></button>`
+  ).join("");
+  const drawnCards = ENVIRONMENTS.filter((e) => e.cat === activeEnvCat).map((env) =>
+    `<button type="button" class="env-card ${state.env.type === "preset" && state.env.id === env.id ? "active" : ""}" data-env="${env.id}">
+      ${envCardSVG(env)}<b>${env.label}</b></button>`
+  ).join("");
+  envGridEl.innerHTML = sceneCards + drawnCards;
+}
+
+envCatsEl.addEventListener("click", (event) => {
+  const btn = event.target.closest("button[data-cat]");
+  if (!btn) return;
+  activeEnvCat = btn.dataset.cat;
+  renderEnvCats();
+  renderEnvGrid();
+});
+
+envGridEl.addEventListener("click", (event) => {
+  const sceneBtn = event.target.closest("button[data-scene]");
+  if (sceneBtn) {
+    const scene = sceneById(sceneBtn.dataset.scene);
+    mutate(() => {
+      state.env = { type: "scene", id: scene.id };
+      state.bed = false;
+      // quota per modulo: sopra il letto si parte dalla testiera,
+      // i moduli laterali scendono fino a terra
+      state.cols.forEach((col, c) => {
+        col.baseline = Math.max(minBaselineFor(c), 0);
+        reconcileColumn(col);
+      });
+    }, `${scene.label}: sopra il letto la parete parte dalla testiera`);
+    renderEnvGrid();
+    updateEnvControls();
+    return;
+  }
+  const btn = event.target.closest("button[data-env]");
+  if (!btn) return;
+  mutate(() => {
+    state.env = { type: "preset", id: btn.dataset.env };
+  }, `Ambiente: ${envById(btn.dataset.env).label}`);
+  renderEnvGrid();
+  updateEnvControls();
+});
+
+$("#env-photo-input").addEventListener("change", (event) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  // La foto si applica subito; il ritocco resta un'opzione dedicata per chi
+  // vuole togliere piccoli oggetti (il pulsante "Ritocca la foto").
+  reader.onload = () => applyEditedPhoto(reader.result, "Foto caricata: regola la parete con i cursori");
+  reader.readAsDataURL(file);
+  event.target.value = "";
+});
+
+function applyEditedPhoto(dataUrl, message) {
+  mutate(() => {
+    state.photo = dataUrl;
+    state.env = { type: "photo", id: state.env.id };
+    if (state.photoScale === undefined) { state.photoScale = 100; state.photoX = 0; state.photoY = 0; }
+  }, message);
+  updateEnvControls();
+  renderEnvGrid();
+}
+
+$("#env-photo-retouch").addEventListener("click", () => {
+  if (state.photo) openPhotoEditor(state.photo);
+});
+
+$("#env-photo-remove").addEventListener("click", () => {
+  mutate(() => {
+    state.photo = null;
+    state.env = { type: "preset", id: state.env.id };
+  }, "Foto rimossa");
+  updateEnvControls();
+  renderEnvGrid();
+});
+
+function updateEnvControls() {
+  const isPhoto = state.env.type === "photo" && state.photo;
+  $("#env-photo-remove").hidden = !isPhoto;
+  $("#env-photo-retouch").hidden = !isPhoto;
+  $("#env-photo-straighten").hidden = !isPhoto;
+  $("#env-adjust").hidden = !isPhoto;
+  $("#env-scale").value = state.photoScale;
+  $("#env-off-x").value = state.photoX;
+  $("#env-off-y").value = state.photoY;
+}
+
+for (const [id, key] of [["#env-scale", "photoScale"], ["#env-off-x", "photoX"], ["#env-off-y", "photoY"]]) {
+  $(id).addEventListener("input", (event) => {
+    state[key] = Number(event.target.value);
+    renderWall();
+  });
+  $(id).addEventListener("change", () => saveState());
+}
+
+$("#env-adjust-reset").addEventListener("click", () => {
+  state.photoScale = 100; state.photoX = 0; state.photoY = 0;
+  updateEnvControls();
+  renderWall();
+});
+
+/* ---------- 14. Parete UI ---------- */
+
+function moveColumn(c, dir) {
+  const j = c + dir;
+  if (j < 0 || j >= state.cols.length) return false;
+  [state.cols[c], state.cols[j]] = [state.cols[j], state.cols[c]];
+  return true;
+}
+
+function renderColList() {
+  if (!state.cols.length) {
+    colListEl.innerHTML = '<p class="col-empty">Aggiungi almeno una colonna.</p>';
+    return;
+  }
+  colListEl.innerHTML = state.cols.map((col, c) => {
+    const isSelected = selection && selection.c === c;
+    const b = colBaseline(col);
+    const minB = minBaselineFor(c);
+    const canDown = b - 150 >= minB;
+    const canUp = b + 150 <= Math.min(1200, state.height - 600);
+    return `<div class="col-chip ${isSelected ? "col-chip-selected" : ""}" ${isSelected ? 'title="Qui c’è il pannello selezionato"' : ""}>
+      <b>C${c + 1} · ${col.width} mm${isSelected ? " ·" : ""}</b>${isSelected ? '<i class="col-chip-dot" aria-label="pannello selezionato"></i>' : ""}
+      <span class="col-quota" title="Quota da terra del modulo${minB > 0 ? ` (minimo ${minB} mm: c’è il letto)` : ""}">
+        <button type="button" data-col-quota="${c}:-150" aria-label="Abbassa la quota del modulo ${c + 1}" ${canDown ? "" : "disabled"}>−</button>
+        <em>${b > 0 ? b + " mm" : "terra"}</em>
+        <button type="button" data-col-quota="${c}:150" aria-label="Alza la quota del modulo ${c + 1}" ${canUp ? "" : "disabled"}>+</button>
+      </span>
+      <button type="button" data-col-move="${c}:-1" title="Sposta a sinistra" aria-label="Sposta la colonna ${c + 1} a sinistra" ${c === 0 ? "disabled" : ""}>◀</button>
+      <button type="button" data-col-move="${c}:1" title="Sposta a destra" aria-label="Sposta la colonna ${c + 1} a destra" ${c === state.cols.length - 1 ? "disabled" : ""}>▶</button>
+      <button type="button" class="col-remove" data-col-remove="${c}" title="Rimuovi la colonna" aria-label="Rimuovi la colonna ${c + 1}">×</button>
+    </div>`;
+  }).join("");
+}
+
+colListEl.addEventListener("click", (event) => {
+  const quotaBtn = event.target.closest("button[data-col-quota]");
+  if (quotaBtn) {
+    const [c, delta] = quotaBtn.dataset.colQuota.split(":").map(Number);
+    const col = state.cols[c];
+    const next = colBaseline(col) + delta;
+    const minB = minBaselineFor(c);
+    if (next < minB) {
+      toast(minB > 0 ? `Sopra il letto questo modulo parte da ${minB} mm` : "Il modulo è già a terra");
+      return;
+    }
+    if (next > Math.min(1200, state.height - 600)) { toast("Quota massima raggiunta"); return; }
+    mutateKeep(() => {
+      col.baseline = next;
+      reconcileColumn(col);
+    }, `Modulo C${c + 1}: quota ${next > 0 ? next + " mm" : "a terra"}`);
+    renderPopover();
+    updatePanelTabBadge();
+    return;
+  }
+  const moveBtn = event.target.closest("button[data-col-move]");
+  if (moveBtn) {
+    const [c, dir] = moveBtn.dataset.colMove.split(":").map(Number);
+    // la selezione segue il modulo spostato: resta evidenziato in lista,
+    // il pannello resta selezionato in 2D e si può continuare a spostare
+    mutateKeep(() => {
+      if (moveColumn(c, dir)) {
+        if (selection?.c === c) selection.c = c + dir;
+        else if (selection?.c === c + dir) selection.c = c;
+      }
+    }, `Colonna spostata a ${dir > 0 ? "destra" : "sinistra"}`);
+    renderPopover();
+    updatePanelTabBadge();
+    return;
+  }
+  const removeBtn = event.target.closest("button[data-col-remove]");
+  if (!removeBtn) return;
+  if (state.cols.length <= 1) { toast("Serve almeno una colonna"); return; }
+  const removed = Number(removeBtn.dataset.colRemove);
+  const selectionWasHere = selection?.c === removed;
+  mutateKeep(() => {
+    state.cols.splice(removed, 1);
+    if (selection && selection.c > removed) selection.c -= 1;
+  }, "Colonna rimossa");
+  if (selectionWasHere) closePopover();
+  else { renderPopover(); updatePanelTabBadge(); }
+});
+
+document.querySelectorAll("[data-add-col]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const width = Number(btn.dataset.addCol);
+    if (wallWidth() + width > MAX_WALL_WIDTH) { toast(`Larghezza massima ${MAX_WALL_WIDTH / 1000} m`); return; }
+    mutate(() => {
+      const col = generateColumn(width, currentPalette(), wallBaseline());
+      col.baseline = wallBaseline();
+      state.cols.push(col);
+    }, `Colonna da ${width} mm aggiunta`);
+  });
+});
+
+function renderWallHeights() {
+  document.querySelectorAll("#wall-heights button").forEach((btn) => {
+    btn.setAttribute("aria-checked", String(Number(btn.dataset.height) === state.height));
+    btn.setAttribute("role", "radio");
+  });
+  document.querySelectorAll("#wall-baselines button").forEach((btn) => {
+    const value = Number(btn.dataset.baseline);
+    const allEqual = state.cols.length > 0 && state.cols.every((col) => colBaseline(col) === value);
+    btn.setAttribute("aria-checked", String(allEqual));
+    btn.setAttribute("role", "radio");
+  });
+  const bedRow = $("#bed-toggle-row");
+  bedRow.hidden = !bedAllowed();
+  $("#bed-toggle").checked = Boolean(state.bed);
+}
+
+$("#wall-baselines").addEventListener("click", (event) => {
+  const btn = event.target.closest("button[data-baseline]");
+  if (!btn) return;
+  const value = Number(btn.dataset.baseline);
+  // applica a TUTTI i moduli, rispettando la zona letto di ciascuno
+  mutate(() => {
+    state.baseline = value;
+    if (value < 450) state.bed = false;
+    state.cols.forEach((col, c) => {
+      col.baseline = Math.max(value, minBaselineFor(c));
+      reconcileColumn(col);
+    });
+  }, value > 0 ? `Tutti i moduli da ${value} mm da terra` : "Tutti i moduli a terra");
+});
+
+$("#bed-toggle").addEventListener("change", (event) => {
+  mutate(() => { state.bed = event.target.checked; },
+    event.target.checked ? "Letto centrato sotto la parete" : "Letto nascosto");
+});
+
+$("#wall-heights").addEventListener("click", (event) => {
+  const btn = event.target.closest("button[data-height]");
+  if (!btn) return;
+  mutate(() => {
+    state.height = Number(btn.dataset.height);
+    state.cols.forEach(reconcileColumn);
+  }, `Altezza parete: ${btn.dataset.height} mm`);
+});
+
+/* ---------- 15. Finiture UI ---------- */
+
+function renderFinishTabs() {
+  if (!activeFinishTab) activeFinishTab = CATALOG.groups[0]?.id;
+  finishTabsEl.innerHTML = CATALOG.groups.map((group) =>
+    `<button type="button" data-tab="${group.id}" class="${group.id === activeFinishTab ? "active" : ""}" role="tab">${group.label}</button>`
+  ).join("");
+}
+
+function renderFinishGrid() {
+  const group = CATALOG.groups.find((g) => g.id === activeFinishTab) || CATALOG.groups[0];
+  if (!group) { finishGridEl.innerHTML = ""; return; }
+  const used = new Set();
+  state.cols.forEach((col) => col.panels.forEach((p) => used.add(p.finish)));
+  const sel = selectedPanel();
+  finishGridEl.innerHTML = group.materials.map((mat) => {
+    const isActive = sel ? sel.finish === mat.code : used.has(mat.code);
+    return `<button type="button" class="finish-swatch ${isActive ? "active" : ""}" data-code="${mat.code}" title="${mat.code} · ${group.label}">
+      <img src="${mat.textureData}" alt="" loading="lazy"><small>${mat.code}</small></button>`;
+  }).join("");
+}
+
+finishTabsEl.addEventListener("click", (event) => {
+  const btn = event.target.closest("button[data-tab]");
+  if (!btn) return;
+  activeFinishTab = btn.dataset.tab;
+  renderFinishTabs();
+  renderFinishGrid();
+});
+
+function renderFinishModes() {
+  document.querySelectorAll("#finish-mode button").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.finishMode === finishMode);
+  });
+  updateFinishHint();
+}
+
+$("#finish-mode").addEventListener("click", (event) => {
+  const btn = event.target.closest("button[data-finish-mode]");
+  if (!btn) return;
+  finishMode = btn.dataset.finishMode;
+  renderFinishModes();
+});
+
+function updateFinishHint() {
+  const sel = selectedPanel();
+  if (finishMode === "panel") {
+    finishHintEl.textContent = sel
+      ? `Applico al pannello selezionato (${IW_TYPES[sel.type].label} ${sel.height} mm).`
+      : "Tocca prima un pannello sulla parete, poi scegli la finitura.";
+  } else {
+    finishHintEl.textContent = "Tocca una finitura per vestire tutta la parete in un colpo solo.";
+  }
+}
+
+finishGridEl.addEventListener("click", (event) => {
+  const btn = event.target.closest("button[data-code]");
+  if (!btn) return;
+  const code = btn.dataset.code;
+  const mat = MAT_BY_CODE.get(code);
+  if (!mat) return;
+  if (finishMode === "panel") {
+    const sel = selectedPanel();
+    if (!sel) { toast("Prima tocca un pannello sulla parete"); return; }
+    const kept = selection;
+    const group = selectedGroup();
+    mutate(() => {
+      if (group) group.members.forEach((m) => { m.panel.finish = code; });
+      else sel.finish = code;
+    }, `${code} applicata al pannello`);
+    selection = kept;
+    renderWall();
+  } else {
+    mutate(() => {
+      state.cols.forEach((col) => col.panels.forEach((p) => { p.finish = code; }));
+    }, `${code} su tutta la parete`);
+  }
+  renderFinishGrid();
+});
+
+/* ---------- 16. Riepilogo, export, condivisione ---------- */
+
+function configLines() {
+  const lines = [];
+  const seenMerges = new Set();
+  state.cols.forEach((col, c) => {
+    col.panels.forEach((panel) => {
+      if (panel.mergeId) {
+        if (seenMerges.has(panel.mergeId)) return;
+        seenMerges.add(panel.mergeId);
+        const info = groupInfo(panel.mergeId);
+        if (info) {
+          const c1 = info.members[0].c + 1, c2 = info.members[info.members.length - 1].c + 1;
+          lines.push({
+            col: `C${c1}–C${c2}`,
+            name: `${IW_TYPES[panel.type].label} unito${panel.variant ? ` (${IW_TYPES.lux.variants.find(([v]) => v === panel.variant)?.[1] || panel.variant})` : ""}`,
+            size: `${info.width} × ${info.height} mm`,
+            finish: panel.finish,
+          });
+          return;
+        }
+      }
+      lines.push({
+        col: `C${c + 1}`,
+        name: `${IW_TYPES[panel.type].label}${panel.variant ? ` (${IW_TYPES.lux.variants.find(([v]) => v === panel.variant)?.[1] || panel.variant})` : ""}`,
+        size: `${col.width} × ${panel.height} mm`,
+        finish: panel.finish,
+      });
+    });
+  });
+  return lines;
+}
+
+function renderSummary() {
+  const W = wallWidth();
+  const baseline = wallBaseline();
+  const finishes = new Set();
+  let count = 0;
+  state.cols.forEach((col) => col.panels.forEach((p) => { count++; finishes.add(p.finish); }));
+  const lines = configLines();
+  const bMin = minColBaseline(), bMax = maxColBaseline();
+  const quotaRow = bMax > 0
+    ? `<div class="summary-row"><span>Quota da terra${state.bed ? " · letto centrato" : ""}</span><small>${
+        bMin === bMax
+          ? `tutti i moduli a ${bMin} mm`
+          : state.cols.map((col, c) => `C${c + 1}: ${colBaseline(col) || "terra"}`).join(" · ")
+      }</small></div>`
+    : "";
+  summaryEl.innerHTML = `
+    <div class="summary-stats">
+      <div><span>Parete</span><b>${(W / 1000).toFixed(1)} × ${(state.height / 1000).toFixed(1)} m</b></div>
+      <div><span>Pannelli</span><b>${count}</b></div>
+      <div><span>Finiture</span><b>${finishes.size}</b></div>
+    </div>
+    <div class="summary-list">
+      ${quotaRow}
+      ${lines.map((line) => `<div class="summary-row"><span>${line.col} · ${line.name} ${line.size}</span><small>${line.finish}</small></div>`).join("")}
+    </div>`;
+}
+
+function configDescription() {
+  const prefix = state.bed && bedAllowed() ? "letto matrimoniale centrato; " : "";
+  return prefix + state.cols.map((col, c) => {
+    const b = colBaseline(col);
+    const panels = col.panels.map((p) =>
+      `${IW_TYPES[p.type].label} ${col.width}x${p.height}${p.variant ? ` ${p.variant}` : ""} DI-NOC ${p.finish}`
+    ).join(" + ");
+    return `colonna ${c + 1} (${col.width} mm${b > 0 ? `, quota ${b} mm` : ""}): ${panels}`;
+  }).join("; ");
+}
+
+function updateRequestLink() {
+  const finishes = [...new Set(state.cols.flatMap((col) => col.panels.map((p) => p.finish)))];
+  const params = new URLSearchParams({
+    tipo: "config3d",
+    dimensioni: `${wallWidth() / 10}x${state.height / 10}`,
+    finitura: finishes.join(", "),
+    elementi: configDescription(),
+  });
+  requestEl.href = `contatti.html?${params}`;
+}
+
+/* --- serializzazione stato → URL --- */
+
+function encodeState() {
+  const compact = {
+    h: state.height,
+    b: wallBaseline(),
+    l: state.bed ? 1 : 0,
+    e: state.env.type === "photo" ? ["preset", "living"] : [state.env.type, state.env.id],
+    c: state.cols.map((col) => [col.width, col.panels.map((p) => [TYPE_ORDER.indexOf(p.type), p.height, p.variant, p.finish, panelGrain(p), p.mergeId || 0]), colBaseline(col)]),
+  };
+  const json = JSON.stringify(compact);
+  return btoa(unescape(encodeURIComponent(json))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function decodeState(encoded) {
+  try {
+    const json = decodeURIComponent(escape(atob(encoded.replace(/-/g, "+").replace(/_/g, "/"))));
+    const compact = JSON.parse(json);
+    if (!Array.isArray(compact.c) || !compact.c.length) return null;
+    const parsed = {
+      height: WALL_HEIGHTS.includes(compact.h) ? compact.h : 2700,
+      baseline: BASELINES.includes(compact.b) ? compact.b : 0,
+      bed: compact.l === 1 && compact.b >= 450,
+      env: compact.e?.[0] === "scene" && sceneById(compact.e[1])
+        ? { type: "scene", id: compact.e[1] }
+        : { type: "preset", id: envById(compact.e?.[1]).id },
+      photo: null, photoScale: 100, photoX: 0, photoY: 0,
+      cols: compact.c.map(([width, panels, colB]) => ({
+        width: COL_WIDTHS.includes(width) ? width : 600,
+        // quota per modulo; i link vecchi (senza terzo campo) usano la globale
+        baseline: BASELINES.includes(colB) ? colB : (BASELINES.includes(compact.b) ? compact.b : 0),
+        panels: panels.map(([t, h, v, f, g, m]) => {
+          const panel = {
+            type: TYPE_ORDER[t] || "flat",
+            height: Number(h) || 300,
+            variant: typeof v === "string" ? v : "",
+            finish: MAT_BY_CODE.has(f) ? f : DEFAULT_BASE,
+            grain: g === "h" ? "h" : "v",
+          };
+          if (Number(m) > 0) panel.mergeId = Number(m);
+          return panel;
+        }),
+      })),
+    };
+    sanitizeColumns(parsed.cols);
+    parsed.cols.forEach((col) => reconcileColumn(col, parsed.height - col.baseline));
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function saveState() {
+  try {
+    const snapshot = clone(state);
+    snapshot.photo = null;
+    if (snapshot.env.type === "photo") snapshot.env = { type: "preset", id: snapshot.env.id };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+    history.replaceState(null, "", `#d=${encodeState()}`);
+  } catch { /* storage pieno o negato: pazienza */ }
+}
+
+/* --- export PNG --- */
+
+function buildStandaloneSVG() {
+  const VW = Number(svgEl.getAttribute("viewBox").split(" ")[2]);
+  const watermark = `<g font-family="Arial, sans-serif">
+    <text x="${VW - 90}" y="${VIEW_H - 90}" text-anchor="end" font-size="86" fill="rgba(255,255,255,.92)" font-weight="600">IconicWall</text>
+    <text x="${VW - 90}" y="${VIEW_H - 160}" text-anchor="end" font-size="52" fill="rgba(255,255,255,.75)">creata su iconicwall.it</text>
+  </g>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 ${VW} ${VIEW_H}" width="1600" height="${Math.round(1600 * VIEW_H / VW)}">${svgEl.innerHTML}${watermark}</svg>`;
+}
+
+// L'SVG rasterizzato dentro <img> non può caricare file esterni:
+// le texture usate vanno incorporate come data URL.
+const textureDataUrlCache = new Map();
+
+async function textureAsDataURL(mat) {
+  if (textureDataUrlCache.has(mat.code)) return textureDataUrlCache.get(mat.code);
+  try {
+    const blob = await (await fetch(matSrc(mat))).blob();
+    const dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+    textureDataUrlCache.set(mat.code, dataUrl);
+    return dataUrl;
+  } catch {
+    return mat.textureData; // ripiego: miniatura del catalogo
+  }
+}
+
+async function inlineTextures(svgString) {
+  const used = new Set();
+  state.cols.forEach((col) => col.panels.forEach((p) => used.add(p.finish)));
+  for (const code of used) {
+    const mat = MAT_BY_CODE.get(code);
+    if (!mat) continue;
+    const src = matSrc(mat);
+    if (!svgString.includes(`href="${src}"`)) continue; // già data URL (seamless)
+    svgString = svgString.split(`href="${src}"`).join(`href="${await textureAsDataURL(mat)}"`);
+  }
+  // anche la scena fotografica di sfondo va incorporata nell'export
+  const scene = activeScene();
+  if (scene && svgString.includes(`href="${scene.src}"`)) {
+    try {
+      const blob = await (await fetch(scene.src)).blob();
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+      svgString = svgString.split(`href="${scene.src}"`).join(`href="${dataUrl}"`);
+    } catch { /* la scena resterà vuota nell'export, meglio di un errore */ }
+  }
+  return svgString;
+}
+
+function exportPNG(done) {
+  const hadSelection = selection;
+  if (hadSelection) { selection = null; renderWall(); }
+  const svgString = buildStandaloneSVG();
+  if (hadSelection) { selection = hadSelection; renderWall(); }
+  inlineTextures(svgString).then((inlined) => rasterizeSVG(inlined, done));
+}
+
+function rasterizeSVG(svgString, done) {
+  const img = new Image();
+  img.onload = () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = img.width || 1600;
+    canvas.height = img.height || 1067;
+    const context = canvas.getContext("2d");
+    context.drawImage(img, 0, 0);
+    try {
+      done(canvas.toDataURL("image/png"));
+    } catch (error) {
+      console.warn("Export PNG non riuscito", error);
+      toast("Non riesco a esportare l'immagine con questa foto");
+    }
+  };
+  img.onerror = () => toast("Non riesco a generare l'immagine");
+  img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgString);
+}
+
+$("#btn-download-png").addEventListener("click", () => {
+  exportPNG((dataUrl) => {
+    const link = document.createElement("a");
+    link.href = dataUrl;
+    link.download = "iconicwall-la-mia-parete.png";
+    link.click();
+    toast("Immagine scaricata: mostrala a chi vuoi");
+  });
+});
+
+/* --- scheda PDF (stampa) --- */
+
+$("#btn-download-pdf").addEventListener("click", () => {
+  exportPNG((dataUrl) => {
+    const lines = configLines();
+    const date = new Date().toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
+    $("#print-sheet").innerHTML = `
+      <div class="print-head"><b>IconicWall</b><span>Scheda configurazione · ${date}</span></div>
+      <img class="print-visual" src="${dataUrl}" alt="La parete configurata">
+      <h2>La tua parete — ${(wallWidth() / 1000).toFixed(1)} × ${(state.height / 1000).toFixed(1)} m</h2>
+      <table>
+        <thead><tr><th>Colonna</th><th>Pannello</th><th>Misure</th><th>Finitura 3M™ DI-NOC™</th></tr></thead>
+        <tbody>${lines.map((line) => `<tr><td>${line.col}</td><td>${line.name}</td><td>${line.size}</td><td>${line.finish}</td></tr>`).join("")}</tbody>
+      </table>
+      <div class="print-foot">Configurazione indicativa creata con IconicWall Studio — www.iconicwall.it.
+      Misure e finiture vengono verificate in fase di proposta. Il catalogo completo 3M™ DI-NOC™ (oltre 700 finiture) è disponibile su richiesta.</div>`;
+    requestAnimationFrame(() => window.print());
+  });
+});
+
+/* --- condivisione --- */
+
+$("#btn-share").addEventListener("click", async () => {
+  saveState();
+  const url = location.href;
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: "La mia parete IconicWall", text: "Guarda la parete che ho composto con IconicWall Studio", url });
+      return;
+    } catch { /* annullato: proviamo la copia */ }
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    toast("Link copiato: incollalo dove vuoi");
+  } catch {
+    prompt("Copia questo link:", url);
+  }
+});
+
+/* ---------- 16b. Ritocco foto: rimozione oggetti ---------- */
+
+const peEl = $("#photo-editor");
+const peStage = $("#pe-stage");
+const peCanvas = $("#pe-canvas");
+const peCtx = peCanvas.getContext("2d");
+const PE_MAX = 1400; // risoluzione massima di lavoro
+let pe = null; // { work, mask, undoStack, painting, lastX, lastY, mode, corners, draggingCorner }
+
+function peDefaultCorners(w, h) {
+  return [
+    { x: w * .14, y: h * .14 }, { x: w * .86, y: h * .14 },
+    { x: w * .86, y: h * .86 }, { x: w * .14, y: h * .86 },
+  ];
+}
+
+function setPeMode(mode) {
+  if (!pe) return;
+  pe.mode = mode;
+  $("#pe-mode-brush").classList.toggle("active", mode === "brush");
+  $("#pe-mode-corners").classList.toggle("active", mode === "corners");
+  document.querySelectorAll(".pe-brush-only").forEach((el) => { el.hidden = mode !== "brush"; });
+  document.querySelectorAll(".pe-corner-only").forEach((el) => { el.hidden = mode !== "corners"; });
+  $("#pe-hint").innerHTML = mode === "brush"
+    ? "Colora con il dito o il mouse i piccoli oggetti da far sparire, poi premi <b>Rimuovi</b>. Funziona al meglio su pareti e superfici uniformi."
+    : "Trascina i 4 angoli sugli spigoli di qualcosa che nella realtà è rettangolare (la parete, una porta, una finestra), poi premi <b>Raddrizza</b>: la foto viene messa in squadra.";
+  peRedraw();
+}
+
+function openPhotoEditor(dataUrl, mode = "brush") {
+  const img = new Image();
+  img.onload = () => {
+    const scale = Math.min(1, PE_MAX / Math.max(img.width, img.height));
+    const w = Math.round(img.width * scale);
+    const h = Math.round(img.height * scale);
+    const work = document.createElement("canvas");
+    work.width = w; work.height = h;
+    work.getContext("2d").drawImage(img, 0, 0, w, h);
+    const mask = document.createElement("canvas");
+    mask.width = w; mask.height = h;
+    pe = {
+      work, mask, undoStack: [], painting: false, lastX: 0, lastY: 0,
+      mode, corners: peDefaultCorners(w, h), draggingCorner: -1,
+    };
+    peCanvas.width = w;
+    peCanvas.height = h;
+    peEl.hidden = false;
+    document.body.style.overflow = "hidden";
+    setPeMode(mode);
+  };
+  img.onerror = () => toast("Non riesco a leggere questa immagine");
+  img.src = dataUrl;
+}
+
+function closePhotoEditor() {
+  peEl.hidden = true;
+  document.body.style.overflow = "";
+  pe = null;
+}
+
+function peRedraw() {
+  if (!pe) return;
+  peCtx.drawImage(pe.work, 0, 0);
+  peCtx.save();
+  peCtx.globalAlpha = .5;
+  peCtx.drawImage(pe.mask, 0, 0);
+  peCtx.restore();
+  if (pe.mode === "corners") peDrawCorners();
+}
+
+// Sovrapposizione del quadrilatero di raddrizzamento: ombra fuori,
+// linee e maniglie in evidenza.
+function peDrawCorners() {
+  const c = pe.corners;
+  const rect = peCanvas.getBoundingClientRect();
+  const k = rect.width ? peCanvas.width / rect.width : 1; // px lavoro per px schermo
+  peCtx.save();
+  peCtx.beginPath();
+  peCtx.rect(0, 0, peCanvas.width, peCanvas.height);
+  peCtx.moveTo(c[0].x, c[0].y);
+  for (let i = 3; i >= 0; i--) peCtx.lineTo(c[i].x, c[i].y);
+  peCtx.closePath();
+  peCtx.fillStyle = "rgba(17,17,15,.4)";
+  peCtx.fill("evenodd");
+  peCtx.beginPath();
+  peCtx.moveTo(c[0].x, c[0].y);
+  for (let i = 1; i < 4; i++) peCtx.lineTo(c[i].x, c[i].y);
+  peCtx.closePath();
+  peCtx.strokeStyle = "#e8c496";
+  peCtx.lineWidth = 3 * k;
+  peCtx.stroke();
+  for (const p of c) {
+    peCtx.beginPath();
+    peCtx.arc(p.x, p.y, 13 * k, 0, Math.PI * 2);
+    peCtx.fillStyle = "#ffffff";
+    peCtx.fill();
+    peCtx.lineWidth = 4 * k;
+    peCtx.strokeStyle = "#b8905f";
+    peCtx.stroke();
+  }
+  peCtx.restore();
+}
+
+function pePoint(event) {
+  const rect = peCanvas.getBoundingClientRect();
+  return {
+    x: (event.clientX - rect.left) * (peCanvas.width / rect.width),
+    y: (event.clientY - rect.top) * (peCanvas.height / rect.height),
+    brush: Number($("#pe-brush").value) * (peCanvas.width / rect.width),
+  };
+}
+
+function peStroke(x0, y0, x1, y1, radius) {
+  const ctx = pe.mask.getContext("2d");
+  ctx.strokeStyle = "rgba(213,74,54,.95)";
+  ctx.fillStyle = "rgba(213,74,54,.95)";
+  ctx.lineWidth = radius * 2;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.beginPath();
+  ctx.moveTo(x0, y0);
+  ctx.lineTo(x1, y1);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(x1, y1, radius, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+peCanvas.addEventListener("pointerdown", (event) => {
+  if (!pe) return;
+  event.preventDefault();
+  peCanvas.setPointerCapture(event.pointerId);
+  const p = pePoint(event);
+  if (pe.mode === "corners") {
+    const grab = 42 * (peCanvas.width / peCanvas.getBoundingClientRect().width);
+    let best = -1, bestD = grab;
+    pe.corners.forEach((corner, i) => {
+      const d = Math.hypot(corner.x - p.x, corner.y - p.y);
+      if (d < bestD) { bestD = d; best = i; }
+    });
+    pe.draggingCorner = best;
+    return;
+  }
+  pe.painting = true;
+  pe.lastX = p.x; pe.lastY = p.y;
+  peStroke(p.x, p.y, p.x, p.y, p.brush / 2);
+  peRedraw();
+});
+
+peCanvas.addEventListener("pointermove", (event) => {
+  if (!pe) return;
+  const p = pePoint(event);
+  if (pe.mode === "corners") {
+    if (pe.draggingCorner < 0) return;
+    pe.corners[pe.draggingCorner] = {
+      x: Math.max(0, Math.min(peCanvas.width, p.x)),
+      y: Math.max(0, Math.min(peCanvas.height, p.y)),
+    };
+    peRedraw();
+    return;
+  }
+  if (!pe.painting) return;
+  peStroke(pe.lastX, pe.lastY, p.x, p.y, p.brush / 2);
+  pe.lastX = p.x; pe.lastY = p.y;
+  peRedraw();
+});
+
+peCanvas.addEventListener("pointerup", () => {
+  if (!pe) return;
+  pe.painting = false;
+  pe.draggingCorner = -1;
+});
+
+function peSnapshot() {
+  pe.undoStack.push({
+    img: pe.work.toDataURL("image/jpeg", .92),
+    mask: pe.mask.toDataURL("image/png"),
+  });
+  if (pe.undoStack.length > 6) pe.undoStack.shift();
+}
+
+$("#pe-undo").addEventListener("click", () => {
+  if (!pe || !pe.undoStack.length) {
+    // nessun "Rimuovi" da annullare: pulisci almeno la selezione
+    if (pe) { pe.mask.getContext("2d").clearRect(0, 0, pe.mask.width, pe.mask.height); peRedraw(); }
+    return;
+  }
+  const snap = pe.undoStack.pop();
+  const imgEl = new Image();
+  imgEl.onload = () => {
+    pe.work.getContext("2d").drawImage(imgEl, 0, 0);
+    const maskEl = new Image();
+    maskEl.onload = () => {
+      const mctx = pe.mask.getContext("2d");
+      mctx.clearRect(0, 0, pe.mask.width, pe.mask.height);
+      mctx.drawImage(maskEl, 0, 0);
+      peRedraw();
+    };
+    maskEl.src = snap.mask;
+  };
+  imgEl.src = snap.img;
+});
+
+$("#pe-clear").addEventListener("click", () => {
+  if (!pe) return;
+  pe.mask.getContext("2d").clearRect(0, 0, pe.mask.width, pe.mask.height);
+  peRedraw();
+});
+
+// Riempimento "a cipolla" dal bordo verso l'interno + lisciatura:
+// dissolve l'oggetto nei colori circostanti (muri e pavimenti vengono benissimo).
+function inpaintData(data, mask, w, h) {
+  const known = new Uint8Array(w * h);
+  const holes = [];
+  for (let i = 0; i < w * h; i++) {
+    known[i] = mask[i] ? 0 : 1;
+    if (mask[i]) holes.push(i);
+  }
+  if (!holes.length) return;
+  let frontier = [];
+  for (const i of holes) {
+    const x = i % w, y = (i / w) | 0;
+    if ((x > 0 && known[i - 1]) || (x < w - 1 && known[i + 1]) || (y > 0 && known[i - w]) || (y < h - 1 && known[i + w])) {
+      frontier.push(i);
+    }
+  }
+  while (frontier.length) {
+    const next = [];
+    const filledNow = [];
+    for (const i of frontier) {
+      if (known[i]) continue;
+      const x = i % w, y = (i / w) | 0;
+      let r = 0, g = 0, b = 0, n = 0;
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const nx = x + dx, ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+          const j = ny * w + nx;
+          if (known[j] === 1) {
+            const o = j * 4;
+            r += data[o]; g += data[o + 1]; b += data[o + 2]; n++;
+          }
+        }
+      }
+      if (!n) { next.push(i); continue; }
+      const o = i * 4;
+      data[o] = r / n; data[o + 1] = g / n; data[o + 2] = b / n; data[o + 3] = 255;
+      known[i] = 2;
+      filledNow.push(i);
+      if (x > 0 && !known[i - 1]) next.push(i - 1);
+      if (x < w - 1 && !known[i + 1]) next.push(i + 1);
+      if (y > 0 && !known[i - w]) next.push(i - w);
+      if (y < h - 1 && !known[i + w]) next.push(i + w);
+    }
+    for (const i of filledNow) known[i] = 1;
+    if (!filledNow.length) break;
+    frontier = next;
+  }
+  // lisciatura Gauss-Seidel solo sui pixel riempiti
+  for (let iteration = 0; iteration < 42; iteration++) {
+    for (const i of holes) {
+      const x = i % w, y = (i / w) | 0;
+      let r = 0, g = 0, b = 0, n = 0;
+      const add = (j) => { const o = j * 4; r += data[o]; g += data[o + 1]; b += data[o + 2]; n++; };
+      if (x > 0) add(i - 1);
+      if (x < w - 1) add(i + 1);
+      if (y > 0) add(i - w);
+      if (y < h - 1) add(i + w);
+      if (!n) continue;
+      const o = i * 4;
+      data[o] = r / n; data[o + 1] = g / n; data[o + 2] = b / n;
+    }
+  }
+}
+
+/* --- Ricostruzione PatchMatch multi-scala ---
+   La diffusione da sola sfuma (bene solo su muri uniformi). Qui il buco viene
+   ricostruito copiando e fondendo patch reali di texture circostante, come il
+   "riempimento in base al contenuto": parquet, intonaci e tessuti restano
+   credibili. Si lavora su una piramide di scale, dal grezzo al fine. */
+
+function downsampleLevel(level) {
+  const w2 = Math.max(1, level.w >> 1), h2 = Math.max(1, level.h >> 1);
+  const data = new Uint8ClampedArray(w2 * h2 * 4);
+  const mask = new Uint8Array(w2 * h2);
+  for (let y = 0; y < h2; y++) {
+    for (let x = 0; x < w2; x++) {
+      let r = 0, g = 0, b = 0, known = 0, masked = 0;
+      for (let dy = 0; dy < 2; dy++) {
+        for (let dx = 0; dx < 2; dx++) {
+          const sx = Math.min(level.w - 1, x * 2 + dx), sy = Math.min(level.h - 1, y * 2 + dy);
+          const si = sy * level.w + sx;
+          if (level.mask[si]) { masked++; continue; }
+          const o = si * 4;
+          r += level.data[o]; g += level.data[o + 1]; b += level.data[o + 2]; known++;
+        }
+      }
+      const i = y * w2 + x, o = i * 4;
+      if (known) { data[o] = r / known; data[o + 1] = g / known; data[o + 2] = b / known; data[o + 3] = 255; }
+      mask[i] = masked >= 2 || known === 0 ? 1 : 0;
+    }
+  }
+  return { data, mask, w: w2, h: h2 };
+}
+
+function upsampleInto(fine, coarse) {
+  for (let y = 0; y < fine.h; y++) {
+    for (let x = 0; x < fine.w; x++) {
+      const i = y * fine.w + x;
+      if (!fine.mask[i]) continue;
+      const fx = Math.min(coarse.w - 1.001, x / 2), fy = Math.min(coarse.h - 1.001, y / 2);
+      const x0 = fx | 0, y0 = fy | 0, ax = fx - x0, ay = fy - y0;
+      const o = i * 4;
+      for (let ch = 0; ch < 3; ch++) {
+        const c00 = coarse.data[(y0 * coarse.w + x0) * 4 + ch];
+        const c10 = coarse.data[(y0 * coarse.w + x0 + 1) * 4 + ch];
+        const c01 = coarse.data[((y0 + 1) * coarse.w + x0) * 4 + ch];
+        const c11 = coarse.data[((y0 + 1) * coarse.w + x0 + 1) * 4 + ch];
+        fine.data[o + ch] = (c00 * (1 - ax) + c10 * ax) * (1 - ay) + (c01 * (1 - ax) + c11 * ax) * ay;
+      }
+      fine.data[o + 3] = 255;
+    }
+  }
+}
+
+function patchRefine(data, mask, w, h, iterations) {
+  const R = 2, P = 2 * R + 1;
+  const holes = [];
+  for (let i = 0; i < w * h; i++) if (mask[i]) holes.push(i);
+  if (!holes.length || holes.length > w * h * .45) return;
+
+  // summed-area della maschera: una sorgente è valida se la sua patch è tutta nota
+  const sat = new Int32Array((w + 1) * (h + 1));
+  for (let y = 0; y < h; y++) {
+    let row = 0;
+    for (let x = 0; x < w; x++) {
+      row += mask[y * w + x];
+      sat[(y + 1) * (w + 1) + x + 1] = sat[y * (w + 1) + x + 1] + row;
+    }
+  }
+  const holeIn = (x0, y0, x1, y1) =>
+    sat[(y1 + 1) * (w + 1) + x1 + 1] - sat[y0 * (w + 1) + x1 + 1] - sat[(y1 + 1) * (w + 1) + x0] + sat[y0 * (w + 1) + x0];
+  const validSource = (x, y) => x >= R && y >= R && x < w - R && y < h - R && holeIn(x - R, y - R, x + R, y + R) === 0;
+
+  // sorgenti: anello attorno al buco (coerenza locale), tutta l'immagine come riserva
+  let minX = w, minY = h, maxX = 0, maxY = 0;
+  for (const i of holes) {
+    const x = i % w, y = (i / w) | 0;
+    if (x < minX) minX = x; if (x > maxX) maxX = x;
+    if (y < minY) minY = y; if (y > maxY) maxY = y;
+  }
+  const pad = Math.max(30, Math.round(Math.max(maxX - minX, maxY - minY) * .9));
+  const sx0 = Math.max(R, minX - pad), sy0 = Math.max(R, minY - pad);
+  const sx1 = Math.min(w - 1 - R, maxX + pad), sy1 = Math.min(h - 1 - R, maxY + pad);
+  const sources = [];
+  const area = Math.max(1, (sx1 - sx0 + 1) * (sy1 - sy0 + 1));
+  const step = Math.max(1, Math.round(Math.sqrt(area / 60000)));
+  for (let y = sy0; y <= sy1; y += step) {
+    for (let x = sx0; x <= sx1; x += step) if (validSource(x, y)) sources.push(y * w + x);
+  }
+  if (sources.length < 40) {
+    for (let y = R; y < h - R; y += 2) {
+      for (let x = R; x < w - R; x += 2) if (validSource(x, y)) sources.push(y * w + x);
+    }
+  }
+  if (!sources.length) return;
+
+  const nnf = new Int32Array(w * h).fill(-1);
+  const best = new Float64Array(w * h);
+
+  const patchDist = (pi, qi, cutoff) => {
+    const px = pi % w, py = (pi / w) | 0, qx = qi % w, qy = (qi / w) | 0;
+    let sum = 0;
+    for (let dy = -R; dy <= R; dy++) {
+      const pyy = py + dy;
+      if (pyy < 0 || pyy >= h) continue;
+      const qrow = (qy + dy) * w + qx;
+      for (let dx = -R; dx <= R; dx++) {
+        const pxx = px + dx;
+        if (pxx < 0 || pxx >= w) continue;
+        const po = (pyy * w + pxx) * 4, qo = (qrow + dx) * 4;
+        const dr = data[po] - data[qo], dg = data[po + 1] - data[qo + 1], db = data[po + 2] - data[qo + 2];
+        sum += dr * dr + dg * dg + db * db;
+        if (sum > cutoff) return sum;
+      }
+    }
+    return sum;
+  };
+
+  const tryCandidate = (pi, qi) => {
+    if (qi < 0 || qi >= w * h) return;
+    const qx = qi % w, qy = (qi / w) | 0;
+    if (!validSource(qx, qy)) return;
+    const d = patchDist(pi, qi, best[pi]);
+    if (d < best[pi]) { best[pi] = d; nnf[pi] = qi; }
+  };
+
+  for (const i of holes) {
+    best[i] = Infinity;
+    tryCandidate(i, sources[(Math.random() * sources.length) | 0]);
+    if (nnf[i] === -1) { nnf[i] = sources[0]; best[i] = patchDist(i, sources[0], Infinity); }
+  }
+
+  const accR = new Float32Array(w * h), accG = new Float32Array(w * h);
+  const accB = new Float32Array(w * h), accW = new Float32Array(w * h);
+  const maxRadius = Math.max(w, h);
+
+  for (let it = 0; it < iterations; it++) {
+    const forward = it % 2 === 0;
+    for (let k = 0; k < holes.length; k++) {
+      const i = holes[forward ? k : holes.length - 1 - k];
+      const neighbors = forward ? [i - 1, i - w] : [i + 1, i + w];
+      for (const n of neighbors) {
+        if (n >= 0 && n < w * h && nnf[n] !== -1) tryCandidate(i, nnf[n] + (i - n));
+      }
+      let radius = maxRadius;
+      while (radius >= 1) {
+        const q = nnf[i], qx = q % w, qy = (q / w) | 0;
+        const cx = qx + (((Math.random() * 2 - 1) * radius) | 0);
+        const cy = qy + (((Math.random() * 2 - 1) * radius) | 0);
+        if (cx >= R && cy >= R && cx < w - R && cy < h - R) tryCandidate(i, cy * w + cx);
+        radius >>= 1;
+      }
+    }
+    // ricostruzione per voto: ogni patch vota i colori sui pixel del buco che copre
+    accR.fill(0); accG.fill(0); accB.fill(0); accW.fill(0);
+    for (const i of holes) {
+      const q = nnf[i];
+      if (q === -1) continue;
+      const px = i % w, py = (i / w) | 0, qx = q % w, qy = (q / w) | 0;
+      const weight = 1 / (1 + best[i] / (P * P * 300));
+      for (let dy = -R; dy <= R; dy++) {
+        const ty = py + dy;
+        if (ty < 0 || ty >= h) continue;
+        const qrow = (qy + dy) * w + qx;
+        for (let dx = -R; dx <= R; dx++) {
+          const tx = px + dx;
+          if (tx < 0 || tx >= w) continue;
+          const ti = ty * w + tx;
+          if (!mask[ti]) continue;
+          const qo = (qrow + dx) * 4;
+          accR[ti] += data[qo] * weight;
+          accG[ti] += data[qo + 1] * weight;
+          accB[ti] += data[qo + 2] * weight;
+          accW[ti] += weight;
+        }
+      }
+    }
+    for (const i of holes) {
+      if (!accW[i]) continue;
+      const o = i * 4;
+      data[o] = accR[i] / accW[i];
+      data[o + 1] = accG[i] / accW[i];
+      data[o + 2] = accB[i] / accW[i];
+      data[o + 3] = 255;
+    }
+  }
+}
+
+async function inpaintSmart(data, mask, w, h) {
+  const levels = [{ data, mask, w, h }];
+  while (levels.length < 8) {
+    const top = levels[levels.length - 1];
+    if (Math.max(top.w, top.h) <= 96) break;
+    levels.push(downsampleLevel(top));
+  }
+  const coarse = levels[levels.length - 1];
+  inpaintData(coarse.data, coarse.mask, coarse.w, coarse.h);
+  patchRefine(coarse.data, coarse.mask, coarse.w, coarse.h, 4);
+  for (let li = levels.length - 2; li >= 0; li--) {
+    await new Promise((resolve) => setTimeout(resolve)); // respiro per l'interfaccia
+    upsampleInto(levels[li], levels[li + 1]);
+    patchRefine(levels[li].data, levels[li].mask, levels[li].w, levels[li].h, li === 0 ? 2 : 3);
+  }
+}
+
+$("#pe-apply").addEventListener("click", async () => {
+  if (!pe || pe.busy) return;
+  const w = pe.work.width, h = pe.work.height;
+  const maskData = pe.mask.getContext("2d").getImageData(0, 0, w, h).data;
+  const mask = new Uint8Array(w * h);
+  let count = 0;
+  for (let i = 0; i < w * h; i++) if (maskData[i * 4 + 3] > 40) { mask[i] = 1; count++; }
+  if (!count) { toast("Prima colora gli oggetti da togliere"); return; }
+  peSnapshot();
+  pe.busy = true;
+  peStage.classList.add("pe-busy");
+  await new Promise((resolve) => setTimeout(resolve, 30));
+  try {
+    const ctx = pe.work.getContext("2d");
+    const img = ctx.getImageData(0, 0, w, h);
+    await inpaintSmart(img.data, mask, w, h);
+    ctx.putImageData(img, 0, 0);
+    pe.mask.getContext("2d").clearRect(0, 0, w, h);
+  } finally {
+    if (pe) {
+      pe.busy = false;
+      peStage.classList.remove("pe-busy");
+      peRedraw();
+    }
+  }
+  toast("Fatto! Se serve, ripassa sui punti rimasti");
+});
+
+/* --- Raddrizzamento prospettico (omografia a 4 punti) --- */
+
+// Matrice 3×3 che porta il quadrato unitario sul quadrilatero p0..p3
+// (ordine: alto-sx, alto-dx, basso-dx, basso-sx).
+function unitToQuad(q) {
+  const [p0, p1, p2, p3] = q;
+  const dx1 = p1.x - p2.x, dy1 = p1.y - p2.y;
+  const dx2 = p3.x - p2.x, dy2 = p3.y - p2.y;
+  const dx3 = p0.x - p1.x + p2.x - p3.x;
+  const dy3 = p0.y - p1.y + p2.y - p3.y;
+  const den = dx1 * dy2 - dx2 * dy1;
+  if (Math.abs(den) < 1e-9) return null;
+  const g = (dx3 * dy2 - dx2 * dy3) / den;
+  const h = (dx1 * dy3 - dx3 * dy1) / den;
+  return [
+    p1.x - p0.x + g * p1.x, p3.x - p0.x + h * p3.x, p0.x,
+    p1.y - p0.y + g * p1.y, p3.y - p0.y + h * p3.y, p0.y,
+    g, h, 1,
+  ];
+}
+
+function invert3(m) {
+  const [a, b, c, d, e, f, g, h, i] = m;
+  const A = e * i - f * h, B = c * h - b * i, C = b * f - c * e;
+  const det = a * A + d * B + g * C;
+  if (Math.abs(det) < 1e-9) return null;
+  return [
+    A / det, B / det, C / det,
+    (f * g - d * i) / det, (a * i - c * g) / det, (c * d - a * f) / det,
+    (d * h - e * g) / det, (b * g - a * h) / det, (a * e - b * d) / det,
+  ];
+}
+
+function multiply3(m, n) {
+  const out = new Array(9);
+  for (let r = 0; r < 3; r++) {
+    for (let col = 0; col < 3; col++) {
+      out[r * 3 + col] = m[r * 3] * n[col] + m[r * 3 + 1] * n[3 + col] + m[r * 3 + 2] * n[6 + col];
+    }
+  }
+  return out;
+}
+
+// Deforma la foto in modo che il quadrilatero scelto diventi il rettangolo
+// del suo riquadro: mappatura inversa con interpolazione bilineare.
+function warpPerspective(work, quad) {
+  const w = work.width, h = work.height;
+  const xs = quad.map((p) => p.x), ys = quad.map((p) => p.y);
+  const rect = [
+    { x: Math.min(...xs), y: Math.min(...ys) },
+    { x: Math.max(...xs), y: Math.min(...ys) },
+    { x: Math.max(...xs), y: Math.max(...ys) },
+    { x: Math.min(...xs), y: Math.max(...ys) },
+  ];
+  if (rect[1].x - rect[0].x < 40 || rect[3].y - rect[0].y < 40) return false;
+  const toQuad = unitToQuad(quad);
+  const toRect = unitToQuad(rect);
+  if (!toQuad || !toRect) return false;
+  const rectInv = invert3(toRect);
+  if (!rectInv) return false;
+  const H = multiply3(toQuad, rectInv); // destinazione → sorgente
+  const ctx = work.getContext("2d");
+  const src = ctx.getImageData(0, 0, w, h).data;
+  const out = ctx.createImageData(w, h);
+  const dst = out.data;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const sw = H[6] * x + H[7] * y + H[8];
+      let sx = (H[0] * x + H[1] * y + H[2]) / sw;
+      let sy = (H[3] * x + H[4] * y + H[5]) / sw;
+      sx = Math.max(0, Math.min(w - 1.001, sx));
+      sy = Math.max(0, Math.min(h - 1.001, sy));
+      const x0 = sx | 0, y0 = sy | 0;
+      const ax = sx - x0, ay = sy - y0;
+      const o00 = (y0 * w + x0) * 4, o10 = o00 + 4, o01 = o00 + w * 4, o11 = o01 + 4;
+      const di = (y * w + x) * 4;
+      for (let ch = 0; ch < 3; ch++) {
+        dst[di + ch] =
+          (src[o00 + ch] * (1 - ax) + src[o10 + ch] * ax) * (1 - ay) +
+          (src[o01 + ch] * (1 - ax) + src[o11 + ch] * ax) * ay;
+      }
+      dst[di + 3] = 255;
+    }
+  }
+  ctx.putImageData(out, 0, 0);
+  return true;
+}
+
+$("#pe-straighten").addEventListener("click", () => {
+  if (!pe || pe.busy) return;
+  peSnapshot();
+  peStage.classList.add("pe-busy");
+  setTimeout(() => {
+    const ok = warpPerspective(pe.work, pe.corners);
+    peStage.classList.remove("pe-busy");
+    if (!ok) { toast("Angoli troppo vicini o incrociati: allargali un po'"); pe.undoStack.pop(); return; }
+    pe.corners = peDefaultCorners(pe.work.width, pe.work.height);
+    peRedraw();
+    toast("Foto in squadra! Ripeti se serve un ritocco fine");
+  }, 30);
+});
+
+$("#pe-corners-reset").addEventListener("click", () => {
+  if (!pe) return;
+  pe.corners = peDefaultCorners(pe.work.width, pe.work.height);
+  peRedraw();
+});
+
+$("#pe-mode-brush").addEventListener("click", () => setPeMode("brush"));
+$("#pe-mode-corners").addEventListener("click", () => setPeMode("corners"));
+
+$("#env-photo-straighten").addEventListener("click", () => {
+  if (state.photo) openPhotoEditor(state.photo, "corners");
+});
+
+$("#pe-done").addEventListener("click", () => {
+  if (!pe) return;
+  const dataUrl = pe.work.toDataURL("image/jpeg", .9);
+  closePhotoEditor();
+  applyEditedPhoto(dataUrl, "Foto pronta: regola la parete con i cursori");
+});
+
+$("#pe-close").addEventListener("click", closePhotoEditor);
+peEl.addEventListener("click", (event) => {
+  if (event.target === peEl) closePhotoEditor();
+});
+
+/* ---------- 16c. Render prospettico sulla scena ¾ ---------- */
+
+const RENDER_MARGIN = 60; // mm attorno alla parete per cornice e ombra
+
+// SVG della sola parete (niente ambiente), in coordinate mm locali.
+// Copre dal modulo più basso al filo superiore; le quote diverse lasciano
+// trasparenza sotto i moduli sospesi (il compositing la salta via alpha).
+function buildWallOnlySVG(ppm) {
+  const W = wallWidth();
+  const bMin = minColBaseline();
+  const H = state.height - bMin; // altezza del riquadro locale
+  const M = RENDER_MARGIN;
+  const vw = W + M * 2, vh = H + M * 2;
+  // absY (mm da terra) → y locale
+  const localY = (absY) => M + (state.height - absY);
+  const parts = [];
+  parts.push(svgDefs(vw));
+  // cornici per gruppi di moduli a pari quota
+  {
+    let runStart = 0;
+    for (let c = 1; c <= state.cols.length; c++) {
+      if (c === state.cols.length || colBaseline(state.cols[c]) !== colBaseline(state.cols[runStart])) {
+        const b = colBaseline(state.cols[runStart]);
+        const rx0 = M + colOffsetMm(runStart);
+        const rw = state.cols.slice(runStart, c).reduce((s, col) => s + col.width, 0);
+        parts.push(`<rect x="${rx0 - 14}" y="${M - 14}" width="${rw + 28}" height="${state.height - b + 28}" rx="10" fill="#1d1b18" filter="url(#wall-shadow)"/>`);
+        runStart = c;
+      }
+    }
+  }
+  let cursor = M;
+  state.cols.forEach((col, c) => {
+    let y = localY(colBaseline(col));
+    col.panels.forEach((panel, i) => {
+      y -= panel.height;
+      if (!panel.mergeId) parts.push(renderPanelSVG(panel, cursor, y, col.width, panel.height, c, i));
+    });
+    cursor += col.width;
+  });
+  const ids = new Set();
+  state.cols.forEach((col) => col.panels.forEach((p) => { if (p.mergeId) ids.add(p.mergeId); }));
+  ids.forEach((id) => {
+    const info = groupInfo(id);
+    if (!info) return;
+    parts.push(renderPanelSVG(info.panel, M + info.x0, localY(info.bottom) - info.height, info.width, info.height, info.members[0].c, info.members[0].i));
+  });
+  // velatura per modulo
+  {
+    let sx0 = M;
+    state.cols.forEach((col) => {
+      parts.push(`<rect x="${sx0}" y="${M}" width="${col.width}" height="${colStackHeight(col)}" fill="url(#wall-sheen)" pointer-events="none"/>`);
+      sx0 += col.width;
+    });
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${vw} ${vh}" width="${Math.round(vw * ppm)}" height="${Math.round(vh * ppm)}">${parts.join("")}</svg>`;
+}
+
+function loadImageAsync(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+// Omografia dal piano parete (mm, origine al centro-letto, y verso il basso
+// dal soffitto) ai pixel della scena ¾, tramite il rettangolo di riferimento.
+function wallPlaneHomography(quad) {
+  const REF_X = 1650, REF_H = 2700;
+  const mmQuad = [
+    { x: -REF_X, y: 0 }, { x: REF_X, y: 0 },
+    { x: REF_X, y: REF_H }, { x: -REF_X, y: REF_H },
+  ];
+  const pxQuad = quad.corners.map(([x, y]) => ({ x, y }));
+  const mmH = unitToQuad(mmQuad);
+  const pxH = unitToQuad(pxQuad);
+  if (!mmH || !pxH) return null;
+  const mmInv = invert3(mmH);
+  if (!mmInv) return null;
+  return { forward: multiply3(pxH, mmInv), inverse: invert3(multiply3(pxH, mmInv)) };
+}
+
+const applyH = (H, x, y) => {
+  const w = H[6] * x + H[7] * y + H[8];
+  return [(H[0] * x + H[1] * y + H[2]) / w, (H[3] * x + H[4] * y + H[5]) / w];
+};
+
+// Compone la parete configurata nella scena ¾: campionamento inverso
+// con bilineare + velatura di luce coerente con la scena.
+async function renderPerspective() {
+  const scene = activeScene();
+  if (!scene?.quad34) return null;
+  const ppm = .62;
+  const wallSvg = await inlineTextures(buildWallOnlySVG(ppm));
+  const wallImg = await loadImageAsync("data:image/svg+xml;charset=utf-8," + encodeURIComponent(wallSvg));
+  const wallCanvas = document.createElement("canvas");
+  wallCanvas.width = wallImg.width;
+  wallCanvas.height = wallImg.height;
+  wallCanvas.getContext("2d").drawImage(wallImg, 0, 0);
+  const wallData = wallCanvas.getContext("2d").getImageData(0, 0, wallCanvas.width, wallCanvas.height);
+
+  const bg = await loadImageAsync(scene.quad34.src);
   const canvas = document.createElement("canvas");
-  canvas.width = 512;
-  canvas.height = 96;
-  const context = canvas.getContext("2d");
-  context.fillStyle = background;
-  context.fillRect(0, 0, canvas.width, canvas.height);
-  context.fillStyle = foreground;
-  context.font = "500 31px Arial";
-  context.textAlign = "center";
-  context.textBaseline = "middle";
-  context.fillText(text, canvas.width / 2, canvas.height / 2);
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false }));
-  sprite.scale.set(.48, .09, 1);
-  sprite.renderOrder = 20;
-  sprite.visible = viewMode === "technical";
-  return sprite;
+  canvas.width = bg.naturalWidth;
+  canvas.height = bg.naturalHeight;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(bg, 0, 0);
+
+  const homography = wallPlaneHomography(scene.quad34);
+  if (!homography) return null;
+
+  const W = wallWidth(), M = RENDER_MARGIN;
+  // limiti della parete (con margine ombra) sul piano, y dal soffitto in giù:
+  // dal filo superiore comune al modulo più basso (le quote diverse sono
+  // gestite dalla trasparenza del riquadro piatto)
+  const top = 2700 - state.height;
+  const xMin = -W / 2 - M, xMax = W / 2 + M;
+  const yMin = top - M, yMax = 2700 - minColBaseline() + M;
+
+  // bounding box in pixel scena dei 4 angoli proiettati
+  const cornersPx = [
+    applyH(homography.forward, xMin, yMin), applyH(homography.forward, xMax, yMin),
+    applyH(homography.forward, xMax, yMax), applyH(homography.forward, xMin, yMax),
+  ];
+  const bx0 = Math.max(0, Math.floor(Math.min(...cornersPx.map((p) => p[0]))));
+  const bx1 = Math.min(canvas.width - 1, Math.ceil(Math.max(...cornersPx.map((p) => p[0]))));
+  const by0 = Math.max(0, Math.floor(Math.min(...cornersPx.map((p) => p[1]))));
+  const by1 = Math.min(canvas.height - 1, Math.ceil(Math.max(...cornersPx.map((p) => p[1]))));
+
+  const out = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const shade = scene.quad34.shade || { dir: 1, strength: 0 };
+  const src = wallData.data, sw = wallCanvas.width, sh = wallCanvas.height;
+
+  // confini fisici del muro nella scena: la parete non può coprire
+  // soffitto, pavimento o le pareti laterali della stanza
+  const roomBounds = scene.quad34.bounds || [-1650, 1650];
+
+  for (let y = by0; y <= by1; y++) {
+    for (let x = bx0; x <= bx1; x++) {
+      const [mmX, mmY] = applyH(homography.inverse, x + .5, y + .5);
+      if (mmX < xMin || mmX > xMax || mmY < yMin || mmY > yMax) continue;
+      if (mmX < roomBounds[0] || mmX > roomBounds[1] || mmY < 15 || mmY > 2700) continue;
+      let sx = (mmX - xMin) * ppm;
+      let sy = (mmY - yMin) * ppm;
+      sx = Math.max(0, Math.min(sw - 1.001, sx));
+      sy = Math.max(0, Math.min(sh - 1.001, sy));
+      const x0 = sx | 0, y0 = sy | 0, ax = sx - x0, ay = sy - y0;
+      const o00 = (y0 * sw + x0) * 4, o10 = o00 + 4, o01 = o00 + sw * 4, o11 = o01 + 4;
+      const alpha = ((src[o00 + 3] * (1 - ax) + src[o10 + 3] * ax) * (1 - ay) +
+        (src[o01 + 3] * (1 - ax) + src[o11 + 3] * ax) * ay) / 255;
+      if (alpha < .01) continue;
+      // luce di scena: attenuazione verso il lato che si allontana
+      const t = (mmX + W / 2 + M) / (W + 2 * M);
+      const lightFactor = 1 - shade.strength * (shade.dir > 0 ? t : 1 - t);
+      const di = (y * canvas.width + x) * 4;
+      for (let ch = 0; ch < 3; ch++) {
+        const value = ((src[o00 + ch] * (1 - ax) + src[o10 + ch] * ax) * (1 - ay) +
+          (src[o01 + ch] * (1 - ax) + src[o11 + ch] * ax) * ay) * lightFactor;
+        out.data[di + ch] = out.data[di + ch] * (1 - alpha) + value * alpha;
+      }
+    }
+  }
+  ctx.putImageData(out, 0, 0);
+  return canvas;
 }
 
-function createPanelMoveHandle(panel) {
-  const handle = createLabel("SPOSTA", "rgba(44,40,34,.78)", "#ffffff");
-  handle.scale.set(.26, .05, 1);
-  handle.visible = viewMode === "technical" || Boolean(panel && panel.id === selectedPanelId);
-  handle.userData.panelHandle = true;
-  return handle;
+// Taratura (solo sviluppo, da console): griglia del piano parete proiettata
+// sulla scena ¾ — verde: soffitto, pavimento e centrale; rosso: passo 300 mm.
+window.__calib = async function (sceneId, corners) {
+  const scene = PHOTO_SCENES.find((s) => s.id === sceneId);
+  if (!scene?.quad34) return "scena senza quad34";
+  if (corners) scene.quad34.corners = corners;
+  const bg = await loadImageAsync(scene.quad34.src);
+  let host = document.querySelector("#__calib");
+  if (!host) {
+    host = document.createElement("canvas");
+    host.id = "__calib";
+    host.style.cssText = "position:fixed;top:0;left:0;z-index:999;width:100vw;height:auto;background:#000;cursor:pointer";
+    document.body.appendChild(host);
+    host.addEventListener("click", () => host.remove());
+  }
+  host.width = bg.naturalWidth;
+  host.height = bg.naturalHeight;
+  const ctx = host.getContext("2d");
+  ctx.drawImage(bg, 0, 0);
+  const H = wallPlaneHomography(scene.quad34).forward;
+  const b = scene.quad34.bounds || [-1650, 1650];
+  ctx.lineWidth = 4;
+  const line = (x1, y1, x2, y2, color) => {
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    for (let t = 0; t <= 24; t++) {
+      const p = applyH(H, x1 + (x2 - x1) * t / 24, y1 + (y2 - y1) * t / 24);
+      if (t) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]);
+    }
+    ctx.stroke();
+  };
+  for (let x = Math.ceil(b[0] / 300) * 300; x <= b[1]; x += 300) {
+    line(x, 0, x, 2700, x === 0 ? "rgba(80,255,120,.9)" : "rgba(255,80,60,.7)");
+  }
+  for (let y = 0; y <= 2700; y += 675) {
+    line(b[0], y, b[1], y, y === 0 || y === 2700 ? "rgba(80,255,120,.9)" : "rgba(255,80,60,.7)");
+  }
+  return "griglia su " + sceneId;
+};
+
+const renderOverlay = $("#render-overlay");
+
+$("#btn-render34").addEventListener("click", async () => {
+  const scene = activeScene();
+  if (!scene?.quad34) {
+    toast("Scegli prima una scena fotografica (es. Camera hotel)");
+    return;
+  }
+  const btn = $("#btn-render34");
+  btn.disabled = true;
+  btn.textContent = "✦ Sto renderizzando…";
+  try {
+    const canvas = await renderPerspective();
+    if (!canvas) { toast("Render non riuscito"); return; }
+    const dataUrl = canvas.toDataURL("image/jpeg", .92);
+    $("#render-result").src = dataUrl;
+    $("#render-download").href = dataUrl;
+    renderOverlay.hidden = false;
+    document.body.style.overflow = "hidden";
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span aria-hidden="true">✦</span> Renderizza';
+  }
+});
+
+$("#render-close").addEventListener("click", () => {
+  renderOverlay.hidden = true;
+  document.body.style.overflow = "";
+});
+renderOverlay.addEventListener("click", (event) => {
+  if (event.target === renderOverlay) {
+    renderOverlay.hidden = true;
+    document.body.style.overflow = "";
+  }
+});
+
+/* ---------- 17. Azioni toolbar ---------- */
+
+$("#btn-shuffle").addEventListener("click", () => {
+  dismissCoach();
+  mutate(() => shuffleComposition(), "Nuova combinazione! Non ti piace? Premi ancora ✦");
+});
+
+$("#btn-undo").addEventListener("click", () => {
+  if (!undoStack.length) { toast("Niente da annullare"); return; }
+  state = undoStack.pop();
+  selection = null;
+  refresh();
+  toast("Modifica annullata");
+});
+
+/* ---------- 18. Coach ---------- */
+
+function dismissCoach() {
+  if (!coachEl.hidden) {
+    coachEl.hidden = true;
+    try { localStorage.setItem("iwStudioCoach", "done"); } catch { }
+  }
+}
+
+$("#coach-dismiss").addEventListener("click", dismissCoach);
+
+/* ---------- 19. Vista 3D ---------- */
+
+const overlay3D = $("#studio-3d");
+const stage3D = $("#studio-3d-stage");
+const loading3D = $("#studio-3d-loading");
+let three = null; // { renderer, scene, camera, wallGroup, floor, raf, yaw, targetYaw, pitch, targetPitch, zoom, targetZoom, templates }
+const texturePromises3D = new Map();
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = src;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error(`Script non caricato: ${src}`));
+    document.head.appendChild(script);
+  });
+}
+
+async function ensureThree() {
+  if (!globalThis.THREE) await loadScript("assets/three-gltf-bundle.js");
+  if (!globalThis.IW_MODEL_DATA) await loadScript("assets/models/iw-models.js");
+  if (!three) init3D();
+  if (!three.templatesReady) await loadTemplates3D();
 }
 
 function base64ToArrayBuffer(value) {
@@ -383,1349 +3060,544 @@ function base64ToArrayBuffer(value) {
   return bytes.buffer;
 }
 
-function loadOriginalModels() {
+async function loadTemplates3D() {
   const loader = new GLTFLoader();
-  return Promise.all(Object.entries(IW_MODEL_DATA || {}).map(([name, encoded]) =>
-    new Promise((resolve, reject) => {
+  three.templates = {};
+  await Promise.all(Object.entries(IW_MODEL_DATA || {}).map(([name, encoded]) =>
+    new Promise((resolve) => {
       loader.parse(base64ToArrayBuffer(encoded), "", (gltf) => {
-        originalModelTemplates[name] = gltf.scene;
+        three.templates[name] = gltf.scene;
         resolve();
-      }, reject);
+      }, () => resolve());
     })
   ));
+  three.templatesReady = true;
 }
 
-function createOriginalPanelVisual(panel) {
-  const source = originalModelTemplates[`${panel.type}_${panel.width}_${panel.height}`];
-  const size = ORIGINAL_GEOMETRY_SIZE[panel.type];
-  if (!source || !size) return null;
+function init3D() {
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xe9e5dd);
+  scene.fog = new THREE.Fog(0xe9e5dd, 12, 26);
+  const camera = new THREE.PerspectiveCamera(34, 1, .1, 100);
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
+  stage3D.appendChild(renderer.domElement);
 
-  const wrapper = new THREE.Group();
-  const model = source.clone(true);
-  // SketchUp/DAE: X=larghezza, Y=profondità, Z=altezza.
-  // Three.js: X=larghezza, Y=altezza, Z=fronte.
-  // La rotazione porta Z su Y; l'inversione di Y fa sporgere il componente
-  // verso l'ambiente anziché dentro la sottostruttura.
-  model.rotation.x = -Math.PI / 2;
-  model.scale.y = -1;
-  model.position.set(-panel.width / 2000, -panel.height / 2000, STRUCTURE_FRONT_Z);
-  const familyColor = panel.type === "shelf" ? 0x9a7f61 : 0x393632;
-  model.traverse((item) => {
-    if (item.isMesh) {
-      item.castShadow = true;
-      item.receiveShadow = true;
-      item.material = item.material.clone();
-      item.material.color.setHex(familyColor);
-      item.material.roughness = .5;
-      item.material.metalness = .18;
-      applyPanelFinish(item.material, panel);
-    }
+  const hemiLight = new THREE.HemisphereLight(0xffffff, 0x8b8377, 2.2);
+  scene.add(hemiLight);
+  const keyLight = new THREE.DirectionalLight(0xffffff, 3.2);
+  keyLight.position.set(-4, 6, 7);
+  keyLight.castShadow = true;
+  keyLight.shadow.mapSize.set(2048, 2048);
+  scene.add(keyLight);
+  const warmLight = new THREE.PointLight(0xffd8aa, 22, 12);
+  warmLight.position.set(4, 2.5, 4);
+  scene.add(warmLight);
+
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(30, 22),
+    new THREE.MeshStandardMaterial({ color: 0xcfc9be, roughness: .94 })
+  );
+  floor.rotation.x = -Math.PI / 2;
+  floor.receiveShadow = true;
+  scene.add(floor);
+
+  const backWall = new THREE.Mesh(
+    new THREE.PlaneGeometry(30, 14),
+    new THREE.MeshStandardMaterial({ color: 0xd8d2c6, roughness: .96 })
+  );
+  backWall.position.z = -.25;
+  backWall.receiveShadow = true;
+  scene.add(backWall);
+
+  const wallGroup = new THREE.Group();
+  scene.add(wallGroup);
+
+  three = {
+    scene, camera, renderer, wallGroup, floor, backWall,
+    hemiLight, keyLight, warmLight,
+    yaw: 0, targetYaw: -.4, pitch: .12, targetPitch: .12,
+    zoom: 9, targetZoom: 7, raf: 0, templates: {}, templatesReady: false,
+  };
+
+  // orbita manuale
+  let dragging = false, lastX = 0, lastY = 0, pinch = 0;
+  const dom = renderer.domElement;
+  dom.addEventListener("pointerdown", (event) => {
+    dragging = true; lastX = event.clientX; lastY = event.clientY;
+    dom.setPointerCapture(event.pointerId);
   });
-  wrapper.add(model);
-  return wrapper;
+  dom.addEventListener("pointermove", (event) => {
+    if (!dragging) return;
+    three.targetYaw = Math.max(-1.1, Math.min(1.1, three.targetYaw + (event.clientX - lastX) * .006));
+    three.targetPitch = Math.max(-.05, Math.min(.5, three.targetPitch + (event.clientY - lastY) * .003));
+    lastX = event.clientX; lastY = event.clientY;
+  });
+  dom.addEventListener("pointerup", () => { dragging = false; });
+  dom.addEventListener("wheel", (event) => {
+    event.preventDefault();
+    three.targetZoom = Math.max(2.6, Math.min(13, three.targetZoom + event.deltaY * .004));
+  }, { passive: false });
+  dom.addEventListener("touchstart", (event) => {
+    if (event.touches.length === 2) pinch = touchDistance(event);
+  }, { passive: true });
+  dom.addEventListener("touchmove", (event) => {
+    if (event.touches.length === 2 && pinch) {
+      const distance = touchDistance(event);
+      three.targetZoom = Math.max(2.6, Math.min(13, three.targetZoom * (pinch / distance)));
+      pinch = distance;
+    }
+  }, { passive: true });
 }
 
-function createPanelVisual(panel, moduleWidth) {
-  const group = new THREE.Group();
-  const bronze = meshMaterial(0x8a7258, .42, .22);
-  const dark = meshMaterial(0x262522, .56);
-  const featureHeight = panel.height / 1000;
-  const original = createOriginalPanelVisual(panel);
+function touchDistance(event) {
+  const [a, b] = event.touches;
+  return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+}
 
-  if (original) {
-    const finishSkin = createFinishSkin(panel, moduleWidth, featureHeight);
-    if (finishSkin) group.add(finishSkin);
-    group.add(original);
-    const selectedHighlight = createSelectedPanelHighlight(panel, moduleWidth, featureHeight);
-    if (selectedHighlight) group.add(selectedHighlight);
-    const label = createPanelMoveHandle(panel);
-    label.position.set(0, featureHeight / 2 + .055, .39);
-    label.scale.set(.34, .065, 1);
-    label.userData.panelHandle = true;
-    group.add(label);
-    markPanelVisual(group, panel);
+function dinocTexture3D(mat) {
+  if (!texturePromises3D.has(mat.code)) {
+    // priorità alla texture HD; per i materiali omogenei senza HD si usa
+    // la versione resa senza giunture
+    const srcPromise = finishMapping(mat).mode === "seamless" && !matHDTileable(mat)
+      ? ensureSeamless(mat)
+      : Promise.resolve(matSrc(mat));
+    texturePromises3D.set(mat.code, srcPromise.then((src) => new Promise((resolve, reject) => {
+      new THREE.TextureLoader().load(src, (texture) => {
+        texture.colorSpace = THREE.SRGBColorSpace;
+        resolve(texture);
+      }, undefined, reject);
+    })));
+  }
+  return texturePromises3D.get(mat.code);
+}
+
+function finishSettings(mat) {
+  if (!mat) return { roughness: .72, metalness: 0 };
+  if (mat.family === "Metal") return { roughness: .42, metalness: .28 };
+  if (mat.family === "Solid Color") return { roughness: .58, metalness: 0 };
+  if (mat.family === "Carbon") return { roughness: .5, metalness: .08 };
+  return { roughness: .76, metalness: 0 };
+}
+
+function applyDinoc3D(material, panel, widthMm, offXmm = 0, offYmm = 0) {
+  const mat = MAT_BY_CODE.get(panel.finish);
+  if (!mat) return material;
+  const settings = finishSettings(mat);
+  material.color.set(mat.averageColor || "#ffffff");
+  material.roughness = settings.roughness;
+  material.metalness = settings.metalness;
+  dinocTexture3D(mat).then((source) => {
+    const texture = source.clone();
+    // Stessa strategia di posa del 2D: fogli per i legni, book-match per le
+    // pietre, continuo senza giunture per i materiali omogenei; offset
+    // ancorato alla posizione del pannello, così la posa prosegue anche in 3D.
+    const map = finishMapping(mat);
+    const sx = map.mode === "sheet" ? map.w : map.s;
+    const sy = map.mode === "sheet" ? map.h : map.s;
+    texture.wrapS = map.mode === "seamless" ? THREE.RepeatWrapping : THREE.MirroredRepeatWrapping;
+    texture.wrapT = map.mode === "bookmatch" ? THREE.MirroredRepeatWrapping : THREE.RepeatWrapping;
+    const repX = Math.max(.02, widthMm / sx);
+    const repY = Math.max(.02, panel.height / sy);
+    if (panelGrain(panel) === "h") {
+      texture.center.set(.5, .5);
+      texture.rotation = Math.PI / 2;
+      texture.repeat.set(repY, repX);
+    } else {
+      texture.repeat.set(repX, repY);
+    }
+    texture.offset.set(offXmm / sx, offYmm / sy);
+    texture.anisotropy = three.renderer.capabilities.getMaxAnisotropy();
+    texture.needsUpdate = true;
+    material.color.setHex(0xffffff);
+    material.map = texture;
+    material.needsUpdate = true;
+  }).catch(() => { });
+  return material;
+}
+
+const STRUCTURE_FRONT_Z = .09;
+
+function panelVisual3D(panel, widthMm, offXmm, offYmm) {
+  const group = new THREE.Group();
+  const width = widthMm / 1000;
+  const height = panel.height / 1000;
+
+  const template = three.templates[`${panel.type}_${widthMm}_${panel.height}`];
+  if (template) {
+    const model = template.clone(true);
+    model.rotation.x = -Math.PI / 2;
+    model.scale.y = -1;
+    model.position.set(-width / 2, -height / 2, STRUCTURE_FRONT_Z);
+    model.traverse((item) => {
+      if (item.isMesh) {
+        item.castShadow = true;
+        item.receiveShadow = true;
+        item.material = item.material.clone();
+        item.material.color.setHex(panel.type === "shelf" ? 0x9a7f61 : 0x393632);
+        item.material.roughness = .5;
+        item.material.metalness = .18;
+        applyDinoc3D(item.material, panel, widthMm, offXmm, offYmm);
+      }
+    });
+    group.add(model);
     return group;
   }
 
-  const panelThickness = panel.type === "lux" ? .012 : .0025;
+  const thickness = panel.type === "lux" ? .012 : panel.type === "board" ? .05 : .004;
+  const surfaceMaterial = applyDinoc3D(new THREE.MeshStandardMaterial({ roughness: panel.type === "board" ? .85 : .72 }), panel, widthMm, offXmm, offYmm);
   const surface = new THREE.Mesh(
-    new THREE.BoxGeometry(Math.max(.01, moduleWidth - .008), featureHeight - .006, panelThickness),
-    panelSurfaceMaterial(panel)
+    new THREE.BoxGeometry(Math.max(.01, width - .008), Math.max(.01, height - .006), thickness),
+    surfaceMaterial
   );
-  // Piano posteriore comune a Flat e schiene degli elementi speciali.
-  surface.position.z = STRUCTURE_FRONT_Z + panelThickness / 2;
+  surface.position.z = STRUCTURE_FRONT_Z + thickness / 2;
   surface.castShadow = true;
   surface.receiveShadow = true;
   group.add(surface);
-  const outline = new THREE.LineSegments(
-    new THREE.EdgesGeometry(surface.geometry),
-    new THREE.LineBasicMaterial({ color: 0x332f2a, transparent: true, opacity: .52 })
-  );
-  outline.position.copy(surface.position);
-  group.add(outline);
-  const finishSkin = createFinishSkin(panel, moduleWidth, featureHeight);
-  if (finishSkin) group.add(finishSkin);
-  const selectedHighlight = createSelectedPanelHighlight(panel, moduleWidth, featureHeight);
-  if (selectedHighlight) group.add(selectedHighlight);
 
   if (panel.type === "lux") {
-    surface.position.z = STRUCTURE_FRONT_Z + .006;
     const addLed = (y) => {
-      const glow = roundedBox(moduleWidth * .9, .018, .018, .006, new THREE.MeshBasicMaterial({ color: 0xffd892 }));
-      glow.position.set(0, y, .205);
+      const glow = new THREE.Mesh(
+        new THREE.BoxGeometry(width * .88, .016, .016),
+        new THREE.MeshBasicMaterial({ color: 0xffd892 })
+      );
+      glow.position.set(0, y, STRUCTURE_FRONT_Z + .03);
       group.add(glow);
+      const halo = new THREE.PointLight(0xffd8a0, 4, .9);
+      halo.position.set(0, y, STRUCTURE_FRONT_Z + .12);
+      group.add(halo);
     };
-    if (panel.variant === "LED_T" || panel.variant === "LED_TB") addLed(featureHeight / 2 - .018);
-    if (panel.variant === "LED_B" || panel.variant === "LED_TB") addLed(-featureHeight / 2 + .018);
-  } else if (panel.type === "shelf") {
-    const addShelf = (y) => {
-      const shelf = roundedBox(moduleWidth, .018, .15, .006, bronze);
-      shelf.rotation.x = Math.PI / 2;
-      shelf.position.set(0, y, .25);
-      group.add(shelf);
-    };
-    if (panel.variant === "TOP" || panel.variant === "DOUBLE") addShelf(featureHeight / 2 - .018);
-    if (panel.variant === "BOTTOM" || panel.variant === "DOUBLE") addShelf(-featureHeight / 2 + .018);
-  } else if (panel.type === "frame") {
-    const sideWidth = Math.min(.055, moduleWidth * .12);
-    const top = roundedBox(moduleWidth, .035, .15, .008, dark);
-    const bottom = top.clone();
-    const left = roundedBox(sideWidth, featureHeight, .15, .008, dark);
-    const right = left.clone();
-    top.position.set(0, featureHeight / 2 - .018, .23);
-    bottom.position.set(0, -featureHeight / 2 + .018, .23);
-    left.position.set(-moduleWidth / 2 + sideWidth / 2, 0, .23);
-    right.position.set(moduleWidth / 2 - sideWidth / 2, 0, .23);
-    group.add(top, bottom, left, right);
-  } else if (panel.type === "box") {
-    const front = roundedBox(moduleWidth, featureHeight * .55, .018, .006, dark);
-    const bottom = roundedBox(moduleWidth, .018, .15, .006, dark);
-    front.position.set(0, -featureHeight * .225, .28);
-    bottom.rotation.x = Math.PI / 2;
-    bottom.position.set(0, -featureHeight / 2 + .018, .25);
-    group.add(front, bottom);
+    if (panel.variant === "LED_T" || panel.variant === "LED_TB") addLed(height / 2 - .02);
+    if (panel.variant !== "LED_T") addLed(-height / 2 + .02);
   }
-  const label = createPanelMoveHandle(panel);
-  label.position.set(0, Math.max(-featureHeight / 2 + .075, featureHeight / 2 - .075), .39);
-  label.userData.panelHandle = true;
-  group.add(label);
-  markPanelVisual(group, panel);
   return group;
 }
 
-function buildWall() {
-  disposeGroup(moduleGroup);
-  moduleMeshes.clear();
-  modules.forEach((module) => module.panels.forEach((panel) => {
-    if (!panel.id) panel.id = ++nextPanelId;
-    else nextPanelId = Math.max(nextPanelId, panel.id);
-  }));
-  if (selectedPanelId && !modules.some((module) => module.panels.some((panel) => panel.id === selectedPanelId))) selectedPanelId = null;
-  if (selectedModuleId && !modules.some((module) => module.id === selectedModuleId)) selectedModuleId = null;
-  wallHeightMm = Number(heightSelect.value);
-  wallHeight = wallHeightMm / 1000;
-  wallWidth = Math.max(.3, modules.reduce((sum, module) => sum + module.width, 0) / 1000);
-  let cursor = -wallWidth / 2;
-
-  modules.forEach((module) => {
-    const width = module.width / 1000;
+function build3DWall() {
+  const group = three.wallGroup;
+  while (group.children.length) {
+    const child = group.children.pop();
+    child.traverse((item) => {
+      item.geometry?.dispose();
+      if (Array.isArray(item.material)) item.material.forEach((m) => m.dispose());
+      else item.material?.dispose();
+    });
+  }
+  const W = wallWidth() / 1000;
+  // Quote per modulo: il sistema di riferimento verticale è centrato
+  // sull'altezza totale della parete; il pavimento sta a -height/2.
+  const floorY = -state.height / 2000;
+  let cursor = -W / 2;
+  let colXmm = 0;
+  state.cols.forEach((col) => {
+    const width = col.width / 1000;
+    const b = colBaseline(col) / 1000;
+    const Hc = colStackHeight(col) / 1000;
     const root = new THREE.Group();
     root.position.x = cursor + width / 2;
-    root.userData.moduleId = module.id;
-
     const structure = new THREE.Mesh(
-      new THREE.BoxGeometry(Math.max(.01, width - .008), wallHeight, .18),
-      meshMaterial(0x77736c, .68, .16)
+      new THREE.BoxGeometry(Math.max(.01, width - .006), Hc, .18),
+      new THREE.MeshStandardMaterial({ color: 0x35322d, roughness: .7, metalness: .12 })
     );
+    structure.position.y = floorY + b + Hc / 2;
     structure.castShadow = true;
     structure.receiveShadow = true;
-    structure.userData.moduleRoot = root;
     root.add(structure);
-    const moduleOutline = new THREE.LineSegments(
-      new THREE.EdgesGeometry(structure.geometry),
-      new THREE.LineBasicMaterial({ color: 0x242321, transparent: true, opacity: .72 })
-    );
-    moduleOutline.userData.moduleRoot = root;
-    root.add(moduleOutline);
-    const moduleLabel = createLabel(`MODULO ${modules.indexOf(module) + 1} · ${module.width} mm`);
-    moduleLabel.position.set(0, wallHeight / 2 + .08, .22);
-    moduleLabel.scale.set(Math.min(.72, width * .92), .1, 1);
-    moduleLabel.userData.moduleHandle = true;
-    moduleLabel.userData.moduleRoot = root;
-    root.add(moduleLabel);
-
-    let panelBottom = -wallHeight / 2;
-    module.panels.forEach((panel, panelIndex) => {
-      const visual = createPanelVisual(panel, width);
-      visual.position.y = panelBottom + panel.height / 2000;
-      visual.userData.panelIndex = panelIndex;
-      visual.traverse((item) => {
-        if (item.isMesh || item.isLineSegments || item.isSprite) {
-          item.userData.moduleRoot = root;
-          item.userData.panelIndex = panelIndex;
-          if (item.userData.panelHandle) item.userData.panelRoot = visual;
-          if (item.userData.iwPanelSurface) item.userData.panelRoot = visual;
-        }
-      });
-      root.add(visual);
-      panelBottom += panel.height / 1000;
-    });
-
-    moduleGroup.add(root);
-    moduleMeshes.set(module.id, root);
-    cursor += width;
-  });
-
-  floor.position.y = -wallHeight / 2 - .05;
-  placed.forEach(clampAccessory);
-  renderModuleEditor();
-  renderPanelAssignments();
-  updatePanelBuilder();
-  updateSummary();
-}
-
-function renderModuleEditor() {
-  if (!modules.length) {
-    moduleList.innerHTML = '<div class="module-empty">Aggiungi un modulo strutturale 300, 600 o 900 mm.</div>';
-    return;
-  }
-  moduleList.innerHTML = modules.map((module, index) => `
-    <article class="wall-module ${selectedModuleId === module.id ? "selected" : ""}" data-module-id="${module.id}">
-      <span class="wall-module-index">${String(index + 1).padStart(2, "0")}</span>
-      <div class="wall-module-fields">
-        <label><span>Modulo strutturale · ${module.panels.reduce((sum, panel) => sum + panel.height, 0)} / ${wallHeightMm} mm</span><select data-module-width>
-          ${[300, 600, 900].map((width) => `<option value="${width}" ${module.width === width ? "selected" : ""}>${width} mm</option>`).join("")}
-        </select></label>
-        <div class="module-move">
-          <button data-move="-1" ${index === 0 ? "disabled" : ""} title="Sposta a sinistra">←</button>
-          <button data-move="1" ${index === modules.length - 1 ? "disabled" : ""} title="Sposta a destra">→</button>
-        </div>
-        <div class="module-panel-stack">
-          ${module.panels.length
-            ? module.panels.map((panel) => `<span data-family="${panel.type}" style="--panel-height:${Math.max(18, panel.height / wallHeightMm * 82)}px">${IW_RULES[panel.type].label}<small>${panel.height}</small></span>`).join("")
-            : "<em>Vuoto</em>"}
-        </div>
-      </div>
-      <button class="wall-module-remove" data-remove-module title="Rimuovi modulo">×</button>
-    </article>`).join("");
-}
-
-function renderPanelAssignments() {
-  const assigned = modules.flatMap((module, moduleIndex) => module.panels.map((panel, panelIndex) => ({ module, moduleIndex, panel, panelIndex })));
-  panelList.innerHTML = assigned.length ? assigned.map(({ module, moduleIndex, panel, panelIndex }) =>
-    `<div class="assigned-panel ${selectedPanelId === panel.id ? "selected" : ""}" data-select-panel="${panel.id}" data-select-module="${module.id}"><span>C${moduleIndex + 1} · ${IW_RULES[panel.type].label} ${panel.width} × ${panel.height}${panel.variant ? ` · ${panel.variant}` : ""}<small>${dinocById.get(panel.material?.id)?.code || "Finitura non assegnata"}</small></span><button data-remove-panel="${module.id}:${panelIndex}" title="Rimuovi pannello">×</button></div>`
-  ).join("") : '<div class="module-empty">Nessun pannello applicato.</div>';
-  updateMaterialTarget();
-  updateSelectedPanelInfo();
-}
-
-function updatePanelBuilder() {
-  const rule = IW_RULES[panelType.value];
-  activePanelName = rule.label;
-  const previousWidth = Number(panelWidth.value);
-  const previousVariant = panelVariant.value;
-  panelWidth.innerHTML = rule.widths.map((width) => `<option value="${width}">${width} mm</option>`).join("");
-  if (rule.widths.includes(previousWidth)) panelWidth.value = String(previousWidth);
-  const heights = rule.heights.filter((height) => height <= wallHeightMm);
-  const previousHeight = Number(panelHeight.value);
-  panelHeight.innerHTML = heights.map((height) => `<option value="${height}">${height} mm</option>`).join("");
-  if (heights.includes(previousHeight)) panelHeight.value = String(previousHeight);
-  panelVariant.innerHTML = rule.variants.map(([value, label]) => `<option value="${value}">${label}</option>`).join("");
-  if (rule.variants.some(([value]) => value === previousVariant)) panelVariant.value = previousVariant;
-  panelVariantField.hidden = rule.variants.length === 0;
-  panelCardName.textContent = `${rule.label} ${panelWidth.value} × ${panelHeight.value}`;
-  panelDragCard.style.setProperty("--feature-opacity", panelType.value === "flat" ? "0" : "1");
-  updatePanelFamilyState();
-}
-
-function updatePanelFamilyState() {
-  document.querySelectorAll("[data-panel-option]").forEach((button) => {
-    const active = button.dataset.panelOption === panelType.value;
-    button.classList.toggle("selected", active);
-    button.setAttribute("aria-selected", String(active));
-  });
-}
-
-function moveModule(id, direction) {
-  const index = modules.findIndex((module) => module.id === id);
-  const target = index + direction;
-  if (index < 0 || target < 0 || target >= modules.length) return;
-  const [movingModule] = modules.splice(index, 1);
-  modules.splice(target, 0, movingModule);
-  buildWall();
-}
-
-function reorderPanel(module, fromIndex, targetY) {
-  const original = [...module.panels];
-  const [movingPanel] = module.panels.splice(fromIndex, 1);
-  let cursor = -wallHeight / 2;
-  let insertAt = module.panels.length;
-  for (let index = 0; index < module.panels.length; index += 1) {
-    const center = cursor + module.panels[index].height / 2000;
-    if (targetY < center) {
-      insertAt = index;
-      break;
-    }
-    cursor += module.panels[index].height / 1000;
-  }
-  module.panels.splice(insertAt, 0, movingPanel);
-  const error = compositionError(module, module.panels);
-  if (error) {
-    module.panels = original;
-    showDropError(error);
-  }
-  buildWall();
-}
-
-function moduleAtPoint(point) {
-  let cursor = -wallWidth / 2;
-  return modules.find((module) => {
-    const next = cursor + module.width / 1000;
-    const inside = point.x >= cursor && point.x <= next;
-    cursor = next;
-    return inside;
-  });
-}
-
-function panelJoints(module, panels = module.panels) {
-  let total = 0;
-  return panels.map((panel) => total += panel.height).filter((height) => height < wallHeightMm);
-}
-
-function compositionError(module, candidatePanels) {
-  const total = candidatePanels.reduce((sum, panel) => sum + panel.height, 0);
-  if (total > wallHeightMm) return `Altezza colonna superata di ${total - wallHeightMm} mm`;
-  if (candidatePanels[0] && candidatePanels[0].type !== "flat") return "La fascia inferiore deve essere Flat";
-  const index = modules.indexOf(module);
-  const joints = panelJoints(module, candidatePanels);
-  for (const adjacentIndex of [index - 1, index + 1]) {
-    const adjacent = modules[adjacentIndex];
-    if (adjacent && joints.some((joint) => panelJoints(adjacent).includes(joint))) {
-      return "Fuga orizzontale coincidente con la colonna adiacente";
-    }
-  }
-  return "";
-}
-
-function showDropError(message) {
-  stage.querySelector(".drop-message").textContent = message;
-  announce(message);
-  stage.classList.add("drag-over");
-  setTimeout(() => {
-    stage.classList.remove("drag-over");
-    stage.querySelector(".drop-message").textContent = "Rilascia sulla parete";
-  }, 1500);
-}
-
-function assignPanel(module, panel, pointY) {
-  if (module.width !== panel.width) {
-    showDropError(`Serve un modulo da ${panel.width} mm`);
-    return;
-  }
-  let insertAt = module.panels.length;
-  let cursor = -wallHeight / 2;
-  for (let index = 0; index < module.panels.length; index += 1) {
-    const center = cursor + module.panels[index].height / 2000;
-    if (pointY < center) { insertAt = index; break; }
-    cursor += module.panels[index].height / 1000;
-  }
-  const candidate = [...module.panels];
-  candidate.splice(insertAt, 0, { ...panel });
-  const error = compositionError(module, candidate);
-  if (error) return showDropError(error);
-  module.panels = candidate;
-  announce(`${IW_RULES[panel.type].label} ${panel.width} × ${panel.height} aggiunto al modulo`);
-  buildWall();
-}
-
-function createAccessory(type) {
-  const group = new THREE.Group();
-  group.userData.type = type;
-  const bronze = meshMaterial(0x8a7258, .42, .22);
-  const dark = meshMaterial(0x262522, .56);
-  if (type === "shelf") {
-    const shelf = roundedBox(.9, .055, .25, .018, bronze);
-    shelf.rotation.x = Math.PI / 2;
-    shelf.position.z = .22;
-    group.add(shelf);
-    group.userData.bounds = { w: .9, h: .18 };
-  } else if (type === "box") {
-    group.add(roundedBox(.6, .4, .16, .025, dark));
-    group.userData.bounds = { w: .6, h: .4 };
-  } else if (type === "light") {
-    group.add(roundedBox(.065, 1.8, .08, .025, dark));
-    group.userData.bounds = { w: .09, h: 1.8 };
-  } else if (type === "mirror") {
-    group.add(roundedBox(.65, .95, .025, .315, bronze));
-    group.userData.bounds = { w: .65, h: .95 };
-  } else {
-    const hook = new THREE.Mesh(new THREE.TorusGeometry(.075, .018, 10, 24, Math.PI * 1.35), bronze);
-    group.add(hook);
-    group.userData.bounds = { w: .2, h: .22 };
-  }
-  group.position.z = .35;
-  group.traverse((object) => {
-    if (object.isMesh) {
-      object.castShadow = true;
-      object.userData.accessoryRoot = group;
-    }
-  });
-  return group;
-}
-
-function snap(value, grid = .1) { return Math.round(value / grid) * grid; }
-function clampAccessory(object) {
-  const bounds = object.userData.bounds;
-  object.position.x = THREE.MathUtils.clamp(snap(object.position.x), -wallWidth / 2 + bounds.w / 2, wallWidth / 2 - bounds.w / 2);
-  object.position.y = THREE.MathUtils.clamp(snap(object.position.y), -wallHeight / 2 + bounds.h / 2, wallHeight / 2 - bounds.h / 2);
-}
-function pointerToWall(clientX, clientY) {
-  const rect = renderer.domElement.getBoundingClientRect();
-  pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
-  pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
-  raycaster.setFromCamera(pointer, camera);
-  const point = new THREE.Vector3();
-  return raycaster.ray.intersectPlane(dragPlane, point) ? wallGroup.worldToLocal(point) : null;
-}
-
-function moduleHitAtPointer(clientX, clientY) {
-  const rect = renderer.domElement.getBoundingClientRect();
-  pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
-  pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
-  raycaster.setFromCamera(pointer, camera);
-  return raycaster.intersectObjects(moduleGroup.children, true)[0]?.object || null;
-}
-function addAccessory(type, position = new THREE.Vector3()) {
-  const object = createAccessory(type);
-  object.position.x = position.x;
-  object.position.y = position.y;
-  clampAccessory(object);
-  accessoryGroup.add(object);
-  placed.push(object);
-  announce(`${ACCESSORY_LABELS[type] || type} posizionato sulla parete`);
-  updateSummary();
-}
-function removeAccessory(object) {
-  const index = placed.indexOf(object);
-  if (index < 0) return;
-  placed.splice(index, 1);
-  accessoryGroup.remove(object);
-  announce(`${ACCESSORY_LABELS[object.userData.type] || object.userData.type} rimosso`);
-  updateSummary();
-}
-function renderAccessoryList() {
-  if (!accessoryList) return;
-  accessoryList.innerHTML = placed.length ? placed.map((object, index) =>
-    `<div class="assigned-accessory"><span>${ACCESSORY_LABELS[object.userData.type] || object.userData.type}</span><button data-remove-accessory="${index}" title="Rimuovi accessorio">×</button></div>`
-  ).join("") : '<div class="module-empty">Nessun accessorio posizionato.</div>';
-}
-
-function updateSummary() {
-  const panelCount = modules.reduce((sum, module) => sum + module.panels.length, 0);
-  countOutput.textContent = `${modules.length} moduli · ${panelCount} pannelli`;
-  sizeOutput.textContent = `${Math.round(wallWidth * 1000)} × ${wallHeightMm} mm`;
-  widthOutput.textContent = `${Math.round(wallWidth * 1000)} mm`;
-  renderAccessoryList();
-  if (measureWidthOutput) measureWidthOutput.textContent = `${Math.round(wallWidth * 1000)} mm`;
-  if (measureTotalOutput) measureTotalOutput.textContent = `${Math.round(wallWidth * 1000)} × ${wallHeightMm} mm`;
-  renderSidebarSummary();
-}
-
-function renderSidebarSummary() {
-  if (!sidebarSummary) return;
-  const materialCodes = [...new Set(modules.flatMap((module) =>
-    module.panels.map((panel) => dinocById.get(panel.material?.id)?.code).filter(Boolean)
-  ))];
-  const panelCount = modules.reduce((sum, module) => sum + module.panels.length, 0);
-  sidebarSummary.innerHTML = `
-    <dl>
-      <div><dt>Moduli</dt><dd>${modules.length}</dd></div>
-      <div><dt>Pannelli</dt><dd>${panelCount}</dd></div>
-      <div><dt>Dimensione</dt><dd>${Math.round(wallWidth * 1000)} × ${wallHeightMm} mm</dd></div>
-      <div><dt>Materiali</dt><dd>${materialCodes.length ? materialCodes.map(escapeHtml).join(", ") : "Non assegnati"}</dd></div>
-      <div><dt>Preset</dt><dd>${escapeHtml(selectedPreset)}</dd></div>
-      <div><dt>Foto ambiente</dt><dd>${environmentPhotoActive ? "Caricata" : "Sfondo standard"}</dd></div>
-    </dl>`;
-}
-
-function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, (character) => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;",
-  })[character]);
-}
-
-function selectMaterial(id) {
-  const material = dinocById.get(id);
-  if (!material) return;
-  selectedMaterialId = id;
-  materialScale.value = String(material.defaultScaleMm || 600);
-  materialCurrent.querySelector(".material-current-swatch").style.backgroundImage = `url("${material.texture}")`;
-  materialCurrent.querySelector("b").textContent = material.code;
-  materialCurrent.querySelector("small").textContent = `${material.family} · serie ${material.series}${material.variant ? ` · ${material.variant}` : ""}`;
-  panelDragCard.querySelector(".panel-preview").style.backgroundImage = `url("${material.texture}")`;
-  panelDragCard.querySelector(".panel-preview").style.backgroundSize = "cover";
-  renderMaterialCatalog();
-}
-
-function filteredMaterials() {
-  const query = materialSearch.value.trim().toUpperCase();
-  const family = materialFamily.value;
-  let materials = dinocCatalog.materials.filter((material) => {
-    if (family && material.family !== family) return false;
-    if (query && !`${material.code} ${material.series} ${material.family} ${material.sourceFile}`.toUpperCase().includes(query)) return false;
-    if (materialTab === "favorites" && !favoriteMaterials.has(material.id)) return false;
-    if (materialTab === "recent" && !recentMaterials.includes(material.id)) return false;
-    return true;
-  });
-  if (materialTab === "recent") {
-    const order = new Map(recentMaterials.map((id, index) => [id, index]));
-    materials = materials.sort((a, b) => order.get(a.id) - order.get(b.id));
-  }
-  return materials;
-}
-
-function renderMaterialCatalog() {
-  const materials = filteredMaterials();
-  materialGrid.innerHTML = materials.length ? materials.slice(0, materialLimit).map((material) => `
-    <button class="material-card ${selectedMaterialId === material.id ? "selected" : ""} ${favoriteMaterials.has(material.id) ? "favorite" : ""}" data-material-id="${material.id}" title="${escapeHtml(material.code)}" draggable="true" aria-selected="${selectedMaterialId === material.id}">
-      <img src="${material.texture}" alt="${escapeHtml(material.code)}" loading="lazy">
-      <span><b>${escapeHtml(material.code)}</b><small>${escapeHtml(material.family)} · ${escapeHtml(material.series)}</small></span>
-      <i data-favorite-material="${material.id}" title="Preferito">★</i>
-    </button>`).join("") : '<div class="material-empty">Nessun materiale trovato.</div>';
-  materialMore.hidden = materials.length <= materialLimit;
-  materialMore.textContent = `Mostra altri (${Math.max(0, materials.length - materialLimit)})`;
-}
-
-function saveMaterialPreferences() {
-  localStorage.setItem("iwDinocFavorites", JSON.stringify([...favoriteMaterials]));
-  localStorage.setItem("iwDinocRecent", JSON.stringify(recentMaterials));
-}
-
-function rememberMaterial(id) {
-  recentMaterials = [id, ...recentMaterials.filter((entry) => entry !== id)].slice(0, 24);
-  saveMaterialPreferences();
-}
-
-function materialSnapshot() {
-  if (!selectedMaterialId) return null;
-  return {
-    id: selectedMaterialId,
-    rotation: Number(materialRotation.value),
-    scale: Number(materialScale.value),
-  };
-}
-
-function panelById(id) {
-  for (const module of modules) {
-    const panel = module.panels.find((entry) => entry.id === id);
-    if (panel) return { module, panel };
-  }
-  return null;
-}
-
-function setSelectedPanel(panelId, moduleId = null, { rebuild = true } = {}) {
-  selectedPanelId = panelId || null;
-  if (moduleId !== null) selectedModuleId = moduleId;
-  controls.enableRotate = !selectedPanelId;
-  if (rebuild) buildWall();
-  else {
-    renderModuleEditor();
-    renderPanelAssignments();
-  }
-}
-
-function panelHitDetails(hitObject) {
-  if (!Number.isInteger(hitObject?.userData.panelIndex) || !hitObject.userData.moduleRoot) return null;
-  const moduleIdValue = hitObject.userData.moduleRoot.userData.moduleId;
-  const module = modules.find((entry) => entry.id === moduleIdValue);
-  const panel = module?.panels[hitObject.userData.panelIndex];
-  return panel ? { module, moduleIdValue, panel, panelIndex: hitObject.userData.panelIndex } : null;
-}
-
-function panelTargetLabel(panelId = selectedPanelId) {
-  const selected = panelById(panelId);
-  if (!selected) return "";
-  const moduleIndex = modules.indexOf(selected.module) + 1;
-  const panel = selected.panel;
-  return `Modulo ${moduleIndex} / ${IW_RULES[panel.type].label} ${panel.width}×${panel.height}`;
-}
-
-function selectedPanelDetails() {
-  const selected = panelById(selectedPanelId);
-  if (!selected) return null;
-  const moduleIndex = modules.indexOf(selected.module) + 1;
-  const panelIndex = selected.module.panels.indexOf(selected.panel);
-  return { ...selected, moduleIndex, panelIndex };
-}
-
-function updateMaterialTarget() {
-  if (!materialTarget) return;
-  const label = panelTargetLabel();
-  materialTarget.textContent = label
-    ? `Applica finitura a: ${label}`
-    : "Nessun pannello selezionato · seleziona un pannello per applicare una finitura";
-  materialTarget.classList.toggle("empty", !label);
-  document.querySelectorAll("#apply-material-panel, #apply-material-module, #apply-material-wall")
-    .forEach((button) => { button.disabled = !label; });
-  stage.classList.toggle("panel-selection-mode", Boolean(label));
-  if (unlockViewButton) unlockViewButton.hidden = !label;
-  if (stageLockBanner) stageLockBanner.hidden = !label;
-  controls.enableRotate = !label;
-}
-
-function updateSelectedPanelInfo() {
-  if (!selectedPanelInfo || !removeSelectedPanelButton) return;
-  const details = selectedPanelDetails();
-  if (!details) {
-    selectedPanelInfo.querySelector("span").innerHTML = "Nessun pannello selezionato";
-    removeSelectedPanelButton.disabled = true;
-    return;
-  }
-  const materialCode = dinocById.get(details.panel.material?.id)?.code || "Finitura non assegnata";
-  selectedPanelInfo.querySelector("span").innerHTML =
-    `<b>Selezionato: Modulo ${details.moduleIndex + 1} / ${IW_RULES[details.panel.type].label} ${details.panel.width}×${details.panel.height}</b><small>${materialCode} · vista bloccata</small>`;
-  removeSelectedPanelButton.disabled = false;
-}
-
-function removeSelectedPanel() {
-  const details = selectedPanelDetails();
-  if (!details) return showDropError("Nessun pannello selezionato");
-  if (!confirm("Rimuovere il pannello selezionato?")) return;
-  details.module.panels.splice(details.panelIndex, 1);
-  selectedPanelId = null;
-  selectedModuleId = details.module.id;
-  buildWall();
-  showDropError("Pannello rimosso");
-}
-
-function clearPanelSelection() {
-  if (!selectedPanelId) return;
-  setSelectedPanel(null);
-  showDropError("Vista sbloccata");
-}
-
-function applySelectedMaterial(target) {
-  const finish = materialSnapshot();
-  if (!finish) return showDropError("Seleziona prima un materiale DI-NOC");
-  if (!selectedPanelId) return showDropError("Seleziona un pannello per applicare una finitura");
-  applyMaterialToTarget(finish, target);
-}
-
-function applyMaterialToTarget(finish, target, targetModuleId = selectedModuleId, targetPanelId = selectedPanelId) {
-  let changed = 0;
-  let feedbackTarget = "";
-  if (target === "panel") {
-    const selected = panelById(targetPanelId);
-    if (!selected) return showDropError("Seleziona un pannello per applicare una finitura");
-    selected.panel.material = { ...finish };
-    selectedModuleId = selected.module.id;
-    selectedPanelId = selected.panel.id;
-    feedbackTarget = panelTargetLabel(selected.panel.id);
-    changed = 1;
-  } else if (target === "module") {
-    const module = modules.find((entry) => entry.id === targetModuleId) || panelById(targetPanelId)?.module;
-    if (!module) return showDropError("Seleziona un modulo");
-    selectedModuleId = module.id;
-    module.panels.forEach((panel) => { panel.material = { ...finish }; changed += 1; });
-  } else {
-    modules.forEach((module) => module.panels.forEach((panel) => {
-      panel.material = { ...finish };
-      changed += 1;
-    }));
-  }
-  if (!changed) return showDropError("Non ci sono pannelli a cui applicare il materiale");
-  rememberMaterial(finish.id);
-  selectedMaterialId = finish.id;
-  console.log("DI-NOC applied", target, dinocById.get(finish.id)?.code);
-  buildWall();
-  requestAnimationFrame(() => refreshVisiblePanelMaterials());
-  showDropError(target === "panel" ? `Finitura applicata a ${feedbackTarget}` : target === "module" ? "Finitura applicata al modulo" : "Finitura applicata alla parete");
-}
-
-function refreshVisiblePanelMaterials() {
-  moduleGroup.traverse((item) => {
-    if (!item.isMesh || !item.userData.iwPanelSurface) return;
-    const selected = panelById(item.userData.panelId);
-    if (!selected?.panel.material?.id) return;
-    const material = Array.isArray(item.material) ? item.material[0] : item.material;
-    if (!material) return;
-    applyPanelFinish(material, selected.panel);
-  });
-}
-
-function initializeMaterialCatalog() {
-  materialFamily.innerHTML += dinocCatalog.families.map((family) =>
-    `<option value="${escapeHtml(family)}">${escapeHtml(family)}</option>`
-  ).join("");
-  renderMaterialCatalog();
-}
-
-function loadDinocCatalog() {
-  if (dinocCatalogPromise) return dinocCatalogPromise;
-  materialGrid.innerHTML = '<div class="material-empty">Caricamento catalogo materiali…</div>';
-  dinocCatalogPromise = new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = "assets/dinoc/catalog.js?v=3";
-    script.onload = () => {
-      dinocCatalog = globalThis.IW_DINOC_CATALOG || { families: [], materials: [] };
-      dinocById = new Map(dinocCatalog.materials.map((material) => [material.id, material]));
-      initializeMaterialCatalog();
-      resolve();
-    };
-    script.onerror = (error) => {
-      materialGrid.innerHTML = '<div class="material-empty">Catalogo non disponibile. Riprova più tardi.</div>';
-      reject(error);
-    };
-    document.body.appendChild(script);
-  });
-  return dinocCatalogPromise;
-}
-
-function resize() {
-  const rect = stage.getBoundingClientRect();
-  renderer.setSize(rect.width, rect.height, false);
-  camera.aspect = rect.width / rect.height;
-  camera.updateProjectionMatrix();
-}
-function animate() {
-  requestAnimationFrame(animate);
-  yaw += (targetYaw - yaw) * .08;
-  zoom += (targetZoom - zoom) * .08;
-  wallGroup.rotation.y = yaw;
-  camera.position.z = zoom;
-  camera.lookAt(0, -.05, 0);
-  renderer.render(scene, camera);
-}
-
-function openConfigPanel(name) {
-  document.querySelector(".config-main-menu")?.setAttribute("hidden", "");
-  document.querySelectorAll("[data-config-panel]").forEach((panel) => {
-    panel.hidden = panel.dataset.configPanel !== name;
-  });
-  document.querySelectorAll("[data-config-open]").forEach((button) => {
-    button.setAttribute("aria-expanded", String(button.dataset.configOpen === name));
-  });
-}
-
-function closeConfigPanel() {
-  document.querySelector(".config-main-menu")?.removeAttribute("hidden");
-  document.querySelectorAll("[data-config-panel]").forEach((panel) => { panel.hidden = true; });
-  document.querySelectorAll("[data-config-open]").forEach((button) => button.setAttribute("aria-expanded", "false"));
-}
-
-function applyEnvironmentTransform() {
-  const scale = wallScalePercent / 100;
-  wallGroup.scale.set(scale, scale, scale);
-  wallGroup.position.set(wallOffsetX / 1000, wallOffsetY / 1000, 0);
-}
-
-function setStageBackground(value, presetName = "Studio neutro") {
-  selectedPreset = presetName;
-  stage.style.setProperty("--environment-background", value);
-  renderSidebarSummary();
-}
-
-function syncGridVisibility() {
-  const show = gridToggles.some((toggle) => toggle.checked);
-  stage.classList.toggle("show-grid", show);
-  gridToggles.forEach((toggle) => { toggle.checked = show; });
-}
-
-function setViewMode(mode) {
-  viewMode = mode;
-  stage.classList.toggle("technical-mode", mode === "technical");
-  document.querySelectorAll("[data-mode]").forEach((button) => {
-    const active = button.dataset.mode === mode;
-    button.classList.toggle("active", active);
-    button.setAttribute("aria-selected", String(active));
-  });
-  buildWall();
-}
-
-const standardPresets = {
-  kitchen: {
-    name: "Cucina lineare",
-    background: "linear-gradient(120deg, #d8d1c6 0 38%, #efece6 38% 100%)",
-    modules: [
-      { width: 600, panels: [{ type: "flat", height: 1200 }, { type: "lux", height: 300, variant: "LED_T" }, { type: "flat", height: 1200 }] },
-      { width: 600, panels: [{ type: "flat", height: 1500 }, { type: "shelf", height: 300, variant: "BOTTOM" }, { type: "flat", height: 900 }] },
-      { width: 900, panels: [{ type: "flat", height: 2700 }] },
-    ],
-  },
-  living: {
-    name: "Living",
-    background: "radial-gradient(circle at 70% 30%, #f0e7db 0 18%, transparent 19%), linear-gradient(110deg, #d7d0c4, #eee9df)",
-    modules: [
-      { width: 900, panels: [{ type: "flat", height: 1200 }, { type: "frame", height: 600 }, { type: "flat", height: 900 }] },
-      { width: 600, panels: [{ type: "flat", height: 1500 }, { type: "box", height: 450 }, { type: "flat", height: 750 }] },
-      { width: 600, panels: [{ type: "flat", height: 2700 }] },
-    ],
-  },
-  entry: {
-    name: "Ingresso",
-    background: "linear-gradient(90deg, #cfc7bb, #f4f0e8)",
-    modules: [
-      { width: 300, panels: [{ type: "flat", height: 2700 }] },
-      { width: 600, panels: [{ type: "flat", height: 1200 }, { type: "shelf", height: 300, variant: "BOTTOM" }, { type: "flat", height: 1200 }] },
-      { width: 300, panels: [{ type: "flat", height: 2700 }] },
-    ],
-  },
-  hospitality: {
-    name: "Hospitality",
-    background: "linear-gradient(135deg, #bfb5a6, #eee8dd 62%, #d5cec2)",
-    modules: [
-      { width: 900, panels: [{ type: "flat", height: 1500 }, { type: "lux", height: 300, variant: "LED_TB" }, { type: "flat", height: 900 }] },
-      { width: 900, panels: [{ type: "flat", height: 2700 }] },
-      { width: 600, panels: [{ type: "flat", height: 1200 }, { type: "frame", height: 600 }, { type: "flat", height: 900 }] },
-    ],
-  },
-  retail: {
-    name: "Retail",
-    background: "linear-gradient(90deg, #ded7cc 0 55%, #f6f3ed 55%)",
-    modules: [
-      { width: 600, panels: [{ type: "flat", height: 1200 }, { type: "box", height: 600 }, { type: "flat", height: 900 }] },
-      { width: 900, panels: [{ type: "flat", height: 1500 }, { type: "shelf", height: 300, variant: "BOTTOM" }, { type: "flat", height: 900 }] },
-      { width: 600, panels: [{ type: "flat", height: 2700 }] },
-    ],
-  },
-  sample: {
-    name: "Parete campionario",
-    background: "linear-gradient(120deg, #ddd6cb, #f2eee7)",
-    modules: [
-      { width: 300, panels: [{ type: "flat", height: 750 }, { type: "lux", height: 300, variant: "LED_T" }, { type: "flat", height: 750 }, { type: "box", height: 300 }, { type: "flat", height: 600 }] },
-      { width: 600, panels: [{ type: "flat", height: 1200 }, { type: "frame", height: 600 }, { type: "flat", height: 900 }] },
-      { width: 900, panels: [{ type: "flat", height: 2700 }] },
-    ],
-  },
-  minimal: {
-    name: "Composizione minima",
-    background: "linear-gradient(135deg, #e2ded5, #f7f5ef)",
-    modules: [
-      { width: 600, panels: [{ type: "flat", height: 2700 }] },
-      { width: 600, panels: [{ type: "flat", height: 2700 }] },
-      { width: 600, panels: [{ type: "flat", height: 2700 }] },
-    ],
-  },
-  premium: {
-    name: "Composizione premium",
-    background: "radial-gradient(circle at 25% 35%, #f6efe5 0 20%, transparent 21%), linear-gradient(100deg, #c9bdae, #eee8dd)",
-    modules: [
-      { width: 900, panels: [{ type: "flat", height: 1200 }, { type: "frame", height: 600 }, { type: "flat", height: 900 }] },
-      { width: 600, panels: [{ type: "flat", height: 1500 }, { type: "lux", height: 300, variant: "LED_TB" }, { type: "flat", height: 900 }] },
-      { width: 900, panels: [{ type: "flat", height: 1200 }, { type: "box", height: 600 }, { type: "flat", height: 900 }] },
-      { width: 300, panels: [{ type: "flat", height: 2700 }] },
-    ],
-  },
-};
-
-function applyPreset(key) {
-  const preset = standardPresets[key];
-  if (!preset) return;
-  modules = preset.modules.map((module) => ({
-    id: ++moduleId,
-    width: module.width,
-    panels: module.panels.map((panel) => ({ ...panel, width: module.width, variant: panel.variant || "", id: ++nextPanelId })),
-  }));
-  selectedModuleId = modules[0]?.id || null;
-  selectedPanelId = modules[0]?.panels[0]?.id || null;
-  environmentPhotoActive = false;
-  setStageBackground(preset.background, preset.name);
-  document.querySelectorAll("[data-preset]").forEach((button) => {
-    button.classList.toggle("selected", button.dataset.preset === key);
-  });
-  targetYaw = -.18;
-  targetZoom = 5.2;
-  buildWall();
-}
-
-document.querySelectorAll("[data-config-open]").forEach((button) => {
-  button.addEventListener("click", () => {
-    openConfigPanel(button.dataset.configOpen);
-    if (button.dataset.configOpen === "materials") loadDinocCatalog();
-    if (onboarding && !onboarding.hidden) {
-      onboarding.hidden = true;
-      localStorage.setItem(ONBOARDING_SEEN_KEY, "1");
-    }
-  });
-});
-document.querySelectorAll("[data-config-back]").forEach((button) => {
-  button.addEventListener("click", closeConfigPanel);
-});
-document.querySelectorAll("[data-panel-option]").forEach((button) => {
-  button.addEventListener("click", () => {
-    panelType.value = button.dataset.panelOption;
-    updatePanelBuilder();
-  });
-});
-removeSelectedPanelButton?.addEventListener("click", removeSelectedPanel);
-document.querySelectorAll("[data-preset]").forEach((button) => {
-  button.addEventListener("click", () => applyPreset(button.dataset.preset));
-});
-document.querySelectorAll("[data-mode]").forEach((button) => {
-  button.addEventListener("click", () => setViewMode(button.dataset.mode));
-});
-document.querySelector("#environment-photo")?.addEventListener("change", (event) => {
-  const file = event.target.files?.[0];
-  if (!file) return;
-  const url = URL.createObjectURL(file);
-  environmentPhotoActive = true;
-  setStageBackground(`url("${url}")`, file.name);
-});
-document.querySelector("#remove-environment-photo")?.addEventListener("click", () => {
-  environmentPhotoActive = false;
-  document.querySelector("#environment-photo").value = "";
-  setStageBackground("radial-gradient(circle at 50% 42%, #f8f7f3 0, #e5e2da 72%)", "Studio neutro");
-});
-wallScaleControl?.addEventListener("input", () => {
-  wallScalePercent = Number(wallScaleControl.value);
-  applyEnvironmentTransform();
-});
-wallOffsetXControl?.addEventListener("input", () => {
-  wallOffsetX = Number(wallOffsetXControl.value);
-  applyEnvironmentTransform();
-});
-wallOffsetYControl?.addEventListener("input", () => {
-  wallOffsetY = Number(wallOffsetYControl.value);
-  applyEnvironmentTransform();
-});
-document.querySelector("#reset-environment-view")?.addEventListener("click", () => {
-  wallScalePercent = 108;
-  wallOffsetX = 0;
-  wallOffsetY = 0;
-  if (wallScaleControl) wallScaleControl.value = String(wallScalePercent);
-  if (wallOffsetXControl) wallOffsetXControl.value = "0";
-  if (wallOffsetYControl) wallOffsetYControl.value = "0";
-  applyEnvironmentTransform();
-});
-gridToggles.forEach((toggle) => toggle.addEventListener("change", syncGridVisibility));
-document.querySelector("#quote-toggle")?.addEventListener("change", (event) => {
-  setViewMode(event.target.checked ? "technical" : "preview");
-});
-
-document.querySelectorAll("[data-add-module]").forEach((button) => button.addEventListener("click", () => {
-  modules.push({ id: ++moduleId, width: Number(button.dataset.addModule), panels: [] });
-  buildWall();
-}));
-moduleList.addEventListener("change", (event) => {
-  if (!event.target.matches("[data-module-width]")) return;
-  const id = Number(event.target.closest("[data-module-id]").dataset.moduleId);
-  const module = modules.find((entry) => entry.id === id);
-  module.width = Number(event.target.value);
-  module.panels = module.panels.filter((panel) => panel.width === module.width);
-  buildWall();
-});
-moduleList.addEventListener("click", (event) => {
-  const card = event.target.closest("[data-module-id]");
-  if (!card) return;
-  const id = Number(card.dataset.moduleId);
-  if (event.target.closest("[data-remove-module]")) {
-    modules = modules.filter((module) => module.id !== id);
-    buildWall();
-  } else if (event.target.closest("[data-move]")) {
-    moveModule(id, Number(event.target.closest("[data-move]").dataset.move));
-  } else if (!event.target.matches("select")) {
-    setSelectedPanel(null, id);
-  }
-});
-panelList.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-remove-panel]");
-  if (button) {
-    const [moduleIdValue, panelIndexValue] = button.dataset.removePanel.split(":").map(Number);
-    const module = modules.find((entry) => entry.id === moduleIdValue);
-    if (module && confirm("Rimuovere il pannello selezionato?")) {
-      const removed = module.panels[panelIndexValue];
-      module.panels.splice(panelIndexValue, 1);
-      if (removed?.id === selectedPanelId) selectedPanelId = null;
-      selectedModuleId = module.id;
-      showDropError("Pannello rimosso");
-    }
-    buildWall();
-    return;
-  }
-  const row = event.target.closest("[data-select-panel]");
-  if (!row) return;
-  setSelectedPanel(Number(row.dataset.selectPanel), Number(row.dataset.selectModule));
-});
-accessoryList?.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-remove-accessory]");
-  if (!button) return;
-  const object = placed[Number(button.dataset.removeAccessory)];
-  if (object) removeAccessory(object);
-});
-[panelType, panelWidth, panelHeight, panelVariant].forEach((select) => select.addEventListener("change", updatePanelBuilder));
-panelDragCard.addEventListener("dragstart", (event) => {
-  event.dataTransfer.setData("application/x-iw-panel", JSON.stringify({
-    type: panelType.value,
-    width: Number(panelWidth.value),
-    height: Number(panelHeight.value),
-    variant: panelVariantField.hidden ? "" : panelVariant.value,
-    material: materialSnapshot(),
-  }));
-  event.dataTransfer.effectAllowed = "copy";
-});
-panelDragCard.addEventListener("pointerdown", (event) => {
-  event.preventDefault();
-  draggedNewPanel = {
-    type: panelType.value,
-    width: Number(panelWidth.value),
-    height: Number(panelHeight.value),
-    variant: panelVariantField.hidden ? "" : panelVariant.value,
-    material: materialSnapshot(),
-  };
-  panelDragGhost = document.createElement("div");
-  panelDragGhost.className = "drag-ghost panel-drag-ghost";
-  panelDragGhost.innerHTML = `<b>${escapeHtml(panelCardName.textContent)}</b>`;
-  document.body.append(panelDragGhost);
-  panelDragGhost.style.left = `${event.clientX}px`;
-  panelDragGhost.style.top = `${event.clientY}px`;
-  stage.classList.add("drag-over");
-});
-addEventListener("pointermove", (event) => {
-  if (!draggedNewPanel || !panelDragGhost) return;
-  panelDragGhost.style.left = `${event.clientX}px`;
-  panelDragGhost.style.top = `${event.clientY}px`;
-  const overStage = document.elementFromPoint(event.clientX, event.clientY)?.closest("#config-stage");
-  if (!overStage) {
-    stage.classList.remove("drag-over");
-    return;
-  }
-  stage.classList.add("drag-over");
-  const point = pointerToWall(event.clientX, event.clientY);
-  const module = point ? moduleAtPoint(point) : null;
-  stage.querySelector(".drop-message").textContent = module ? "Rilascia per aggiungere il pannello" : "Trascina su un modulo della parete";
-});
-addEventListener("pointerup", (event) => {
-  if (!draggedNewPanel) return;
-  const panelData = draggedNewPanel;
-  draggedNewPanel = null;
-  panelDragGhost?.remove();
-  panelDragGhost = null;
-  stage.classList.remove("drag-over");
-  stage.querySelector(".drop-message").textContent = "Rilascia sulla parete";
-  const overStage = document.elementFromPoint(event.clientX, event.clientY)?.closest("#config-stage");
-  if (!overStage) return;
-  const point = pointerToWall(event.clientX, event.clientY);
-  if (!point) return;
-  const module = moduleAtPoint(point);
-  if (module) assignPanel(module, panelData, point.y);
-});
-document.querySelectorAll(".accessory-card").forEach((card) => {
-  card.addEventListener("pointerdown", (event) => {
-    event.preventDefault();
-    draggedNewAccessoryType = card.dataset.accessory;
-    accessoryDragGhost = document.createElement("div");
-    accessoryDragGhost.className = "drag-ghost accessory-drag-ghost";
-    accessoryDragGhost.innerHTML = `<b>${escapeHtml(ACCESSORY_LABELS[draggedNewAccessoryType] || draggedNewAccessoryType)}</b>`;
-    document.body.append(accessoryDragGhost);
-    accessoryDragGhost.style.left = `${event.clientX}px`;
-    accessoryDragGhost.style.top = `${event.clientY}px`;
-    stage.classList.add("drag-over");
-  });
-});
-addEventListener("pointermove", (event) => {
-  if (!draggedNewAccessoryType || !accessoryDragGhost) return;
-  accessoryDragGhost.style.left = `${event.clientX}px`;
-  accessoryDragGhost.style.top = `${event.clientY}px`;
-  const overStage = document.elementFromPoint(event.clientX, event.clientY)?.closest("#config-stage");
-  stage.classList.toggle("drag-over", Boolean(overStage));
-  if (overStage) stage.querySelector(".drop-message").textContent = "Rilascia per posizionare l'accessorio";
-});
-addEventListener("pointerup", (event) => {
-  if (!draggedNewAccessoryType) return;
-  const type = draggedNewAccessoryType;
-  draggedNewAccessoryType = null;
-  accessoryDragGhost?.remove();
-  accessoryDragGhost = null;
-  stage.classList.remove("drag-over");
-  stage.querySelector(".drop-message").textContent = "Rilascia sulla parete";
-  const overStage = document.elementFromPoint(event.clientX, event.clientY)?.closest("#config-stage");
-  if (!overStage) return;
-  const point = pointerToWall(event.clientX, event.clientY);
-  if (!point) return;
-  addAccessory(type, point);
-});
-materialGrid.addEventListener("click", (event) => {
-  const favorite = event.target.closest("[data-favorite-material]");
-  if (favorite) {
-    const id = favorite.dataset.favoriteMaterial;
-    if (favoriteMaterials.has(id)) favoriteMaterials.delete(id);
-    else favoriteMaterials.add(id);
-    saveMaterialPreferences();
-    renderMaterialCatalog();
-    return;
-  }
-  const card = event.target.closest("[data-material-id]");
-  if (card) selectMaterial(card.dataset.materialId);
-});
-materialGrid.addEventListener("dragstart", (event) => {
-  const card = event.target.closest("[data-material-id]");
-  if (!card) return;
-  selectMaterial(card.dataset.materialId);
-  event.dataTransfer.setData("application/x-iw-material", JSON.stringify(materialSnapshot()));
-  event.dataTransfer.effectAllowed = "copy";
-});
-materialGrid.addEventListener("pointerdown", (event) => {
-  if (event.target.closest("[data-favorite-material]")) return;
-  const card = event.target.closest("[data-material-id]");
-  if (!card) return;
-  const material = dinocById.get(card.dataset.materialId);
-  if (!material) return;
-  event.preventDefault();
-  selectMaterial(material.id);
-  draggedMaterial = materialSnapshot();
-  materialDragGhost = document.createElement("div");
-  materialDragGhost.className = "material-drag-ghost";
-  materialDragGhost.innerHTML = `<img src="${material.texture}" alt="">`;
-  document.body.append(materialDragGhost);
-  materialDragGhost.style.left = `${event.clientX}px`;
-  materialDragGhost.style.top = `${event.clientY}px`;
-  stage.classList.add("drag-over");
-});
-addEventListener("pointermove", (event) => {
-  if (!draggedMaterial || !materialDragGhost) return;
-  materialDragGhost.style.left = `${event.clientX}px`;
-  materialDragGhost.style.top = `${event.clientY}px`;
-  const overStage = document.elementFromPoint(event.clientX, event.clientY)?.closest("#config-stage");
-  if (!overStage) {
-    stage.classList.remove("drag-over");
-    return;
-  }
-  stage.classList.add("drag-over");
-  const hit = moduleHitAtPointer(event.clientX, event.clientY);
-  stage.querySelector(".drop-message").textContent = !hit
-    ? "Applica a tutta la parete"
-    : Number.isInteger(hit.userData.panelIndex)
-      ? "Applica a questo pannello"
-      : "Applica a questo modulo";
-});
-addEventListener("pointerup", (event) => {
-  if (!draggedMaterial) return;
-  const finish = draggedMaterial;
-  draggedMaterial = null;
-  materialDragGhost?.remove();
-  materialDragGhost = null;
-  const overStage = document.elementFromPoint(event.clientX, event.clientY)?.closest("#config-stage");
-  stage.classList.remove("drag-over");
-  stage.querySelector(".drop-message").textContent = "Rilascia sulla parete";
-  if (!overStage) return;
-  const hit = moduleHitAtPointer(event.clientX, event.clientY);
-  const details = panelHitDetails(hit);
-  if (details) {
-    setSelectedPanel(details.panel.id, details.module.id);
-    return applyMaterialToTarget(finish, "panel", details.module.id, details.panel.id);
-  }
-  if (!selectedPanelId) return showDropError("Seleziona un pannello per applicare una finitura");
-  applyMaterialToTarget(finish, "panel");
-});
-materialSearch.addEventListener("input", () => { materialLimit = 72; renderMaterialCatalog(); });
-materialFamily.addEventListener("change", () => { materialLimit = 72; renderMaterialCatalog(); });
-document.querySelectorAll("[data-material-tab]").forEach((button) => button.addEventListener("click", () => {
-  materialTab = button.dataset.materialTab;
-  materialLimit = 72;
-  document.querySelectorAll("[data-material-tab]").forEach((item) => item.classList.toggle("active", item === button));
-  renderMaterialCatalog();
-}));
-materialMore.addEventListener("click", () => { materialLimit += 72; renderMaterialCatalog(); });
-document.querySelector("#apply-material-panel").addEventListener("click", () => applySelectedMaterial("panel"));
-document.querySelector("#apply-material-module").addEventListener("click", () => applySelectedMaterial("module"));
-document.querySelector("#apply-material-wall").addEventListener("click", () => applySelectedMaterial("wall"));
-unlockViewButton?.addEventListener("click", clearPanelSelection);
-addEventListener("keydown", (event) => {
-  if (event.key === "Escape") clearPanelSelection();
-});
-
-document.querySelectorAll(".component-card").forEach((card) => {
-  card.addEventListener("dragstart", (event) => {
-    event.dataTransfer.setData("text/iconic-component", card.dataset.component);
-    event.dataTransfer.effectAllowed = "copy";
-  });
-  card.addEventListener("click", () => addAccessory(card.dataset.component));
-});
-stage.addEventListener("dragover", (event) => {
-  event.preventDefault();
-  stage.classList.add("drag-over");
-  if (Array.from(event.dataTransfer.types).includes("application/x-iw-material")) {
-    const hit = moduleHitAtPointer(event.clientX, event.clientY);
-    const message = stage.querySelector(".drop-message");
-    if (panelHitDetails(hit)) message.textContent = "Applica a questo pannello";
-    else message.textContent = "Seleziona un pannello";
-  }
-});
-stage.addEventListener("dragleave", () => {
-  stage.classList.remove("drag-over");
-  stage.querySelector(".drop-message").textContent = "Rilascia sulla parete";
-});
-stage.addEventListener("drop", (event) => {
-  event.preventDefault();
-  stage.classList.remove("drag-over");
-  const materialData = event.dataTransfer.getData("application/x-iw-material");
-  if (materialData) {
-    const finish = JSON.parse(materialData);
-    const hit = moduleHitAtPointer(event.clientX, event.clientY);
-    const details = panelHitDetails(hit);
-    if (details) {
-      setSelectedPanel(details.panel.id, details.module.id);
-      applyMaterialToTarget(finish, "panel", details.module.id, details.panel.id);
-      return;
-    }
-    if (!selectedPanelId) return showDropError("Seleziona un pannello per applicare una finitura");
-    applyMaterialToTarget(finish, "panel");
-    return;
-  }
-  const point = pointerToWall(event.clientX, event.clientY);
-  if (!point) return;
-  const panelData = event.dataTransfer.getData("application/x-iw-panel");
-  if (panelData) {
-    const module = moduleAtPoint(point);
-    if (module) assignPanel(module, JSON.parse(panelData), point.y);
-    return;
-  }
-  const accessoryType = event.dataTransfer.getData("text/iconic-component");
-  if (accessoryType) addAccessory(accessoryType, point);
-});
-
-renderer.domElement.addEventListener("pointerdown", (event) => {
-  emptySelectionCandidate = false;
-  const rect = renderer.domElement.getBoundingClientRect();
-  pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-  pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-  raycaster.setFromCamera(pointer, camera);
-  const accessoryHit = raycaster.intersectObjects(placed, true)[0];
-  if (accessoryHit) {
-    draggedAccessory = accessoryHit.object.userData.accessoryRoot;
-  } else {
-    const moduleHit = raycaster.intersectObjects(moduleGroup.children, true)[0];
-    const hitObject = moduleHit?.object;
-    const panelHit = panelHitDetails(hitObject);
-    if (hitObject?.userData.panelHandle && hitObject.userData.panelRoot && panelHit) {
-      setSelectedPanel(panelHit.panel.id, panelHit.module.id, { rebuild: false });
-      draggedPanel = {
-        moduleId: panelHit.moduleIdValue,
-        panelIndex: hitObject.userData.panelIndex,
-        visual: hitObject.userData.panelRoot,
-        targetY: hitObject.userData.panelRoot.position.y,
-      };
-    } else if (hitObject?.userData.moduleHandle && hitObject.userData.moduleRoot) {
-      setSelectedPanel(null, hitObject.userData.moduleRoot.userData.moduleId, { rebuild: false });
-      draggedModule = hitObject.userData.moduleRoot;
-    } else if (panelHit) {
-      setSelectedPanel(panelHit.panel.id, panelHit.module.id);
-    } else {
-      emptySelectionCandidate = true;
-      orbiting = controls.enableRotate;
-    }
-  }
-  pointerStart = { x: event.clientX, y: event.clientY };
-  pointerDownStart = { x: event.clientX, y: event.clientY };
-  renderer.domElement.setPointerCapture(event.pointerId);
-});
-renderer.domElement.addEventListener("pointermove", (event) => {
-  const point = pointerToWall(event.clientX, event.clientY);
-  if (draggedAccessory && point) {
-    draggedAccessory.position.x = point.x;
-    draggedAccessory.position.y = point.y;
-    clampAccessory(draggedAccessory);
-  } else if (draggedPanel && point) {
-    draggedPanel.targetY = THREE.MathUtils.clamp(point.y, -wallHeight / 2, wallHeight / 2);
-    draggedPanel.visual.position.y = draggedPanel.targetY;
-    draggedPanel.visual.position.z = .12;
-  } else if (draggedModule && point) {
-    draggedModule.position.x = THREE.MathUtils.clamp(point.x, -wallWidth / 2, wallWidth / 2);
-  } else if (orbiting) {
-    if (Math.abs(event.clientX - pointerDownStart.x) > 4 || Math.abs(event.clientY - pointerDownStart.y) > 4) emptySelectionCandidate = false;
-    targetYaw = THREE.MathUtils.clamp(targetYaw + (event.clientX - pointerStart.x) * .006, -.68, .68);
-    pointerStart = { x: event.clientX, y: event.clientY };
-  } else if (emptySelectionCandidate && selectedPanelId) {
-    if (Math.abs(event.clientX - pointerDownStart.x) > 4 || Math.abs(event.clientY - pointerDownStart.y) > 4) emptySelectionCandidate = false;
-  }
-});
-renderer.domElement.addEventListener("pointerup", (event) => {
-  if (draggedPanel) {
-    const module = modules.find((entry) => entry.id === draggedPanel.moduleId);
-    if (module) reorderPanel(module, draggedPanel.panelIndex, draggedPanel.targetY);
-  } else if (draggedModule) {
-    const id = draggedModule.userData.moduleId;
-    const sourceIndex = modules.findIndex((module) => module.id === id);
-    let insertAt = modules.length - 1;
-    const x = draggedModule.position.x;
-    let cursor = -wallWidth / 2;
-    for (let index = 0; index < modules.length; index += 1) {
-      const center = cursor + modules[index].width / 2000;
-      if (x < center) {
-        insertAt = index;
-        break;
+    let bottom = floorY + b;
+    let bottomMm = colBaseline(col);
+    col.panels.forEach((panel) => {
+      if (!panel.mergeId) {
+        const visual = panelVisual3D(panel, col.width, colXmm, bottomMm);
+        visual.position.y = bottom + panel.height / 2000;
+        root.add(visual);
       }
-      cursor += modules[index].width / 1000;
-    }
-    if (sourceIndex !== insertAt) {
-      const [movingModule] = modules.splice(sourceIndex, 1);
-      modules.splice(insertAt, 0, movingModule);
-    }
-    buildWall();
-  } else if (emptySelectionCandidate && selectedPanelId) {
-    setSelectedPanel(null);
-  }
-  draggedAccessory = null;
-  draggedPanel = null;
-  draggedModule = null;
-  orbiting = false;
-  emptySelectionCandidate = false;
-  renderer.domElement.releasePointerCapture(event.pointerId);
-});
-renderer.domElement.addEventListener("wheel", (event) => {
-  event.preventDefault();
-  targetZoom = THREE.MathUtils.clamp(targetZoom + event.deltaY * .004, 5.2, 10);
-}, { passive: false });
-
-document.querySelectorAll(".finish").forEach((button) => button.addEventListener("click", () => {
-  currentFinish = button.dataset.finish;
-  document.querySelectorAll(".finish").forEach((item) => item.classList.toggle("active", item === button));
-  buildWall();
-}));
-heightSelect.addEventListener("change", buildWall);
-document.querySelectorAll("[data-view]").forEach((button) => button.addEventListener("click", () => {
-  targetYaw = button.dataset.view === "perspective" ? -.42 : 0;
-  document.querySelectorAll("[data-view]").forEach((item) => item.classList.toggle("active", item === button));
-}));
-document.querySelector("#undo-button").addEventListener("click", () => placed.length && removeAccessory(placed.at(-1)));
-document.querySelector("#clear-button").addEventListener("click", () => {
-  modules = [];
-  [...placed].forEach(removeAccessory);
-  buildWall();
-});
-document.querySelector("#request-button").addEventListener("click", () => {
-  const description = modules.map((module) => {
-    const panels = module.panels.length
-      ? module.panels.map((panel) => `${IW_RULES[panel.type].label} ${panel.width}x${panel.height}${panel.variant ? ` ${panel.variant}` : ""}${panel.material?.id ? ` DI-NOC ${dinocById.get(panel.material.id)?.code || panel.material.id}` : ""}`).join(" + ")
-      : "senza pannelli";
-    return `modulo ${module.width}: ${panels}`;
-  }).join(", ");
-  const params = new URLSearchParams({
-    tipo: "config3d",
-    dimensioni: `${Math.round(wallWidth * 1000)}x${wallHeightMm}`,
-    elementi: `${description}; accessori: ${placed.map((item) => item.userData.type).join(", ")}`,
-    finitura: "DI-NOC specificata per ciascun pannello",
+      bottom += panel.height / 1000;
+      bottomMm += panel.height;
+    });
+    group.add(root);
+    cursor += width;
+    colXmm += col.width;
   });
-  location.href = `contatti.html?${params}`;
-});
-requestFooterButton?.addEventListener("click", () => document.querySelector("#request-button").click());
+  // pannelli uniti: un unico volume largo quanto il rettangolo del gruppo
+  const mergedIds = new Set();
+  state.cols.forEach((col) => col.panels.forEach((p) => { if (p.mergeId) mergedIds.add(p.mergeId); }));
+  mergedIds.forEach((id) => {
+    const info = groupInfo(id);
+    if (!info) return;
+    const visual = panelVisual3D(info.panel, info.width, info.x0, info.bottom);
+    visual.position.x = -W / 2 + (info.x0 + info.width / 2) / 1000;
+    visual.position.y = floorY + (info.bottom + info.height / 2) / 1000;
+    group.add(visual);
+  });
+  three.floor.position.y = floorY - .001;
+  three.backWall.position.y = 0;
+  // letto matrimoniale stilizzato, centrato sulla parete
+  if (state.bed && bedAllowed()) {
+    const bed = new THREE.Group();
+    const dark = new THREE.MeshStandardMaterial({ color: 0x2c2823, roughness: .6 });
+    const linen = new THREE.MeshStandardMaterial({ color: 0xf1ebdf, roughness: .92 });
+    const linen2 = new THREE.MeshStandardMaterial({ color: 0xe4dccb, roughness: .92 });
+    const throwMat = new THREE.MeshStandardMaterial({ color: 0xa98a63, roughness: .8 });
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(1.94, .18, 2.08), dark);
+    frame.position.set(0, floorY + .09, STRUCTURE_FRONT_Z + 1.1);
+    const mattress = new THREE.Mesh(new THREE.BoxGeometry(1.86, .25, 1.98), linen);
+    mattress.position.set(0, floorY + .18 + .125, STRUCTURE_FRONT_Z + 1.08);
+    const duvet = new THREE.Mesh(new THREE.BoxGeometry(1.9, .09, 1.4), linen2);
+    duvet.position.set(0, floorY + .47, STRUCTURE_FRONT_Z + 1.36);
+    const runner = new THREE.Mesh(new THREE.BoxGeometry(1.9, .1, .42), throwMat);
+    runner.position.set(0, floorY + .47, STRUCTURE_FRONT_Z + 1.85);
+    bed.add(frame, mattress, duvet, runner);
+    for (const side of [-1, 1]) {
+      const pillow = new THREE.Mesh(new THREE.BoxGeometry(.72, .3, .16), linen);
+      pillow.position.set(side * .46, floorY + .62, STRUCTURE_FRONT_Z + .22);
+      pillow.rotation.x = -.22;
+      bed.add(pillow);
+    }
+    bed.traverse((item) => { if (item.isMesh) { item.castShadow = true; item.receiveShadow = true; } });
+    group.add(bed);
+  }
+  // ambientazione: se è attiva una scena fotografica, il 3D diventa la stanza
+  const scene3d = activeScene()?.room3d;
+  applySceneLighting(scene3d);
+  three.floor.visible = !scene3d;
+  three.backWall.visible = !scene3d;
+  if (scene3d) buildRoom3D(group, scene3d, floorY);
 
-const ONBOARDING_SEEN_KEY = "iwConfiguratorOnboardingSeen";
-const onboarding = document.querySelector("#config-onboarding");
-if (onboarding && !localStorage.getItem(ONBOARDING_SEEN_KEY)) onboarding.hidden = false;
-document.querySelector("#config-onboarding-dismiss")?.addEventListener("click", () => {
-  if (onboarding) onboarding.hidden = true;
-  localStorage.setItem(ONBOARDING_SEEN_KEY, "1");
-});
+  three.targetZoom = scene3d
+    ? Math.min(8.2, Math.max(6, W * 1.15 + 3))
+    : Math.max(4.6, W * 1.35 + 2.4);
+  three.zoom = three.targetZoom + 2;
+  three.targetYaw = scene3d ? -.3 : -.4;
+  three.yaw = .3;
+  three.targetPitch = scene3d ? .16 : .12;
+}
 
-addEventListener("resize", resize);
-applyEnvironmentTransform();
-resize();
-animate();
-loadOriginalModels()
-  .then(buildWall)
-  .catch((error) => {
-    console.error("Impossibile caricare le geometrie originali IW", error);
-    buildWall();
-  })
-  .finally(() => requestAnimationFrame(() => loading.classList.add("hidden")));
+// Illuminazione per scena (giorno caldo, diffusa chiara, sera drammatica).
+function applySceneLighting(room) {
+  const light = room?.light || { hemi: 2.2, hemiColor: 0xffffff, key: 3.2, keyColor: 0xffffff, keyPos: [-4, 6, 7], warm: 22 };
+  three.hemiLight.intensity = light.hemi;
+  three.hemiLight.color.setHex(light.hemiColor);
+  three.keyLight.intensity = light.key;
+  three.keyLight.color.setHex(light.keyColor);
+  three.keyLight.position.set(...light.keyPos);
+  three.warmLight.intensity = light.warm;
+}
+
+// Stanza tridimensionale con le misure reali della scena calibrata:
+// pareti ai confini veri, pavimento con materiale reale, letto e comodini.
+function buildRoom3D(group, room, floorY) {
+  const scene = activeScene();
+  const b = (scene.quad34?.bounds || [-2000, 2000]).map((v) => v / 1000);
+  const roomW = b[1] - b[0];
+  const roomCx = (b[0] + b[1]) / 2;
+  const depth = 4.6, height = 2.7;
+  const mat = (color, roughness = .92) => new THREE.MeshStandardMaterial({ color, roughness });
+
+  // pavimento con texture reale della finitura indicata
+  const floorMat = mat(0x9a8a74, .9);
+  const floorMesh = new THREE.Mesh(new THREE.PlaneGeometry(roomW, depth), floorMat);
+  floorMesh.rotation.x = -Math.PI / 2;
+  floorMesh.position.set(roomCx, floorY, depth / 2 - .1);
+  floorMesh.receiveShadow = true;
+  group.add(floorMesh);
+  const floorFinish = MAT_BY_CODE.get(room.floorTex);
+  if (floorFinish) {
+    dinocTexture3D(floorFinish).then((source) => {
+      const texture = source.clone();
+      texture.wrapS = THREE.MirroredRepeatWrapping;
+      texture.wrapT = THREE.MirroredRepeatWrapping;
+      texture.rotation = Math.PI / 2;
+      texture.center.set(.5, .5);
+      texture.repeat.set(roomW / 1.25, depth / 1.25);
+      texture.anisotropy = three.renderer.capabilities.getMaxAnisotropy();
+      texture.needsUpdate = true;
+      floorMat.map = texture;
+      floorMat.color.setHex(0xffffff);
+      floorMat.needsUpdate = true;
+    }).catch(() => { });
+  }
+
+  // muro di fondo, pareti laterali e soffitto ai confini calibrati
+  const back = new THREE.Mesh(new THREE.PlaneGeometry(roomW, height), mat(room.wall, .96));
+  back.position.set(roomCx, floorY + height / 2, -.02);
+  back.receiveShadow = true;
+  group.add(back);
+  for (const side of [0, 1]) {
+    const wallMesh = new THREE.Mesh(new THREE.PlaneGeometry(depth, height), mat(room.side, .96));
+    wallMesh.position.set(b[side], floorY + height / 2, depth / 2 - .1);
+    wallMesh.rotation.y = side === 0 ? Math.PI / 2 : -Math.PI / 2;
+    wallMesh.receiveShadow = true;
+    group.add(wallMesh);
+    // finestra luminosa sul lato indicato
+    if ((side === 0 && room.window === "left") || (side === 1 && room.window === "right")) {
+      const glow = new THREE.Mesh(
+        new THREE.PlaneGeometry(2.2, 1.9),
+        new THREE.MeshBasicMaterial({ color: 0xfff6e2 })
+      );
+      glow.position.set(b[side] + (side === 0 ? .01 : -.01), floorY + 1.45, 2.1);
+      glow.rotation.y = side === 0 ? Math.PI / 2 : -Math.PI / 2;
+      group.add(glow);
+      const softly = new THREE.PointLight(0xfff2dc, 8, 8);
+      softly.position.set(b[side] + (side === 0 ? .6 : -.6), floorY + 1.5, 2.1);
+      group.add(softly);
+    }
+  }
+  const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(roomW, depth), mat(room.ceiling, .98));
+  ceiling.rotation.x = Math.PI / 2;
+  ceiling.position.set(roomCx, floorY + height, depth / 2 - .1);
+  group.add(ceiling);
+
+  // letto matrimoniale con comodini e abat-jour, centrato sulla parete
+  const bed = room.bed;
+  const frame = mat(bed.frame, .6);
+  const linen = mat(bed.linen, .94);
+  const pillowM = mat(bed.pillow, .95);
+  const bedGroup = new THREE.Group();
+  const base = new THREE.Mesh(new THREE.BoxGeometry(1.94, .32, 2.12), frame);
+  base.position.set(0, floorY + .16, STRUCTURE_FRONT_Z + 1.12);
+  const mattress = new THREE.Mesh(new THREE.BoxGeometry(1.86, .26, 2.02), linen);
+  mattress.position.set(0, floorY + .32 + .13, STRUCTURE_FRONT_Z + 1.1);
+  const duvet = new THREE.Mesh(new THREE.BoxGeometry(1.9, .1, 1.5), mat(bed.linen, .97));
+  duvet.position.set(0, floorY + .62, STRUCTURE_FRONT_Z + 1.36);
+  const runner = new THREE.Mesh(new THREE.BoxGeometry(1.9, .11, .46), mat(bed.runner, .85));
+  runner.position.set(0, floorY + .62, STRUCTURE_FRONT_Z + 1.88);
+  bedGroup.add(base, mattress, duvet, runner);
+  for (const sideSign of [-1, 1]) {
+    const pillow = new THREE.Mesh(new THREE.BoxGeometry(.72, .3, .18), pillowM);
+    pillow.position.set(sideSign * .47, floorY + .78, STRUCTURE_FRONT_Z + .26);
+    pillow.rotation.x = -.24;
+    bedGroup.add(pillow);
+    const stand = new THREE.Mesh(new THREE.BoxGeometry(.55, .45, .45), mat(bed.nightstand, .55));
+    stand.position.set(sideSign * 1.35, floorY + .225, STRUCTURE_FRONT_Z + .3);
+    bedGroup.add(stand);
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(.015, .015, .32, 10), mat(0xb8934f, .35));
+    stem.position.set(sideSign * 1.35, floorY + .45 + .16, STRUCTURE_FRONT_Z + .3);
+    const shade = new THREE.Mesh(
+      new THREE.SphereGeometry(.12, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2),
+      room.lamps.on
+        ? new THREE.MeshBasicMaterial({ color: room.lamps.color })
+        : mat(0xf2efe8, .8)
+    );
+    shade.position.set(sideSign * 1.35, floorY + .45 + .3, STRUCTURE_FRONT_Z + .3);
+    bedGroup.add(stem, shade);
+    if (room.lamps.on) {
+      const bulb = new THREE.PointLight(room.lamps.color, room.lamps.intensity, 2.4);
+      bulb.position.set(sideSign * 1.35, floorY + .72, STRUCTURE_FRONT_Z + .34);
+      bedGroup.add(bulb);
+    }
+  }
+  bedGroup.traverse((item) => { if (item.isMesh) { item.castShadow = true; item.receiveShadow = true; } });
+  group.add(bedGroup);
+}
+
+function animate3D() {
+  three.yaw += (three.targetYaw - three.yaw) * .08;
+  three.pitch += (three.targetPitch - three.pitch) * .08;
+  three.zoom += (three.targetZoom - three.zoom) * .07;
+  const { camera } = three;
+  camera.position.set(
+    Math.sin(three.yaw) * three.zoom,
+    Math.sin(three.pitch) * three.zoom * .5 + .1,
+    Math.cos(three.yaw) * three.zoom
+  );
+  camera.lookAt(0, 0, 0);
+  three.renderer.render(three.scene, three.camera);
+  three.raf = requestAnimationFrame(animate3D);
+}
+
+function resize3D() {
+  if (!three) return;
+  const { clientWidth, clientHeight } = stage3D;
+  if (!clientWidth || !clientHeight) return;
+  three.camera.aspect = clientWidth / clientHeight;
+  three.camera.updateProjectionMatrix();
+  three.renderer.setSize(clientWidth, clientHeight);
+}
+
+async function open3D() {
+  dismissCoach();
+  overlay3D.hidden = false;
+  document.body.style.overflow = "hidden";
+  loading3D.style.display = "flex";
+  try {
+    await ensureThree();
+    build3DWall();
+    resize3D();
+    cancelAnimationFrame(three.raf);
+    animate3D();
+    loading3D.style.display = "none";
+  } catch (error) {
+    console.warn("Vista 3D non disponibile", error);
+    close3D();
+    toast("La vista 3D non è disponibile su questo dispositivo");
+  }
+}
+
+function close3D() {
+  overlay3D.hidden = true;
+  document.body.style.overflow = "";
+  if (three) cancelAnimationFrame(three.raf);
+}
+
+$("#btn-3d").addEventListener("click", open3D);
+$("#studio-3d-close").addEventListener("click", close3D);
+overlay3D.addEventListener("click", (event) => {
+  if (event.target === overlay3D) close3D();
+});
+window.addEventListener("resize", () => { if (!overlay3D.hidden) resize3D(); });
+
+/* ---------- 20. Avvio ---------- */
+
+function loadInitialState() {
+  const fromHash = location.hash.match(/#d=([\w-]+)/);
+  if (fromHash) {
+    const parsed = decodeState(fromHash[1]);
+    if (parsed) return parsed;
+  }
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed && Array.isArray(parsed.cols) && parsed.cols.length) {
+        parsed.photo = null;
+        if (parsed.env?.type === "photo") parsed.env = { type: "preset", id: parsed.env.id || "living" };
+        if (parsed.env?.type === "scene" && !sceneById(parsed.env.id)) parsed.env = { type: "preset", id: "living" };
+        parsed.baseline = BASELINES.includes(parsed.baseline) ? parsed.baseline : 0;
+        parsed.bed = Boolean(parsed.bed) && parsed.baseline >= 450;
+        // migrazione: stati salvati prima della quota per modulo
+        parsed.cols.forEach((col) => {
+          if (!BASELINES.includes(col.baseline)) col.baseline = parsed.baseline;
+        });
+        sanitizeColumns(parsed.cols);
+        parsed.cols.forEach((col) => reconcileColumn(col, parsed.height - col.baseline));
+        return parsed;
+      }
+    }
+  } catch { }
+  return defaultState();
+}
+
+function init() {
+  state = loadInitialState();
+  // reconcileColumn usa state.height: rifiniamo dopo l'assegnazione
+  state.cols.forEach((col) => reconcileColumn(col));
+  renderEnvCats();
+  renderEnvGrid();
+  renderFinishTabs();
+  renderFinishModes();
+  updateEnvControls();
+  openDock("ambiente");
+  refresh();
+  try {
+    if (localStorage.getItem("iwStudioCoach") !== "done") coachEl.hidden = false;
+  } catch {
+    coachEl.hidden = false;
+  }
+}
+
+init();

@@ -3,238 +3,269 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Configura una parete IconicWall in 3D scegliendo pannelli, finiture e accessori magnetici.">
+  <meta name="description" content="Componi la tua parete IconicWall: scegli l'ambiente, gioca con pannelli e finiture 3M DI-NOC, guardala in 3D e condividila.">
   <link rel="canonical" href="https://www.iconicwall.it/configuratore.html">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="IconicWall">
   <meta property="og:locale" content="it_IT">
-  <meta property="og:title" content="Configuratore 3D — IconicWall">
-  <meta property="og:description" content="Configura una parete IconicWall in 3D scegliendo pannelli, finiture e accessori magnetici.">
+  <meta property="og:title" content="IconicWall Studio — Componi la tua parete">
+  <meta property="og:description" content="Componi la tua parete IconicWall: scegli l'ambiente, gioca con pannelli e finiture 3M DI-NOC, guardala in 3D e condividila.">
   <meta property="og:url" content="https://www.iconicwall.it/configuratore.html">
   <meta property="og:image" content="https://www.iconicwall.it/assets/gallery/system-reveal.webp">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Configuratore 3D — IconicWall">
-  <meta name="twitter:description" content="Configura una parete IconicWall in 3D scegliendo pannelli, finiture e accessori magnetici.">
+  <meta name="twitter:title" content="IconicWall Studio — Componi la tua parete">
+  <meta name="twitter:description" content="Componi la tua parete IconicWall: pannelli, finiture 3M DI-NOC, vista 3D e condivisione.">
   <meta name="twitter:image" content="https://www.iconicwall.it/assets/gallery/system-reveal.webp">
-  <title>Configuratore 3D — IconicWall</title>
+  <title>IconicWall Studio — Componi la tua parete</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Italiana&display=swap">
   <link rel="stylesheet" href="styles.css?v=56">
-  <link rel="stylesheet" href="configuratore.css?v=18">
+  <link rel="stylesheet" href="configuratore.css?v=34">
   <script src="script.js?v=57" defer></script>
-  <script src="assets/three-gltf-bundle.js" defer></script>
-  <script src="assets/models/iw-models.js" defer></script>
-  <script src="configuratore.js?v=33" defer></script>
+  <script src="assets/dinoc/catalog-curated.js" defer></script>
+  <script src="assets/dinoc/textures-hd/manifest.js" defer></script>
+  <script src="configuratore.js?v=68" defer></script>
 </head>
 <body data-page="configuratore">
-  <div id="config-announcer" class="sr-only" aria-live="polite" role="status"></div>
-  <main class="configurator-page">
-    <section class="configurator-intro">
+  <div id="studio-announcer" class="sr-only" aria-live="polite" role="status"></div>
+
+  <main class="studio-page">
+    <section class="studio-hero">
       <div>
-        <p class="config-kicker">IconicWall Studio</p>
-        <h1>Disegna la tua<br><em>parete.</em></h1>
+        <p class="studio-kicker">IconicWall Studio</p>
+        <h1>La tua parete<br><em>prende vita.</em></h1>
       </div>
-      <p>Una preview progettuale guidata: moduli, pannelli, materiali e ambiente in un flusso pulito.</p>
+      <p>Tocca, cambia, mescola. Niente da imparare: scegli l'ambiente, gioca con pannelli e finiture, poi guardala in 3D e condividila.</p>
     </section>
 
-    <section class="configurator-shell" aria-label="Configuratore IconicWall">
-      <aside class="config-sidebar" aria-label="Menu configuratore">
-        <div id="config-onboarding" class="config-onboarding" hidden>
-          <p class="config-onboarding-title">Come funziona</p>
-          <p>Segui i passaggi numerati: componi la struttura in <b>Moduli</b>, scegli <b>Pannelli</b> e <b>Accessori</b>, applica le finiture in <b>Materiali</b>, poi salva la richiesta in <b>Riepilogo</b>.</p>
-          <button id="config-onboarding-dismiss" type="button">Ho capito</button>
+    <section class="studio" aria-label="Configuratore IconicWall">
+
+      <div class="studio-stage-wrap">
+        <div class="studio-topbar">
+          <div class="studio-dims" id="studio-dims" title="Dimensioni parete">2400 × 2700 mm</div>
+          <div class="studio-actions">
+            <button id="btn-shuffle" type="button" class="studio-action studio-action-primary" title="Genera una nuova composizione">
+              <span aria-hidden="true">✦</span> Sorprendimi
+            </button>
+            <div class="render-group" role="group" aria-label="Vedi il rendering">
+              <button id="btn-3d" type="button" class="studio-action render-action" title="Ruota la parete in 3D">
+                <span aria-hidden="true">◈</span> Vedi in 3D
+              </button>
+              <button id="btn-render34" type="button" class="studio-action render-action" title="Fotoinserimento prospettico nella scena">
+                <span aria-hidden="true">✦</span> Renderizza
+              </button>
+            </div>
+            <button id="btn-undo" type="button" class="studio-action studio-action-icon" title="Annulla ultima modifica" aria-label="Annulla ultima modifica">↺</button>
+          </div>
         </div>
-        <nav class="config-main-menu" aria-label="Sezioni configuratore">
-          <button data-config-open="modules" aria-expanded="false"><span>01</span><b>Moduli</b><small>Struttura parete</small></button>
-          <button data-config-open="panels" aria-expanded="false"><span>02</span><b>Pannelli</b><small>Famiglie IW</small></button>
-          <button data-config-open="accessories" aria-expanded="false"><span>03</span><b>Accessori</b><small>Elementi magnetici</small></button>
-          <button data-config-open="materials" aria-expanded="false"><span>04</span><b>Materiali</b><small>Catalogo DI-NOC</small></button>
-          <button data-config-open="presets" aria-expanded="false"><span>05</span><b>Configurazioni standard</b><small>Preset e ambiente</small></button>
-          <button data-config-open="measures" aria-expanded="false"><span>06</span><b>Misure</b><small>Dimensioni tecniche</small></button>
-          <button data-config-open="summary" aria-expanded="false"><span>07</span><b>Riepilogo</b><small>Salva richiesta</small></button>
+
+        <div id="studio-stage" class="studio-stage">
+          <svg id="wall-svg" role="img" aria-label="Anteprima della parete IconicWall"></svg>
+
+          <div id="studio-coach" class="studio-coach" hidden>
+            <p><b>1</b> Tocca un pannello per trasformarlo</p>
+            <p><b>2</b> <i>✦ Sorprendimi</i> mescola per te</p>
+            <p><b>3</b> Guardala in 3D e condividila</p>
+            <button id="coach-dismiss" type="button">Gioco!</button>
+          </div>
+
+          <div id="studio-toast" class="studio-toast" hidden></div>
+        </div>
+      </div>
+
+      <div class="studio-dock" id="studio-dock">
+        <nav class="dock-tabs" aria-label="Sezioni configuratore">
+          <button data-dock="ambiente" type="button"><span aria-hidden="true">⌂</span>Ambiente</button>
+          <button data-dock="parete" type="button"><span aria-hidden="true">▤</span>Parete</button>
+          <button data-dock="pannello" type="button"><span aria-hidden="true">◻</span>Pannello</button>
+          <button data-dock="finiture" type="button"><span aria-hidden="true">◐</span>Finiture</button>
+          <button data-dock="fine" type="button"><span aria-hidden="true">✓</span>Riepilogo</button>
         </nav>
 
-        <section class="config-panel" data-config-panel="modules" aria-label="Moduli" hidden>
-          <button class="config-back" data-config-back>← Indietro</button>
-          <div class="config-section-head"><span>01</span><h2>Moduli</h2></div>
-          <p class="drag-hint">Componi la parete da sinistra a destra. Ogni colonna può essere da 300, 600 o 900 mm.</p>
-          <div class="module-add">
-            <button data-add-module="300"><b>＋ 300</b><small>mm</small></button>
-            <button data-add-module="600"><b>＋ 600</b><small>mm</small></button>
-            <button data-add-module="900"><b>＋ 900</b><small>mm</small></button>
+        <section class="dock-panel" data-dock-panel="pannello" id="panel-editor" hidden aria-label="Modifica pannello">
+          <div class="panel-edit-head">
+            <h2 id="popover-title">Pannello</h2>
+            <button id="popover-close" type="button" aria-label="Chiudi modifica pannello">×</button>
           </div>
-          <div class="quick-total"><span>Larghezza totale</span><strong id="wall-width-output">2400 mm</strong></div>
-          <div id="module-list" class="module-list"></div>
+          <p id="panel-empty" class="panel-empty" hidden>Nessun pannello selezionato. <b>Tocca un pannello sulla parete</b>: si evidenzia in oro, e da qui lo modifichi — famiglia, altezza, vena, posizione, finitura.</p>
+          <p class="panel-edit-hint">Il pannello selezionato è evidenziato in oro sulla parete: ogni modifica la vedi lì, in diretta.</p>
+          <div class="popover-row popover-families" id="popover-families" role="listbox" aria-label="Tipo di pannello"></div>
+          <div class="popover-row popover-heights" id="popover-heights" aria-label="Altezza pannello"></div>
+          <div class="popover-row popover-grain" id="popover-grain" hidden aria-label="Verso della vena">
+            <span class="popover-row-label">Verso della vena</span>
+            <button type="button" data-grain="v">↕ Verticale</button>
+            <button type="button" data-grain="h">↔ Orizzontale</button>
+          </div>
+          <div class="popover-row popover-move" id="popover-move" aria-label="Scambia posizione">
+            <span class="popover-row-label">Scambia di posto</span>
+            <button type="button" data-move="-1">▼ Con quello sotto</button>
+            <button type="button" data-move="1">▲ Con quello sopra</button>
+          </div>
+          <div class="popover-row popover-variants" id="popover-variants" hidden aria-label="Variante"></div>
+          <div class="popover-row popover-merge-row" aria-label="Unione pannelli">
+            <button id="popover-merge" type="button">⧉ Unisci con altri pannelli</button>
+            <button id="popover-merge-cancel" type="button" hidden>Annulla unione</button>
+            <button id="popover-split" type="button" hidden>Dividi nei moduli</button>
+          </div>
+          <div class="popover-foot">
+            <button id="popover-finish" type="button">Cambia finitura</button>
+            <button id="popover-delete" type="button" title="Rimuovi il pannello: lo spazio torna liscio">Elimina</button>
+          </div>
         </section>
 
-        <section class="config-panel" data-config-panel="panels" aria-label="Pannelli" hidden>
-          <button class="config-back" data-config-back>← Indietro</button>
-          <div class="config-section-head"><span>02</span><h2>Pannelli IW</h2></div>
-          <p class="drag-hint">Scegli famiglia, misura e variante. Trascina la card finale sul modulo compatibile.</p>
-          <div class="panel-family-grid" role="listbox" aria-label="Famiglia pannello">
-            <button class="panel-family-card" data-panel-option="flat" aria-selected="true"><span class="panel-thumb panel-thumb-flat"></span><b>Flat</b><small>Pannello complanare</small><i>Selezionato</i></button>
-            <button class="panel-family-card" data-panel-option="lux" aria-selected="false"><span class="panel-thumb panel-thumb-lux"></span><b>Lux</b><small>Rilievo con luce LED</small><i>Selezionato</i></button>
-            <button class="panel-family-card" data-panel-option="shelf" aria-selected="false"><span class="panel-thumb panel-thumb-shelf"></span><b>Shelf</b><small>Mensola integrata</small><i>Selezionato</i></button>
-            <button class="panel-family-card" data-panel-option="frame" aria-selected="false"><span class="panel-thumb panel-thumb-frame"></span><b>Frame</b><small>Cornice aperta</small><i>Selezionato</i></button>
-            <button class="panel-family-card" data-panel-option="box" aria-selected="false"><span class="panel-thumb panel-thumb-box"></span><b>Box</b><small>Volume contenitivo</small><i>Selezionato</i></button>
+        <section class="dock-panel" data-dock-panel="ambiente" hidden aria-label="Ambiente">
+          <div class="dock-panel-head">
+            <h2>Dove la immagini?</h2>
+            <p>Scegli un ambiente o carica la foto della tua parete. La foto resta sul tuo dispositivo.</p>
           </div>
-          <div class="panel-builder">
-            <label>
-              <span>Famiglia</span>
-              <select id="panel-type">
-                <option value="flat">Flat</option>
-                <option value="lux">Lux</option>
-                <option value="shelf">Shelf</option>
-                <option value="frame">Frame</option>
-                <option value="box">Box</option>
-              </select>
+          <div class="env-cats" id="env-cats" role="tablist" aria-label="Categoria ambienti"></div>
+          <div class="env-grid" id="env-grid"></div>
+          <div class="env-upload">
+            <label class="env-upload-btn">
+              <input id="env-photo-input" type="file" accept="image/jpeg,image/png,image/webp">
+              <span><b>Carica la foto della tua parete</b><small>JPG, PNG o WebP · resta solo sul tuo dispositivo</small></span>
             </label>
-            <label><span>Larghezza</span><select id="panel-width"></select></label>
-            <label><span>Altezza</span><select id="panel-height"></select></label>
-            <label id="panel-variant-field" class="panel-variant-field"><span>Variante</span><select id="panel-variant"></select></label>
-            <button id="panel-drag-card" class="panel-drag-card" draggable="true">
-              <span class="panel-preview"></span>
-              <span><b id="panel-card-name">Flat 300 × 2700</b><small>Trascina sul modello</small></span>
-              <i>↗</i>
-            </button>
+            <button id="env-photo-retouch" type="button" hidden>Ritocca: togli oggetti</button>
+            <button id="env-photo-straighten" type="button" hidden>Raddrizza: correggi la prospettiva</button>
+            <button id="env-photo-remove" type="button" hidden>Rimuovi la foto</button>
           </div>
-          <div id="selected-panel-info" class="selected-panel-info">
-            <span>Nessun pannello selezionato</span>
-            <button id="remove-selected-panel" type="button" disabled>Rimuovi pannello</button>
+          <div class="env-adjust" id="env-adjust" hidden>
+            <label><span>Dimensione parete nella foto</span><input id="env-scale" type="range" min="40" max="160" value="100"></label>
+            <label><span>Sposta a destra / sinistra</span><input id="env-off-x" type="range" min="-100" max="100" value="0"></label>
+            <label><span>Alza / abbassa</span><input id="env-off-y" type="range" min="-100" max="100" value="0"></label>
+            <button id="env-adjust-reset" type="button">Riporta al centro</button>
           </div>
-          <div id="panel-list" class="panel-list"></div>
         </section>
 
-        <section class="config-panel" data-config-panel="accessories" aria-label="Accessori" hidden>
-          <button class="config-back" data-config-back>← Indietro</button>
-          <div class="config-section-head"><span>03</span><h2>Accessori</h2></div>
-          <p class="drag-hint">Trascina un accessorio sulla parete per posizionarlo. Puoi spostarlo in un secondo momento direttamente sul modello, oppure rimuoverlo dall'elenco qui sotto.</p>
-          <div class="accessory-grid" role="listbox" aria-label="Tipo di accessorio">
-            <button class="accessory-card" data-accessory="shelf"><span class="accessory-thumb accessory-thumb-shelf"></span><b>Mensola</b><small>Piano d'appoggio magnetico</small></button>
-            <button class="accessory-card" data-accessory="box"><span class="accessory-thumb accessory-thumb-box"></span><b>Box</b><small>Contenitore a giorno</small></button>
-            <button class="accessory-card" data-accessory="light"><span class="accessory-thumb accessory-thumb-light"></span><b>Luce</b><small>Barra LED verticale</small></button>
-            <button class="accessory-card" data-accessory="mirror"><span class="accessory-thumb accessory-thumb-mirror"></span><b>Specchio</b><small>Elemento riflettente</small></button>
-            <button class="accessory-card" data-accessory="hook"><span class="accessory-thumb accessory-thumb-hook"></span><b>Gancio</b><small>Aggancio magnetico</small></button>
+        <section class="dock-panel" data-dock-panel="parete" hidden aria-label="Parete">
+          <div class="dock-panel-head">
+            <h2>Quanto è grande?</h2>
+            <p>La parete cresce per colonne da 300, 600 o 900 mm. Qui sotto puoi spostarle con ◀ ▶ o rimuoverle con ×.</p>
           </div>
-          <div id="accessory-list" class="accessory-list"></div>
-        </section>
-
-        <section class="config-panel" data-config-panel="materials" aria-label="Materiali" hidden>
-          <button class="config-back" data-config-back>← Indietro</button>
-          <div class="config-section-head"><span>04</span><h2>Materiali DI-NOC</h2></div>
-          <p class="drag-hint">Trascina una finitura su pannello, modulo o parete. Il catalogo resta chiuso finché non entri qui.</p>
-          <div class="material-filters">
-            <input id="material-search" type="search" placeholder="Cerca codice, es. WG-..." autocomplete="off">
-            <select id="material-family" aria-label="Famiglia DI-NOC"><option value="">Tutte le famiglie</option></select>
-          </div>
-          <div class="material-tabs" aria-label="Vista catalogo">
-            <button class="active" data-material-tab="all">Tutti</button>
-            <button data-material-tab="favorites">Preferiti</button>
-            <button data-material-tab="recent">Recenti</button>
-          </div>
-          <div id="material-current" class="material-current">
-            <span class="material-current-swatch"></span>
-            <span><b>Nessun materiale selezionato</b><small>Scegli una texture dal catalogo</small></span>
-          </div>
-          <div id="material-target" class="material-target">Pannello selezionato: nessuno</div>
-          <div class="material-settings">
-            <label><span>Direzione</span><select id="material-rotation"><option value="0">Verticale</option><option value="90">Orizzontale</option></select></label>
-            <label><span>Scala texture</span><select id="material-scale"><option value="300">300 mm</option><option value="600" selected>600 mm</option><option value="1200">1200 mm</option></select></label>
-          </div>
-          <div class="material-apply">
-            <button id="apply-material-panel">Pannello</button>
-            <button id="apply-material-module">Modulo</button>
-            <button id="apply-material-wall">Parete</button>
-          </div>
-          <div id="material-grid" class="material-grid"></div>
-          <button id="material-more" class="material-more" hidden>Mostra altri</button>
-        </section>
-
-        <section class="config-panel" data-config-panel="presets" aria-label="Configurazioni standard" hidden>
-          <button class="config-back" data-config-back>← Indietro</button>
-          <div class="config-section-head"><span>05</span><h2>Configurazioni standard</h2></div>
-          <p class="drag-hint">Preset rapidi e sfondo ambientato. Nessun upload server: la foto resta locale.</p>
-          <div class="preset-grid">
-            <button data-preset="kitchen"><span></span><b>Cucina lineare</b><small>Fasce operative pulite</small></button>
-            <button data-preset="living"><span></span><b>Living</b><small>Composizione decorativa</small></button>
-            <button data-preset="entry"><span></span><b>Ingresso</b><small>Moduli stretti e funzionali</small></button>
-            <button data-preset="hospitality"><span></span><b>Hospitality</b><small>Parete ampia scenografica</small></button>
-            <button data-preset="retail"><span></span><b>Retail</b><small>Moduli vetrina e box</small></button>
-            <button data-preset="sample"><span></span><b>Parete campionario</b><small>Tagli e materiali misti</small></button>
-            <button data-preset="minimal"><span></span><b>Composizione minima</b><small>Tre colonne essenziali</small></button>
-            <button data-preset="premium"><span></span><b>Composizione premium</b><small>Sequenza articolata</small></button>
-          </div>
-          <div class="environment-box">
-            <h3>Ambiente</h3>
-            <label class="file-upload">
-              <span>Carica foto del tuo ambiente</span>
-              <input id="environment-photo" type="file" accept="image/jpeg,image/png,image/webp">
+          <div class="wall-size">
+            <div class="wall-add">
+              <span>Aggiungi colonna</span>
+              <div>
+                <button data-add-col="300" type="button">+300</button>
+                <button data-add-col="600" type="button">+600</button>
+                <button data-add-col="900" type="button">+900</button>
+              </div>
+            </div>
+            <div class="wall-height">
+              <span>Altezza parete</span>
+              <div id="wall-heights" role="radiogroup" aria-label="Altezza parete">
+                <button data-height="2400" type="button">2400</button>
+                <button data-height="2700" type="button">2700</button>
+                <button data-height="3000" type="button">3000</button>
+              </div>
+            </div>
+            <div class="wall-baseline">
+              <span>Quota da terra · la parete parte da qui</span>
+              <div id="wall-baselines" role="radiogroup" aria-label="Quota da terra">
+                <button data-baseline="0" type="button">Terra</button>
+                <button data-baseline="300" type="button">300</button>
+                <button data-baseline="450" type="button">450</button>
+                <button data-baseline="600" type="button">600</button>
+                <button data-baseline="750" type="button">750</button>
+                <button data-baseline="900" type="button">900</button>
+                <button data-baseline="1050" type="button">1050</button>
+                <button data-baseline="1200" type="button">1200</button>
+              </div>
+            </div>
+            <label class="bed-toggle" id="bed-toggle-row" hidden>
+              <input id="bed-toggle" type="checkbox">
+              <span>Mostra un letto matrimoniale centrato sotto la parete (per camere e hotel — prova la famiglia <b>Testiera</b> sul pannello in basso)</span>
             </label>
-            <button id="remove-environment-photo" type="button">Rimuovi foto caricata</button>
           </div>
-          <div class="environment-controls">
-            <label><span>Scala parete</span><input id="wall-scale-control" type="range" min="80" max="135" value="108"></label>
-            <label><span>Sposta orizzontale</span><input id="wall-offset-x-control" type="range" min="-120" max="120" value="0"></label>
-            <label><span>Sposta verticale</span><input id="wall-offset-y-control" type="range" min="-100" max="100" value="0"></label>
-            <button id="reset-environment-view" type="button">Reset posizione</button>
-            <label class="toggle-row"><input id="technical-grid-toggle" type="checkbox"> <span>Mostra griglia tecnica</span></label>
-          </div>
+          <div class="col-list" id="col-list" aria-label="Colonne della parete"></div>
+          <p class="dock-note">Suggerimento: ogni colonna si riempie da sola di pannelli. Toccali sulla parete per trasformarli.</p>
         </section>
 
-        <section class="config-panel" data-config-panel="measures" aria-label="Misure" hidden>
-          <button class="config-back" data-config-back>← Indietro</button>
-          <div class="config-section-head"><span>06</span><h2>Misure</h2></div>
-          <div class="dimension-grid">
-            <label><span>Larghezza parete</span><output id="measure-width-output">2400 mm</output></label>
-            <label><span>Altezza</span><select id="wall-height"><option value="2400">2400 mm</option><option value="2700" selected>2700 mm</option><option value="3000">3000 mm</option></select></label>
-            <label><span>Dimensione totale</span><output id="measure-total-output">2400 × 2700 mm</output></label>
+        <section class="dock-panel" data-dock-panel="finiture" hidden aria-label="Finiture">
+          <div class="dock-panel-head">
+            <h2>Che pelle le diamo?</h2>
+            <p id="finish-target-hint">Tocca una finitura per applicarla a tutta la parete, oppure prima seleziona un pannello.</p>
           </div>
-          <label class="toggle-row"><input id="quote-toggle" type="checkbox"> <span>Quote visibili</span></label>
-          <label class="toggle-row"><input id="measure-grid-toggle" type="checkbox"> <span>Griglia visibile</span></label>
+          <div class="finish-mode" id="finish-mode">
+            <button data-finish-mode="wall" type="button" class="active">Tutta la parete</button>
+            <button data-finish-mode="panel" type="button">Solo il pannello scelto</button>
+          </div>
+          <div class="finish-tabs" id="finish-tabs" role="tablist" aria-label="Gruppi di finiture"></div>
+          <div class="finish-grid" id="finish-grid"></div>
+          <p class="dock-note">Selezione curata di finiture 3M™ DI-NOC™. Il catalogo completo (oltre 700 finiture) è disponibile su richiesta — <a href="materiali.html">scopri i materiali</a>.</p>
         </section>
 
-        <section class="config-panel" data-config-panel="summary" aria-label="Riepilogo" hidden>
-          <button class="config-back" data-config-back>← Indietro</button>
-          <div class="config-section-head"><span>07</span><h2>Riepilogo</h2></div>
-          <div id="sidebar-summary" class="sidebar-summary"></div>
-          <button id="request-button">Salva configurazione e richiedi proposta <span>↗</span></button>
+        <section class="dock-panel" data-dock-panel="fine" hidden aria-label="Riepilogo">
+          <div class="dock-panel-head">
+            <h2>La tua parete, nero su bianco.</h2>
+            <p>Scaricala, condividila con chi vuoi o chiedici una proposta su misura.</p>
+          </div>
+          <div id="summary-body" class="summary-body"></div>
+          <div class="summary-actions">
+            <button id="btn-download-png" type="button"><span aria-hidden="true">▣</span> Scarica immagine</button>
+            <button id="btn-download-pdf" type="button"><span aria-hidden="true">▤</span> Scarica scheda PDF</button>
+            <button id="btn-share" type="button"><span aria-hidden="true">↗</span> Copia link da condividere</button>
+          </div>
+          <a id="btn-request" class="summary-request" href="contatti.html">Richiedi una proposta su misura <span aria-hidden="true">→</span></a>
+          <p class="dock-note">Nessun impegno: ti rispondiamo con misure, finiture e preventivo dedicato.</p>
         </section>
-      </aside>
-
-      <div class="config-stage-wrap">
-        <div class="stage-toolbar">
-          <div class="view-tabs" aria-label="Modalità vista">
-            <button class="active" data-mode="preview">Preview</button>
-            <button data-mode="technical">Tecnica</button>
-            <button data-view="front">Frontale</button>
-            <button data-view="perspective">Prospettiva</button>
-          </div>
-          <div class="stage-actions">
-            <button id="unlock-view-button" class="unlock-view-button" hidden>Sblocca vista</button>
-            <button id="undo-button" title="Annulla ultima aggiunta">Annulla</button>
-            <button id="clear-button">Svuota</button>
-          </div>
-        </div>
-
-        <div id="config-stage" class="config-stage">
-          <div class="stage-background" aria-hidden="true"></div>
-          <div class="stage-loading"><span></span><p>Preparazione studio 3D</p></div>
-          <div class="drop-message">Rilascia sulla parete</div>
-          <div id="stage-lock-banner" class="stage-lock-banner" hidden>
-            <span>Pannello selezionato · vista bloccata</span>
-            <span class="stage-lock-banner-hint">Premi <kbd>Esc</kbd> o «Sblocca vista» per tornare a ruotare</span>
-          </div>
-          <div class="stage-tip">Preview: trascina nello spazio vuoto per ruotare · rotella per zoom</div>
-        </div>
-
-        <div class="config-summary">
-          <div><span>Configurazione</span><strong id="configuration-count">0 elementi</strong></div>
-          <div><span>Dimensione</span><strong id="configuration-size">360 × 270 cm</strong></div>
-          <button id="request-button-footer">Salva configurazione e richiedi proposta <span>↗</span></button>
-        </div>
       </div>
     </section>
   </main>
+
+  <div id="studio-3d" class="studio-3d" hidden role="dialog" aria-modal="true" aria-label="Vista 3D della parete">
+    <div class="studio-3d-inner">
+      <div class="studio-3d-bar">
+        <b>La tua parete in 3D</b>
+        <button id="studio-3d-close" type="button" aria-label="Chiudi vista 3D">×</button>
+      </div>
+      <div id="studio-3d-stage" class="studio-3d-stage">
+        <div id="studio-3d-loading" class="studio-3d-loading"><span></span><p>Preparo la scena…</p></div>
+      </div>
+      <p class="studio-3d-hint">Trascina per ruotare · rotella o pizzica per lo zoom</p>
+    </div>
+  </div>
+
+  <div id="render-overlay" class="render-overlay" hidden role="dialog" aria-modal="true" aria-label="Render prospettico">
+    <div class="render-overlay-inner">
+      <div class="render-overlay-bar">
+        <b>La tua parete, renderizzata</b>
+        <button id="render-close" type="button" aria-label="Chiudi render">×</button>
+      </div>
+      <img id="render-result" alt="Render prospettico della parete configurata">
+      <div class="render-overlay-foot">
+        <a id="render-download" download="iconicwall-render.jpg" href="#">▣ Scarica il render</a>
+      </div>
+    </div>
+  </div>
+
+  <div id="photo-editor" class="photo-editor" hidden role="dialog" aria-modal="true" aria-label="Ritocca la foto">
+    <div class="photo-editor-inner">
+      <div class="photo-editor-bar">
+        <b>Prepara la tua foto</b>
+        <button id="pe-close" type="button" aria-label="Chiudi senza salvare">×</button>
+      </div>
+      <div class="pe-modes" role="tablist" aria-label="Strumento">
+        <button id="pe-mode-brush" type="button" class="active">Togli oggetti</button>
+        <button id="pe-mode-corners" type="button">Raddrizza</button>
+      </div>
+      <p class="photo-editor-hint" id="pe-hint">Colora con il dito o il mouse i piccoli oggetti da far sparire, poi premi <b>Rimuovi</b>. Funziona al meglio su pareti e superfici uniformi.</p>
+      <div class="photo-editor-stage" id="pe-stage">
+        <canvas id="pe-canvas"></canvas>
+      </div>
+      <div class="photo-editor-tools">
+        <label class="pe-brush-label pe-brush-only"><span>Pennello</span><input id="pe-brush" type="range" min="10" max="90" value="36"></label>
+        <button id="pe-undo" type="button">↺ Annulla</button>
+        <button id="pe-clear" type="button" class="pe-brush-only">Pulisci selezione</button>
+        <button id="pe-apply" type="button" class="pe-primary pe-brush-only">✦ Rimuovi</button>
+        <button id="pe-corners-reset" type="button" class="pe-corner-only" hidden>Reimposta angoli</button>
+        <button id="pe-straighten" type="button" class="pe-primary pe-corner-only" hidden>⊞ Raddrizza</button>
+        <button id="pe-done" type="button" class="pe-done">Usa questa foto ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <section id="print-sheet" class="print-sheet" aria-hidden="true"></section>
 </body>
 </html>

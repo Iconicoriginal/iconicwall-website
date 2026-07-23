@@ -165,6 +165,16 @@
 
 .render-group .render-action span { color: var(--bronze); }
 
+/* toggle "Tavola" attivo: la vista tecnica è uno stato, non un'azione */
+.render-group .render-action.is-active {
+  background: var(--bronze-ink);
+  color: #f6efe3;
+}
+
+.render-group .render-action.is-active span { color: #e8c496; }
+
+.render-group .render-action.is-active:hover { background: var(--bronze-ink); }
+
 .studio-stage {
   position: relative;
   border-radius: 22px;
@@ -1191,7 +1201,9 @@
 .render-overlay-foot {
   padding: 12px 18px;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
 }
 
 .render-overlay-foot a {
@@ -1202,6 +1214,36 @@
   font: 500 13px/1 var(--sans);
   text-decoration: none;
 }
+
+/* ritorno esplicito alla composizione: uscire non deve essere un enigma */
+.render-overlay-foot button {
+  background: none;
+  border: 1px solid var(--bronze-ink);
+  color: var(--bronze-ink);
+  border-radius: 999px;
+  padding: 12px 22px;
+  font: 500 13px/1 var(--sans);
+  cursor: pointer;
+}
+
+.render-overlay-foot button:hover { background: #f4ecdf; }
+
+.stage-exit {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 5;
+  background: var(--bronze-ink);
+  color: #f6efe3;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font: 600 13px/1 var(--sans);
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(119, 97, 73, .28);
+}
+
+.stage-exit:hover { filter: brightness(1.12); }
 
 .summary-actions .summary-render {
   background: var(--ink);
@@ -1460,5 +1502,39 @@
     color: #66645f;
     border-top: 1px solid #ccc8c0;
     padding-top: 8pt;
+  }
+
+  /* scheda da studio: tavola tecnica in prima pagina, ambientata in seconda */
+  .print-sheet svg.print-tech {
+    display: block;
+    width: 100%;
+    max-height: 130mm;
+    margin-bottom: 10pt;
+  }
+
+  .print-sheet .print-meta {
+    font-size: 9.5pt;
+    color: #66645f;
+    margin: 0 0 10pt;
+  }
+
+  .print-sheet .print-notes {
+    font-size: 9.5pt;
+    margin-top: 10pt;
+  }
+
+  .print-sheet .print-cta {
+    font-size: 9.5pt;
+    margin-top: 8pt;
+    padding: 8pt 10pt;
+    border: 1pt solid #b8905f;
+    border-radius: 6pt;
+    word-break: break-all;
+  }
+
+  .print-sheet img.print-ambient {
+    break-before: page;
+    page-break-before: always;
+    margin-top: 10pt;
   }
 }

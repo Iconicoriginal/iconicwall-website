@@ -71,6 +71,7 @@ let state = null;          // { height, env:{type,id}, photo, photoScale, photoX
 let selection = null;      // { c, i } pannello selezionato
 let mergeMode = false;     // selezione multipla per "unisci pannelli"
 let mergeSel = [];         // [{ c, i }] pannelli candidati all'unione
+let techView = false;      // vista "Tavola tecnica": elevazione quotata
 let finishMode = "wall";
 let activeFinishTab = null;
 let activeEnvCat = "casa";
@@ -544,14 +545,35 @@ const PHOTO_SCENES = [
     id: "camera-hotel-1", cat: "contract", label: "Camera hotel · Caldo",
     src: "assets/configurator/backgrounds/camera-hotel-1.webp",
     w: 2528, h: 1696, pxPerMm: .5063, cx: 1264, floorY: 1512,
-    minBaseline: 1050, defaultBaseline: 1050, light: "left", backdrop: "#cbc4b6",
+    // 900, non 1050: nella ¾ la testiera proietta a 955-1056 mm (parallasse)
+    // e i moduli devono infilarsi DIETRO la sua sagoma, mai galleggiarci sopra
+    minBaseline: 900, defaultBaseline: 900, light: "left", backdrop: "#cbc4b6",
+    // confini fisici del muro NELLA FOTO FRONTALE (≠ quad34.bounds: le due
+    // inquadrature AI non coincidono): angoli stanza a px 150 / 2372
+    fbounds: [-2200, 2180],
+    // primo piano frontale: testiera a tutta larghezza (la parete parte
+    // sopra) + cappelli delle lampade che sporgono oltre la linea
+    occl: [
+      [[142, 1001], [632, 998], [1264, 995], [1896, 990], [2400, 993], [2410, 1696], [140, 1696]],
+      [[428, 972], [590, 968], [593, 1080], [425, 1084]],
+      [[1952, 972], [2111, 968], [2114, 1076], [1948, 1081]],
+    ],
     // vista ¾: quadrilatero (px) del rettangolo di parete X ±1650 mm, Y 0–2700
     quad34: {
       src: "assets/configurator/backgrounds/camera-hotel-1-34.webp",
       w: 2528, h: 1696,
       corners: [[611, 155], [2105, 273], [2105, 1375], [611, 1503]],
-      bounds: [-2550, 1550], // limiti fisici del muro in mm dal centro-letto
+      // nel ¾ il muro corre fino al bordo foto a destra (niente angolo
+      // visibile): misurato via omografia inversa il 23/07
+      bounds: [-2480, 2300],
       shade: { dir: 1, strength: .16 },
+      // primo piano ¾: testiera (finisce a px 2056) + comodino + letto + lampade
+      occl: [
+        [[99, 1026], [506, 1015], [1011, 1007], [1517, 1000], [1827, 969], [1981, 954], [2056, 945], [2060, 1131], [2165, 1127], [2177, 1240], [2335, 1269], [2475, 1375], [2480, 1696], [0, 1696], [95, 1280]],
+        [[487, 974], [655, 967], [660, 1103], [484, 1117]],
+        [[1799, 947], [1943, 939], [1947, 1051], [1803, 1060]],
+        [[1866, 1052], [1878, 1052], [1884, 1150], [1872, 1150]],
+      ],
     },
     room3d: {
       floorTex: "DW-2476MT", wall: 0xcfc8ba, side: 0xd8d2c6, ceiling: 0xece8e0,
@@ -566,12 +588,55 @@ const PHOTO_SCENES = [
     src: "assets/configurator/backgrounds/camera-hotel-2.webp",
     w: 2528, h: 1696, pxPerMm: .462, cx: 1264, floorY: 1373,
     minBaseline: 750, defaultBaseline: 750, light: "left", backdrop: "#e8e6e1",
+    // muro frontale: dalla spalletta della finestra (px 250) oltre il bordo foto
+    fbounds: [-2190, 2700],
+    // primo piano che occlude la parete (px foto frontale): letto, lampade,
+    // comodini con gambe — tracciati su crop 2-3x, rifiniti con edge-snap;
+    // regola: sul bianco-su-bianco il bordo sta 2-3 px DENTRO la sagoma
+    // (meglio mangiare un filo di cuscino che alonare i pannelli)
+    occl: [
+      [[566, 1591], [562, 1500], [568, 1425], [573, 1407], [607, 1354], [645, 1313], [688, 1271], [735, 1236], [779, 1204], [800, 1198], [798, 1120], [796, 1034], [816, 1020], [844, 1008], [880, 992], [912, 983], [955, 978], [1005, 977], [1050, 981], [1085, 988], [1130, 997], [1163, 1000], [1205, 990], [1270, 982], [1350, 980], [1450, 980], [1530, 984], [1600, 996], [1650, 1010], [1700, 1022], [1737, 1030], [1747, 1042], [1756, 1080], [1758, 1122], [1785, 1160], [1822, 1206], [1853, 1256], [1891, 1301], [1919, 1343], [1941, 1385], [1953, 1422], [1966, 1475], [1965, 1540], [1966, 1592]],
+      [[581, 889], [617, 910], [655, 935], [676, 955], [668, 970], [624, 968], [594, 959], [585, 930], [580, 900]],
+      [[595, 952], [602, 952], [592, 1106], [585, 1106]],
+      [[577, 1122], [590, 1108], [628, 1102], [660, 1114], [656, 1127], [590, 1130]],
+      [[474, 1132], [770, 1133], [770, 1222], [474, 1222]],
+      [[452, 1140], [463, 1140], [466, 1384], [455, 1384]],
+      [[476, 1218], [486, 1218], [500, 1388], [490, 1388]],
+      [[450, 1377], [566, 1384], [566, 1397], [450, 1387]],
+      [[1946, 879], [1950, 900], [1936, 960], [1900, 982], [1852, 978], [1838, 966], [1890, 922]],
+      [[1924, 906], [1931, 906], [1950, 1114], [1943, 1114]],
+      [[1882, 1128], [1900, 1112], [1962, 1108], [2000, 1120], [1996, 1130], [1890, 1132]],
+      [[1770, 1130], [2085, 1130], [2085, 1225], [1770, 1225]],
+      [[1969, 1222], [1979, 1222], [1984, 1392], [1973, 1392]],
+      [[2052, 1222], [2062, 1222], [2066, 1358], [2056, 1358]],
+      [[1971, 1383], [2060, 1348], [2064, 1358], [1978, 1394]],
+    ],
     quad34: {
       src: "assets/configurator/backgrounds/camera-hotel-2-34.webp",
       w: 2528, h: 1696,
-      corners: [[706, 168], [2029, 93], [2029, 1303], [706, 1221]],
+      // corner destri rivisti sul giunto soffitto reale (y≈110 a px 2029)
+      corners: [[706, 168], [2029, 117], [2029, 1307], [706, 1221]],
       bounds: [-2500, 2450],
       shade: { dir: -1, strength: .1 },
+      // primo piano nella vista ¾ (px foto): letto, comodini con gambe a
+      // slitta, lampade — coordinate verificate su crop 2x con griglia
+      occl: [
+        [[356, 1540], [355, 1420], [356, 1310], [356, 1298], [363, 1282], [374, 1258], [388, 1236], [422, 1212], [450, 1200], [529, 1154], [600, 1138], [660, 1124], [707, 1115], [771, 1094], [834, 1078], [891, 1048], [942, 1015], [1030, 993], [1140, 996], [1240, 1008], [1283, 1014], [1330, 1007], [1450, 1000], [1520, 1008], [1594, 1025], [1690, 1052], [1740, 1058], [1774, 1063], [1785, 1082], [1786, 1210], [1786, 1447], [1706, 1560], [1574, 1710], [1138, 1685], [758, 1635], [506, 1584]],
+        [[546, 1092], [672, 1086], [704, 1104], [704, 1131], [546, 1130]],
+        [[719, 866], [733, 879], [789, 954], [788, 964], [694, 963], [712, 884]],
+        [[727, 958], [735, 958], [724, 1092], [715, 1092]],
+        [[700, 1086], [800, 1086], [800, 1100], [700, 1100]],
+        [[1815, 1144], [1844, 1127], [2083, 1121], [2090, 1130], [2090, 1201], [1818, 1212]],
+        [[1818, 1213], [1827, 1213], [1820, 1398], [1811, 1398]],
+        [[1844, 1212], [1852, 1212], [1848, 1368], [1840, 1368]],
+        [[1812, 1392], [1840, 1362], [1847, 1370], [1819, 1400]],
+        [[2064, 1198], [2072, 1198], [2080, 1412], [2072, 1414]],
+        [[2106, 1196], [2114, 1196], [2118, 1378], [2110, 1378]],
+        [[2072, 1406], [2110, 1372], [2116, 1380], [2078, 1414]],
+        [[1992, 875], [1999, 892], [1975, 984], [1891, 977], [1893, 961]],
+        [[1962, 983], [1970, 983], [1996, 1137], [1988, 1137]],
+        [[1912, 1140], [1930, 1130], [2000, 1128], [2014, 1138], [2010, 1148], [1918, 1150]],
+      ],
     },
     room3d: {
       floorTex: "CN-1622", wall: 0xefedea, side: 0xf2f0ec, ceiling: 0xf6f4f1,
@@ -585,13 +650,27 @@ const PHOTO_SCENES = [
     id: "camera-hotel-3", cat: "contract", label: "Camera hotel · Sera",
     src: "assets/configurator/backgrounds/camera-hotel-3.webp",
     w: 2528, h: 1696, pxPerMm: .49, cx: 1264, floorY: 1487,
-    minBaseline: 1050, defaultBaseline: 1050, light: "left", backdrop: "#232019",
+    // 750, non 1050: la sagoma ¾ della testiera proietta a 825-1018 mm
+    minBaseline: 750, defaultBaseline: 750, light: "left", backdrop: "#232019",
+    // muro frontale: dal filo tende (px 205) all'angolo destro (px 2340)
+    fbounds: [-2160, 2190],
+    // primo piano frontale: testiera a tutta larghezza; lampade e letto
+    // restano sotto la sua linea (un solo poligono)
+    occl: [
+      [[149, 965], [632, 966], [1264, 968], [1896, 973], [2480, 979], [2484, 1696], [145, 1696]],
+    ],
     quad34: {
       src: "assets/configurator/backgrounds/camera-hotel-3-34.webp",
       w: 2528, h: 1696,
       corners: [[365, 97], [1940, 234], [1940, 1338], [365, 1482]],
-      bounds: [-1700, 1850],
+      // muro visibile dal filo tenda (px 195 = -1930) fino oltre il bordo
+      // foto a destra: prima si buttava via oltre un metro di parete
+      bounds: [-1930, 3400],
       shade: { dir: 1, strength: .22 },
+      // primo piano ¾: idem, un solo poligono a tutta larghezza
+      occl: [
+        [[192, 964], [758, 968], [1390, 974], [2022, 980], [2417, 983], [2422, 1696], [190, 1696]],
+      ],
     },
     room3d: {
       floorTex: "FW-1127", wall: 0x4a453f, side: 0x413c36, ceiling: 0x26221d,
@@ -996,7 +1075,205 @@ function bedSVG(cx, floorY, baseline) {
   return `<g>${parts.join("")}</g>`;
 }
 
+/* ---------- 8bis. Tavola tecnica ---------- */
+// Elevazione quotata su fondo carta, nel linguaggio degli studi di progetto:
+// quote a catena dei moduli, quota da terra, codici finitura 3M DI-NOC in
+// abaco, cartiglio. Niente ambientazione; i pannelli restano interattivi.
+
+const TECH_INK = "#2e2a24";
+const TECH_DIM = "#8a7c66";
+const TECH_FONT = `font-family="system-ui, -apple-system, 'Segoe UI', sans-serif"`;
+
+// Quota orizzontale con tacche a 45° e testo centrato sopra la linea.
+function techDimH(x1, x2, y, label) {
+  const tick = (x) => `<line x1="${x - 26}" y1="${y + 26}" x2="${x + 26}" y2="${y - 26}" stroke="${TECH_DIM}" stroke-width="6"/>`;
+  return `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${TECH_DIM}" stroke-width="4"/>` +
+    tick(x1) + tick(x2) +
+    `<text x="${(x1 + x2) / 2}" y="${y - 30}" text-anchor="middle" font-size="82" fill="${TECH_INK}">${label}</text>`;
+}
+
+// Quota verticale (testo ruotato); tratteggiata per le quote da terra.
+function techDimV(x, y1, y2, label, dashed = false) {
+  const tick = (y) => `<line x1="${x - 26}" y1="${y + 26}" x2="${x + 26}" y2="${y - 26}" stroke="${TECH_DIM}" stroke-width="6"/>`;
+  const mid = (y1 + y2) / 2;
+  return `<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="${TECH_DIM}" stroke-width="4"${dashed ? ' stroke-dasharray="34 26"' : ""}/>` +
+    tick(y1) + tick(y2) +
+    `<text x="${x - 34}" y="${mid}" text-anchor="middle" font-size="82" fill="${TECH_INK}" transform="rotate(-90 ${x - 34} ${mid})">${label}</text>`;
+}
+
+// Costruisce il foglio della tavola tecnica (markup SVG + viewBox): usato
+// dalla vista ▤ sullo stage e dalla scheda progetto stampabile.
+function buildTechSheet() {
+  const W = wallWidth();
+  const H = state.height;
+  const VW = Math.max(4800, W + 1700);
+  const wallX = (VW - W) / 2;
+  const top = FLOOR_Y - H;
+
+  // indici finitura in ordine di apparizione: F1, F2, … (col verso di posa
+  // della prima occorrenza, così l'abaco riusa un pattern già in <defs>)
+  const finIndex = new Map();
+  const finOf = (panel) => {
+    const code = panel.finish;
+    if (!finIndex.has(code)) finIndex.set(code, { n: finIndex.size + 1, grain: panelGrain(panel) });
+    return finIndex.get(code).n;
+  };
+
+  // pannelli visibili: singoli + un gruppo per ogni unione
+  const mergeIds = new Set();
+  state.cols.forEach((col) => col.panels.forEach((p) => { if (p.mergeId) mergeIds.add(p.mergeId); }));
+  let nPanels = mergeIds.size;
+  state.cols.forEach((col) => col.panels.forEach((p) => { if (!p.mergeId) nPanels += 1; }));
+  const nFinishes = new Set([...state.cols.flatMap((col) => col.panels.map((p) => p.finish))]).size;
+
+  // foglio: margini per le quote, banda in basso per abaco e cartiglio
+  const legendH = Math.max(nFinishes * 118 + 230, 560);
+  let sx0 = wallX - 780, sx1 = wallX + W + 600;
+  const MIN_SHEET_W = 4600;
+  if (sx1 - sx0 < MIN_SHEET_W) {
+    const extra = (MIN_SHEET_W - (sx1 - sx0)) / 2;
+    sx0 -= extra; sx1 += extra;
+  }
+  const sy0 = top - 430;
+  const legendY = FLOOR_Y + 660;
+  const sy1 = legendY + legendH + 110;
+
+  const body = [];
+  body.push(svgDefs(VW));
+  body.push(`<rect x="${sx0}" y="${sy0}" width="${sx1 - sx0}" height="${sy1 - sy0}" fill="#fbf9f5"/>`);
+  body.push(`<rect x="${sx0 + 50}" y="${sy0 + 50}" width="${sx1 - sx0 - 100}" height="${sy1 - sy0 - 100}" fill="none" stroke="#d8cfc0" stroke-width="4"/>`);
+
+  // linea di terra con tratteggio da disegno tecnico
+  const fx0 = sx0 + 110, fx1 = sx1 - 110;
+  body.push(`<line x1="${fx0}" y1="${FLOOR_Y}" x2="${fx1}" y2="${FLOOR_Y}" stroke="${TECH_INK}" stroke-width="7"/>`);
+  {
+    const hatch = [];
+    for (let hx = fx0 + 60; hx < fx1; hx += 150) {
+      hatch.push(`<line x1="${hx}" y1="${FLOOR_Y + 10}" x2="${hx - 64}" y2="${FLOOR_Y + 74}"/>`);
+    }
+    body.push(`<g stroke="${TECH_DIM}" stroke-width="4" opacity=".5">${hatch.join("")}</g>`);
+  }
+
+  // cornici di fondo per gruppi di moduli a pari quota (come in ambientata,
+  // ma piatte: niente ombra portata sul foglio)
+  {
+    let runStart = 0;
+    for (let c = 1; c <= state.cols.length; c++) {
+      if (c === state.cols.length || colBaseline(state.cols[c]) !== colBaseline(state.cols[runStart])) {
+        const b = colBaseline(state.cols[runStart]);
+        const rx0 = wallX + colOffsetMm(runStart);
+        const rw = state.cols.slice(runStart, c).reduce((s, col) => s + col.width, 0);
+        body.push(`<rect x="${rx0 - 14}" y="${top - 14}" width="${rw + 28}" height="${H - b + (b > 0 ? 28 : 14)}" rx="10" fill="#26231e"/>`);
+        runStart = c;
+      }
+    }
+  }
+
+  // pannelli (stessa pelle e stessi hit-rect della vista ambientata)
+  const chips = [];
+  const chip = (panel, x, y, w, h) => {
+    const n = finOf(panel);
+    const cy = panel.type === "lux" && panel.variant !== "LED_B" ? y + 96 : y + 22;
+    chips.push(`<rect x="${x + 22}" y="${cy}" width="266" height="90" rx="45" fill="rgba(251,249,245,.92)" stroke="rgba(46,42,36,.4)" stroke-width="3"/>`);
+    chips.push(`<text x="${x + 155}" y="${cy + 62}" text-anchor="middle" font-size="54" font-weight="600" fill="${TECH_INK}">F${n} · ${h}</text>`);
+  };
+  let cursor = wallX;
+  state.cols.forEach((col, c) => {
+    let y = FLOOR_Y - colBaseline(col);
+    col.panels.forEach((panel, i) => {
+      y -= panel.height;
+      if (!panel.mergeId) {
+        body.push(renderPanelSVG(panel, cursor, y, col.width, panel.height, c, i));
+        chip(panel, cursor, y, col.width, panel.height);
+      }
+    });
+    cursor += col.width;
+  });
+  mergeIds.forEach((id) => {
+    const info = groupInfo(id);
+    if (!info) return;
+    const first = info.members[0];
+    const gx = wallX + info.x0, gy = FLOOR_Y - info.bottom - info.height;
+    body.push(renderPanelSVG(info.panel, gx, gy, info.width, info.height, first.c, first.i));
+    chip(info.panel, gx, gy, info.width, info.height);
+  });
+  if (mergeMode) {
+    mergeSel.forEach(({ c, i }) => {
+      const panel = state.cols[c]?.panels[i];
+      if (!panel) return;
+      const mx = wallX + colOffsetMm(c);
+      const my = FLOOR_Y - panelQuota(c, i) - panel.height;
+      body.push(`<rect x="${mx + 8}" y="${my + 8}" width="${state.cols[c].width - 16}" height="${panel.height - 16}" rx="8" fill="rgba(184,144,95,.14)" stroke="#b8905f" stroke-width="12" stroke-dasharray="40 26" pointer-events="none"/>`);
+    });
+  }
+
+  // quote: catena moduli, larghezza totale, altezza, quote da terra
+  const dims = [];
+  const yChain = FLOOR_Y + 330;
+  let bx = wallX;
+  const ext = (x) => `<line x1="${x}" y1="${FLOOR_Y + 100}" x2="${x}" y2="${yChain + 56}" stroke="${TECH_DIM}" stroke-width="3" opacity=".6"/>`;
+  state.cols.forEach((col) => {
+    dims.push(ext(bx));
+    dims.push(techDimH(bx, bx + col.width, yChain, col.width));
+    bx += col.width;
+  });
+  dims.push(ext(wallX + W));
+  const yTot = FLOOR_Y + 540;
+  dims.push(techDimH(wallX, wallX + W, yTot, `${W} mm`));
+  const xTot = wallX - 360;
+  dims.push(`<line x1="${wallX - 24}" y1="${top}" x2="${xTot - 56}" y2="${top}" stroke="${TECH_DIM}" stroke-width="3" opacity=".6"/>`);
+  dims.push(techDimV(xTot, top, FLOOR_Y, `${H} mm`));
+  {
+    let runStart = 0;
+    for (let c = 1; c <= state.cols.length; c++) {
+      if (c === state.cols.length || colBaseline(state.cols[c]) !== colBaseline(state.cols[runStart])) {
+        const b = colBaseline(state.cols[runStart]);
+        if (b > 0) {
+          const rx0 = wallX + colOffsetMm(runStart);
+          const rw = state.cols.slice(runStart, c).reduce((s, col) => s + col.width, 0);
+          dims.push(techDimV(rx0 + rw / 2, FLOOR_Y - b, FLOOR_Y, b, true));
+        }
+        runStart = c;
+      }
+    }
+  }
+
+  // abaco finiture (tag + campione reale + codice) e cartiglio
+  const leg = [];
+  leg.push(`<text x="${sx0 + 140}" y="${legendY + 100}" font-size="62" letter-spacing="10" font-weight="700" fill="${TECH_INK}">ABACO FINITURE — 3M DI-NOC</text>`);
+  let ly = legendY + 230;
+  finIndex.forEach(({ n, grain }, code) => {
+    const mat = MAT_BY_CODE.get(code);
+    leg.push(`<circle cx="${sx0 + 190}" cy="${ly - 20}" r="46" fill="#fff" stroke="${TECH_INK}" stroke-width="4"/>`);
+    leg.push(`<text x="${sx0 + 190}" y="${ly}" text-anchor="middle" font-size="50" font-weight="700" fill="${TECH_INK}">F${n}</text>`);
+    leg.push(`<rect x="${sx0 + 272}" y="${ly - 64}" width="88" height="88" rx="10" fill="url(#fin-${cssSafe(code)}-${grain})" stroke="rgba(46,42,36,.35)" stroke-width="3"/>`);
+    leg.push(`<text x="${sx0 + 404}" y="${ly}" font-size="56" fill="${TECH_INK}">${code}${mat?.group ? " · " + mat.group : ""}</text>`);
+    ly += 118;
+  });
+  const cw = 1780, ch0 = 420;
+  const cx0 = sx1 - 130 - cw, cy0 = legendY + 40;
+  leg.push(`<rect x="${cx0}" y="${cy0}" width="${cw}" height="${ch0}" fill="#fff" stroke="${TECH_INK}" stroke-width="5"/>`);
+  leg.push(`<text x="${cx0 + 60}" y="${cy0 + 108}" font-size="70" letter-spacing="14" font-weight="700" fill="${TECH_INK}">ICONICWALL</text>`);
+  leg.push(`<line x1="${cx0}" y1="${cy0 + 150}" x2="${cx0 + cw}" y2="${cy0 + 150}" stroke="${TECH_INK}" stroke-width="4"/>`);
+  leg.push(`<text x="${cx0 + 60}" y="${cy0 + 232}" font-size="50" fill="${TECH_INK}">Elevazione frontale · quote in mm</text>`);
+  leg.push(`<text x="${cx0 + 60}" y="${cy0 + 306}" font-size="50" fill="${TECH_INK}">Parete ${W} × ${H} mm — ${state.cols.length} moduli · ${nPanels} pannelli</text>`);
+  leg.push(`<text x="${cx0 + 60}" y="${cy0 + 378}" font-size="44" fill="${TECH_DIM}">${new Date().toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" })} · IconicWall Studio</text>`);
+
+  body.push(`<g ${TECH_FONT}>${chips.join("")}${dims.join("")}${leg.join("")}</g>`);
+
+  return { body: body.join(""), vb: [sx0, sy0, sx1 - sx0, sy1 - sy0] };
+}
+
+function renderWallTech() {
+  const sheet = buildTechSheet();
+  svgEl.setAttribute("viewBox", sheet.vb.join(" "));
+  svgEl.setAttribute("preserveAspectRatio", "xMidYMid meet");
+  svgEl.innerHTML = sheet.body;
+  updateDimsText(wallWidth());
+}
+
 function renderWall() {
+  if (techView) return renderWallTech();
   const W = wallWidth();
   const H = colHeight();
   const baseline = wallBaseline();
@@ -1084,12 +1361,31 @@ function renderWall() {
     });
   }
   const showBed = state.bed && bedAllowed();
-  if (showBed) {
+  if (showBed && !scene) {
     wall.push(bedSVG(cx, FLOOR_Y, bedZoneBaseline()));
   } else if (!scene) {
     wall.push(`<ellipse cx="${cx}" cy="${FLOOR_Y + 40}" rx="${W / 2 + 120}" ry="70" fill="rgba(17,17,15,.22)"/>`);
   }
-  body.push(`<g transform="${transform}">${wall.join("")}</g>`);
+  // Nelle scene fotografiche la parete vive solo entro i confini fisici del
+  // muro (niente pannelli su finestre o pareti laterali)…
+  if (scene) {
+    const b = scene.fbounds || scene.quad34?.bounds || [-3000, 3000];
+    body.push(`<clipPath id="scene-wall-clip"><rect x="${VW / 2 + b[0]}" y="${FLOOR_Y - 2700}" width="${b[1] - b[0]}" height="2700"/></clipPath>`);
+  }
+  body.push(`<g${scene ? ' clip-path="url(#scene-wall-clip)"' : ""} transform="${transform}">${wall.join("")}</g>`);
+  // …e il primo piano della scena (letto) torna davanti alla parete,
+  // come nella realtà: è la stessa foto ritagliata sulla sagoma calibrata.
+  if (scene?.occl?.length) {
+    const s = scene.pxPerMm;
+    const pt = ([px, py]) => `${(VW / 2 + (px - scene.cx) / s).toFixed(1)} ${(FLOOR_Y + (py - scene.floorY) / s).toFixed(1)}`;
+    const d = scene.occl.map((poly) => `M${poly.map(pt).join("L")}Z`).join("");
+    const ix = VW / 2 - scene.cx / s, iy = FLOOR_Y - scene.floorY / s;
+    // maschera con bordo sfumato (~1.5 px foto): il ritaglio netto tradisce
+    // il fotomontaggio, la piuma lo assorbe
+    body.push(`<filter id="occl-soft" x="-5%" y="-5%" width="110%" height="110%"><feGaussianBlur stdDeviation="${(1.6 / s).toFixed(1)}"/></filter>`);
+    body.push(`<mask id="scene-occl" maskUnits="userSpaceOnUse" x="${ix}" y="${iy}" width="${scene.w / s}" height="${scene.h / s}"><path d="${d}" fill="#fff" filter="url(#occl-soft)"/></mask>`);
+    body.push(`<image href="${scene.src}" x="${ix}" y="${iy}" width="${scene.w / s}" height="${scene.h / s}" preserveAspectRatio="none" mask="url(#scene-occl)" pointer-events="none"/>`);
+  }
 
   if (state.env.type !== "photo" && !scene) {
     body.push(envFront(env, VW, VIEW_H, FLOOR_Y, { hideBed: showBed }));
@@ -1099,6 +1395,10 @@ function renderWall() {
   svgEl.setAttribute("preserveAspectRatio", "xMidYMid slice");
   svgEl.innerHTML = body.join("");
 
+  updateDimsText(W);
+}
+
+function updateDimsText(W) {
   const bMin = minColBaseline(), bMax = maxColBaseline();
   dimsEl.textContent = bMax === 0
     ? `${W} × ${state.height} mm`
@@ -2095,16 +2395,42 @@ $("#btn-download-pdf").addEventListener("click", () => {
   exportPNG((dataUrl) => {
     const lines = configLines();
     const date = new Date().toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
+    // scheda da studio di progettazione: tavola tecnica quotata in prima
+    // pagina, distinta e note; anteprima ambientata in seconda pagina
+    const sheet = buildTechSheet();
+    let areaMm2 = 0;
+    const seenMerges = new Set();
+    state.cols.forEach((col) => col.panels.forEach((p) => {
+      if (p.mergeId) {
+        if (seenMerges.has(p.mergeId)) return;
+        seenMerges.add(p.mergeId);
+        const info = groupInfo(p.mergeId);
+        if (info) areaMm2 += info.width * info.height;
+        return;
+      }
+      areaMm2 += col.width * p.height;
+    }));
+    const bMin = minColBaseline(), bMax = maxColBaseline();
+    const finishes = [...new Set(lines.map((l) => l.finish))];
+    saveState();
     $("#print-sheet").innerHTML = `
-      <div class="print-head"><b>IconicWall</b><span>Scheda configurazione · ${date}</span></div>
-      <img class="print-visual" src="${dataUrl}" alt="La parete configurata">
-      <h2>La tua parete — ${(wallWidth() / 1000).toFixed(1)} × ${(state.height / 1000).toFixed(1)} m</h2>
+      <div class="print-head"><b>ICONICWALL</b><span>Scheda progetto · ${date}</span></div>
+      <svg class="print-tech" viewBox="${sheet.vb.join(" ")}" preserveAspectRatio="xMidYMid meet">${sheet.body}</svg>
+      <h2>Parete ${wallWidth()} × ${state.height} mm — ${state.cols.length} moduli · ${lines.length} pannelli</h2>
+      <p class="print-meta">Superficie pannelli ≈ ${(areaMm2 / 1e6).toFixed(2)} m² · Quote da terra ${bMin === bMax ? `${bMin} mm` : `${bMin}–${bMax} mm`} · Fuga fra i pannelli ${GAP} mm · Finiture: ${finishes.join(", ")}</p>
       <table>
-        <thead><tr><th>Colonna</th><th>Pannello</th><th>Misure</th><th>Finitura 3M™ DI-NOC™</th></tr></thead>
+        <thead><tr><th>Modulo</th><th>Pannello</th><th>Misure</th><th>Finitura 3M™ DI-NOC™</th></tr></thead>
         <tbody>${lines.map((line) => `<tr><td>${line.col}</td><td>${line.name}</td><td>${line.size}</td><td>${line.finish}</td></tr>`).join("")}</tbody>
       </table>
-      <div class="print-foot">Configurazione indicativa creata con IconicWall Studio — www.iconicwall.it.
-      Misure e finiture vengono verificate in fase di proposta. Il catalogo completo 3M™ DI-NOC™ (oltre 700 finiture) è disponibile su richiesta.</div>`;
+      <div class="print-notes"><b>Note di posa.</b> Sistema modulare a parete con pannelli magnetici
+      intercambiabili su struttura in moduli da 300/600/900 mm. A terra il primo pannello è sempre
+      Flat o Testiera; le quote da terra per modulo sono indicate in tavola. Misure, pesi e finiture
+      vengono verificati in fase di proposta.</div>
+      <div class="print-cta"><b>Campioni reali 3M™ DI-NOC™.</b> Richiedi i campioni fisici delle finiture
+      di questa parete (${finishes.join(", ")}) su www.iconicwall.it/contatti.html — il catalogo completo
+      conta oltre 700 finiture. Configurazione modificabile online: ${location.href}</div>
+      <img class="print-visual print-ambient" src="${dataUrl}" alt="Anteprima ambientata della parete">
+      <div class="print-foot">Scheda indicativa creata con IconicWall Studio — www.iconicwall.it.</div>`;
     requestAnimationFrame(() => window.print());
   });
 });
@@ -2923,6 +3249,28 @@ async function renderPerspective() {
     }
   }
   ctx.putImageData(out, 0, 0);
+  // primo piano della scena (letto, arredi): torna davanti alla parete
+  // ridisegnando la foto originale dentro le sagome calibrate, con bordo
+  // sfumato (~1.5 px) perché il ritaglio netto tradirebbe il fotomontaggio
+  const occl = scene.quad34.occl;
+  if (occl?.length) {
+    const path = new Path2D();
+    occl.forEach((poly) => {
+      poly.forEach(([px, py], index) => (index ? path.lineTo(px, py) : path.moveTo(px, py)));
+      path.closePath();
+    });
+    const fg = document.createElement("canvas");
+    fg.width = canvas.width;
+    fg.height = canvas.height;
+    const fx = fg.getContext("2d");
+    fx.filter = "blur(1.5px)";
+    fx.fillStyle = "#fff";
+    fx.fill(path);
+    fx.filter = "none";
+    fx.globalCompositeOperation = "source-in";
+    fx.drawImage(bg, 0, 0);
+    ctx.drawImage(fg, 0, 0);
+  }
   return canvas;
 }
 
@@ -2991,15 +3339,23 @@ $("#btn-render34").addEventListener("click", async () => {
   }
 });
 
-$("#render-close").addEventListener("click", () => {
+function closeRenderOverlay() {
   renderOverlay.hidden = true;
   document.body.style.overflow = "";
-});
+}
+
+$("#render-close").addEventListener("click", closeRenderOverlay);
+$("#render-back").addEventListener("click", closeRenderOverlay);
 renderOverlay.addEventListener("click", (event) => {
-  if (event.target === renderOverlay) {
-    renderOverlay.hidden = true;
-    document.body.style.overflow = "";
-  }
+  if (event.target === renderOverlay) closeRenderOverlay();
+});
+
+// ESC riporta sempre alla composizione: render → 3D → tavola, in ordine
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") return;
+  if (!renderOverlay.hidden) { closeRenderOverlay(); return; }
+  if (!overlay3D.hidden) { close3D(); return; }
+  if (techView) $("#btn-tech").click();
 });
 
 /* ---------- 17. Azioni toolbar ---------- */
@@ -3085,17 +3441,19 @@ function init3D() {
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  // Esposizione da "studio prodotto": a 1.05 le finiture slavavano verso il
+  // bianco; a ~0.85 con luci più basse il legno e il marmo restano leggibili.
+  renderer.toneMappingExposure = .85;
   stage3D.appendChild(renderer.domElement);
 
-  const hemiLight = new THREE.HemisphereLight(0xffffff, 0x8b8377, 2.2);
+  const hemiLight = new THREE.HemisphereLight(0xffffff, 0x8b8377, 1.35);
   scene.add(hemiLight);
-  const keyLight = new THREE.DirectionalLight(0xffffff, 3.2);
+  const keyLight = new THREE.DirectionalLight(0xffffff, 2.1);
   keyLight.position.set(-4, 6, 7);
   keyLight.castShadow = true;
   keyLight.shadow.mapSize.set(2048, 2048);
   scene.add(keyLight);
-  const warmLight = new THREE.PointLight(0xffd8aa, 22, 12);
+  const warmLight = new THREE.PointLight(0xffd8aa, 9, 12);
   warmLight.position.set(4, 2.5, 4);
   scene.add(warmLight);
 
@@ -3336,163 +3694,14 @@ function build3DWall() {
   });
   three.floor.position.y = floorY - .001;
   three.backWall.position.y = 0;
-  // letto matrimoniale stilizzato, centrato sulla parete
-  if (state.bed && bedAllowed()) {
-    const bed = new THREE.Group();
-    const dark = new THREE.MeshStandardMaterial({ color: 0x2c2823, roughness: .6 });
-    const linen = new THREE.MeshStandardMaterial({ color: 0xf1ebdf, roughness: .92 });
-    const linen2 = new THREE.MeshStandardMaterial({ color: 0xe4dccb, roughness: .92 });
-    const throwMat = new THREE.MeshStandardMaterial({ color: 0xa98a63, roughness: .8 });
-    const frame = new THREE.Mesh(new THREE.BoxGeometry(1.94, .18, 2.08), dark);
-    frame.position.set(0, floorY + .09, STRUCTURE_FRONT_Z + 1.1);
-    const mattress = new THREE.Mesh(new THREE.BoxGeometry(1.86, .25, 1.98), linen);
-    mattress.position.set(0, floorY + .18 + .125, STRUCTURE_FRONT_Z + 1.08);
-    const duvet = new THREE.Mesh(new THREE.BoxGeometry(1.9, .09, 1.4), linen2);
-    duvet.position.set(0, floorY + .47, STRUCTURE_FRONT_Z + 1.36);
-    const runner = new THREE.Mesh(new THREE.BoxGeometry(1.9, .1, .42), throwMat);
-    runner.position.set(0, floorY + .47, STRUCTURE_FRONT_Z + 1.85);
-    bed.add(frame, mattress, duvet, runner);
-    for (const side of [-1, 1]) {
-      const pillow = new THREE.Mesh(new THREE.BoxGeometry(.72, .3, .16), linen);
-      pillow.position.set(side * .46, floorY + .62, STRUCTURE_FRONT_Z + .22);
-      pillow.rotation.x = -.22;
-      bed.add(pillow);
-    }
-    bed.traverse((item) => { if (item.isMesh) { item.castShadow = true; item.receiveShadow = true; } });
-    group.add(bed);
-  }
-  // ambientazione: se è attiva una scena fotografica, il 3D diventa la stanza
-  const scene3d = activeScene()?.room3d;
-  applySceneLighting(scene3d);
-  three.floor.visible = !scene3d;
-  three.backWall.visible = !scene3d;
-  if (scene3d) buildRoom3D(group, scene3d, floorY);
-
-  three.targetZoom = scene3d
-    ? Math.min(8.2, Math.max(6, W * 1.15 + 3))
-    : Math.max(4.6, W * 1.35 + 2.4);
+  // Studio neutro deliberato, senza arredo né stanze ricostruite: il 3D è il
+  // viewer tecnico del prodotto (volumi, spessori, quote), l'ambientazione la
+  // fanno le scene fotografiche del 2D e il fotoinserimento "Renderizza".
+  three.targetZoom = Math.max(4.6, W * 1.35 + 2.4);
   three.zoom = three.targetZoom + 2;
-  three.targetYaw = scene3d ? -.3 : -.4;
+  three.targetYaw = -.4;
   three.yaw = .3;
-  three.targetPitch = scene3d ? .16 : .12;
-}
-
-// Illuminazione per scena (giorno caldo, diffusa chiara, sera drammatica).
-function applySceneLighting(room) {
-  const light = room?.light || { hemi: 2.2, hemiColor: 0xffffff, key: 3.2, keyColor: 0xffffff, keyPos: [-4, 6, 7], warm: 22 };
-  three.hemiLight.intensity = light.hemi;
-  three.hemiLight.color.setHex(light.hemiColor);
-  three.keyLight.intensity = light.key;
-  three.keyLight.color.setHex(light.keyColor);
-  three.keyLight.position.set(...light.keyPos);
-  three.warmLight.intensity = light.warm;
-}
-
-// Stanza tridimensionale con le misure reali della scena calibrata:
-// pareti ai confini veri, pavimento con materiale reale, letto e comodini.
-function buildRoom3D(group, room, floorY) {
-  const scene = activeScene();
-  const b = (scene.quad34?.bounds || [-2000, 2000]).map((v) => v / 1000);
-  const roomW = b[1] - b[0];
-  const roomCx = (b[0] + b[1]) / 2;
-  const depth = 4.6, height = 2.7;
-  const mat = (color, roughness = .92) => new THREE.MeshStandardMaterial({ color, roughness });
-
-  // pavimento con texture reale della finitura indicata
-  const floorMat = mat(0x9a8a74, .9);
-  const floorMesh = new THREE.Mesh(new THREE.PlaneGeometry(roomW, depth), floorMat);
-  floorMesh.rotation.x = -Math.PI / 2;
-  floorMesh.position.set(roomCx, floorY, depth / 2 - .1);
-  floorMesh.receiveShadow = true;
-  group.add(floorMesh);
-  const floorFinish = MAT_BY_CODE.get(room.floorTex);
-  if (floorFinish) {
-    dinocTexture3D(floorFinish).then((source) => {
-      const texture = source.clone();
-      texture.wrapS = THREE.MirroredRepeatWrapping;
-      texture.wrapT = THREE.MirroredRepeatWrapping;
-      texture.rotation = Math.PI / 2;
-      texture.center.set(.5, .5);
-      texture.repeat.set(roomW / 1.25, depth / 1.25);
-      texture.anisotropy = three.renderer.capabilities.getMaxAnisotropy();
-      texture.needsUpdate = true;
-      floorMat.map = texture;
-      floorMat.color.setHex(0xffffff);
-      floorMat.needsUpdate = true;
-    }).catch(() => { });
-  }
-
-  // muro di fondo, pareti laterali e soffitto ai confini calibrati
-  const back = new THREE.Mesh(new THREE.PlaneGeometry(roomW, height), mat(room.wall, .96));
-  back.position.set(roomCx, floorY + height / 2, -.02);
-  back.receiveShadow = true;
-  group.add(back);
-  for (const side of [0, 1]) {
-    const wallMesh = new THREE.Mesh(new THREE.PlaneGeometry(depth, height), mat(room.side, .96));
-    wallMesh.position.set(b[side], floorY + height / 2, depth / 2 - .1);
-    wallMesh.rotation.y = side === 0 ? Math.PI / 2 : -Math.PI / 2;
-    wallMesh.receiveShadow = true;
-    group.add(wallMesh);
-    // finestra luminosa sul lato indicato
-    if ((side === 0 && room.window === "left") || (side === 1 && room.window === "right")) {
-      const glow = new THREE.Mesh(
-        new THREE.PlaneGeometry(2.2, 1.9),
-        new THREE.MeshBasicMaterial({ color: 0xfff6e2 })
-      );
-      glow.position.set(b[side] + (side === 0 ? .01 : -.01), floorY + 1.45, 2.1);
-      glow.rotation.y = side === 0 ? Math.PI / 2 : -Math.PI / 2;
-      group.add(glow);
-      const softly = new THREE.PointLight(0xfff2dc, 8, 8);
-      softly.position.set(b[side] + (side === 0 ? .6 : -.6), floorY + 1.5, 2.1);
-      group.add(softly);
-    }
-  }
-  const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(roomW, depth), mat(room.ceiling, .98));
-  ceiling.rotation.x = Math.PI / 2;
-  ceiling.position.set(roomCx, floorY + height, depth / 2 - .1);
-  group.add(ceiling);
-
-  // letto matrimoniale con comodini e abat-jour, centrato sulla parete
-  const bed = room.bed;
-  const frame = mat(bed.frame, .6);
-  const linen = mat(bed.linen, .94);
-  const pillowM = mat(bed.pillow, .95);
-  const bedGroup = new THREE.Group();
-  const base = new THREE.Mesh(new THREE.BoxGeometry(1.94, .32, 2.12), frame);
-  base.position.set(0, floorY + .16, STRUCTURE_FRONT_Z + 1.12);
-  const mattress = new THREE.Mesh(new THREE.BoxGeometry(1.86, .26, 2.02), linen);
-  mattress.position.set(0, floorY + .32 + .13, STRUCTURE_FRONT_Z + 1.1);
-  const duvet = new THREE.Mesh(new THREE.BoxGeometry(1.9, .1, 1.5), mat(bed.linen, .97));
-  duvet.position.set(0, floorY + .62, STRUCTURE_FRONT_Z + 1.36);
-  const runner = new THREE.Mesh(new THREE.BoxGeometry(1.9, .11, .46), mat(bed.runner, .85));
-  runner.position.set(0, floorY + .62, STRUCTURE_FRONT_Z + 1.88);
-  bedGroup.add(base, mattress, duvet, runner);
-  for (const sideSign of [-1, 1]) {
-    const pillow = new THREE.Mesh(new THREE.BoxGeometry(.72, .3, .18), pillowM);
-    pillow.position.set(sideSign * .47, floorY + .78, STRUCTURE_FRONT_Z + .26);
-    pillow.rotation.x = -.24;
-    bedGroup.add(pillow);
-    const stand = new THREE.Mesh(new THREE.BoxGeometry(.55, .45, .45), mat(bed.nightstand, .55));
-    stand.position.set(sideSign * 1.35, floorY + .225, STRUCTURE_FRONT_Z + .3);
-    bedGroup.add(stand);
-    const stem = new THREE.Mesh(new THREE.CylinderGeometry(.015, .015, .32, 10), mat(0xb8934f, .35));
-    stem.position.set(sideSign * 1.35, floorY + .45 + .16, STRUCTURE_FRONT_Z + .3);
-    const shade = new THREE.Mesh(
-      new THREE.SphereGeometry(.12, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2),
-      room.lamps.on
-        ? new THREE.MeshBasicMaterial({ color: room.lamps.color })
-        : mat(0xf2efe8, .8)
-    );
-    shade.position.set(sideSign * 1.35, floorY + .45 + .3, STRUCTURE_FRONT_Z + .3);
-    bedGroup.add(stem, shade);
-    if (room.lamps.on) {
-      const bulb = new THREE.PointLight(room.lamps.color, room.lamps.intensity, 2.4);
-      bulb.position.set(sideSign * 1.35, floorY + .72, STRUCTURE_FRONT_Z + .34);
-      bedGroup.add(bulb);
-    }
-  }
-  bedGroup.traverse((item) => { if (item.isMesh) { item.castShadow = true; item.receiveShadow = true; } });
-  group.add(bedGroup);
+  three.targetPitch = .12;
 }
 
 function animate3D() {
@@ -3545,6 +3754,16 @@ function close3D() {
 }
 
 $("#btn-3d").addEventListener("click", open3D);
+$("#btn-tech").addEventListener("click", () => {
+  techView = !techView;
+  const btn = $("#btn-tech");
+  btn.classList.toggle("is-active", techView);
+  btn.setAttribute("aria-pressed", techView ? "true" : "false");
+  $("#tech-exit").hidden = !techView;
+  renderWall();
+});
+// uscita esplicita dalla tavola, sempre visibile sullo stage
+$("#tech-exit").addEventListener("click", () => $("#btn-tech").click());
 $("#studio-3d-close").addEventListener("click", close3D);
 overlay3D.addEventListener("click", (event) => {
   if (event.target === overlay3D) close3D();

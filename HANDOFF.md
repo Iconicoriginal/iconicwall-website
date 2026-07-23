@@ -1,7 +1,7 @@
 # HANDOFF — Configuratore IconicWall Studio
 
 Nota per la prossima chat: leggere questo file prima di toccare il codice.
-Aggiornato al 19/07/2026.
+Aggiornato al 23/07/2026.
 
 ## 1. Obiettivo del progetto
 
@@ -25,10 +25,50 @@ Funziona ed è verificato in browser (desktop + mobile):
 - Finiture: 48 curate DI-NOC in 6 gruppi; in parete texture HD dai sorgenti
   3M 788px con de-lighting; posa reale (fogli legno, book-match marmi,
   seamless tessuti/metalli); continuità ancorata alla parete.
-- Render: **gruppo "◈ Vedi in 3D | ✦ Renderizza" nella barra sopra lo stage**
-  (ultimo lavoro fatto: spostato lì dal Riepilogo, pillola bordo bronzo).
+- Render: **gruppo "◈ Vedi in 3D | ✦ Renderizza | ▤ Tavola" sopra lo stage**.
   "Renderizza" = fotoinserimento prospettico nel quadrilatero calibrato della
-  scena ¾ con ritaglio ai confini fisici del muro. 3D con quote per modulo.
+  scena ¾ con ritaglio ai confini fisici del muro.
+- **3D = studio neutro deliberato** (23/07): niente arredo né stanze
+  ricostruite (letto/comodini/lampade rimossi, `buildRoom3D` eliminata);
+  esposizione 0.85 + luci ribassate, finiture ricche e leggibili. Il 3D è il
+  viewer tecnico del prodotto; l'ambientazione la fanno le scene foto.
+- **Tavola tecnica** (▤, toggle `techView`): elevazione quotata su fondo
+  carta — catena quote moduli, larghezza/altezza totali, quote da terra
+  tratteggiate, chip F1/F2 per pannello, abaco finiture con campioni reali,
+  cartiglio. Pannelli ancora interattivi. `renderWallTech()` in sezione 8bis.
+- **Occlusione scena (23/07, camera-hotel-2 COMPLETA)**: poligoni `occl`
+  (frontale, px foto) e `quad34.occl` (¾) = letto + comodini (gambe a
+  slitta incluse) + lampade AJ + basi; nel live la parete è clippata ai
+  `bounds` fisici e la foto ritagliata sulle sagome torna davanti; in
+  `renderPerspective` il primo piano viene ridisegnato sopra. Metodo di
+  tracciatura: crop ingranditi con griglia px via canvas → /__save +
+  edge-snap automatico (vertici agganciati al gradiente più forte ±6px;
+  funziona solo dove c'è contrasto — sul bianco-su-bianco tracciare a mano
+  2-3 px DENTRO la sagoma). Bordi maschera SFUMATI ~1.5px (SVG feGaussianBlur
+  nel mask; canvas blur+source-in): la piuma assorbe le micro-imprecisioni.
+  FATTO per tutte e 3 le scene (23/07): camera-hotel-2 = letto+comodini+
+  lampade AJ (15 poligoni per vista); camera-hotel-1 e 3 = testiera a tutta
+  larghezza (la parete scende DIETRO la testiera: 1-4 poligoni per vista;
+  nella 1 i cappelli delle lampade sporgono sopra la linea e hanno poligoni
+  propri). Upgrade finale possibile: maschere PNG alpha per scena (da
+  produrre insieme agli 11 ambienti nuovi).
+- **Parallasse testiera (23/07 sera)**: la testiera sporge dal muro → nella
+  ¾ la sua sagoma proietta sul piano parete PIÙ BASSA del suo vero filo
+  (Sera: 825-1018 mm vs 1050 reali; Caldo: 955-1056). I moduli a quota =
+  filo testiera mostravano una striscia di muro nudo nel render. Fix:
+  minBaseline/defaultBaseline ribassati (Caldo 900, Sera 750) così i
+  moduli scendono DIETRO la sagoma e l'occlusione fa il resto. Regola per
+  le scene future: minBaseline ≤ minimo della sagoma ¾ proiettata.
+- **Ricalibrazione ¾ (23/07 sera)**: i `quad34.bounds` erano tarati male
+  (Caldo si fermava alla testiera, Sera buttava via >1 m di muro) — ora
+  misurati via omografia inversa su crop con griglia: Caldo [-2480,2300],
+  Sera [-1930,3400]; corner destri Chiaro corretti sul giunto soffitto
+  ([2029,117]/[2029,1307]). `fbounds` = confini frontali separati (le due
+  foto AI non coincidono). Vincolo d'inquadratura aggiunto a PROMPT-SCENE.md.
+- **Uscite esplicite (23/07)**: chip "✕ Torna alla composizione" sullo
+  stage in modalità tavola (`#tech-exit`), "← Torna al configuratore"
+  nel piede dell'overlay render (`#render-back`), ESC chiude render →
+  3D → tavola in quest'ordine.
 - Chiusura: PNG condivisibile, PDF stampa, link con stato in `#d=`, CTA
   `contatti.html?tipo=config3d` (prefill già gestito da script.js).
 - UI dock a 5 schede: Ambiente / Parete / Pannello / Finiture / Riepilogo.
@@ -51,6 +91,12 @@ Funziona ed è verificato in browser (desktop + mobile):
   approvato; restanti 11 ambienti da produrre con lo stesso processo.
 - **Selezione pannello non cambia scheda** (esplicito di Yuri); la modifica
   vive nella scheda Pannello dedicata.
+- **Riposizionamento pro (23/07, approvato da Yuri)**: target = architetti e
+  studi, quindi NIENTE inseguimento del fotorealismo nel 3D (letto low-poly
+  bocciato). Strategia: precisione dichiarata — 2D/Tavola tecnica per la
+  fiducia, scene fotografiche per l'emozione, 3D solo prodotto in studio
+  neutro (riferimento: configuratore USM Haller). Prossimo tassello: PDF
+  "da studio di progettazione" + CTA campioni DI-NOC.
 - **Render AI online del composito**: fattibile solo con endpoint serverless
   in `api/` + API key (Replicate/FAL, img2img bassa intensità). In attesa
   della chiave da Yuri.
@@ -72,17 +118,23 @@ Funziona ed è verificato in browser (desktop + mobile):
 
 ## 5. Cosa resta da fare (in ordine)
 
-1. **Produrre gli altri 11 ambienti** (33 frontali + 33 ¾ su Higgsfield,
-   calibrarli come camera-hotel: quad, bounds, minBaseline, room3d).
-2. **3D ambientato**: config `room3d` per scena è già nei dati; verificare
-   che la stanza 3D (pavimento texture, pareti tinte, letto, luci) renda
-   bene con le quote per modulo — non ricontrollata visivamente dopo il
-   refactor quote.
+1. ~~PDF "da studio di progettazione"~~ FATTO (23/07): "Scarica scheda
+   PDF" nel Riepilogo ora produce la scheda progetto — tavola tecnica
+   quotata in prima pagina (`buildTechSheet()`, condiviso con la vista ▤),
+   distinta, superficie, note di posa, CTA campioni con codici finiture,
+   anteprima ambientata in seconda pagina (break-before: page).
+2. **Produrre gli altri 11 ambienti** (33 frontali + 33 ¾ su Higgsfield,
+   calibrarli come camera-hotel: quad, bounds, minBaseline). NB: `room3d`
+   non serve più (3D ora sempre studio neutro); i dati room3d nelle scene
+   esistenti sono rimasti ma sono inerti.
 3. **Render AI del composito** (endpoint `api/` + chiave Replicate/FAL da
-   chiedere a Yuri) con pulsante "Migliora con AI" nell'anteprima render.
+   chiedere a Yuri) — solo come "suggestione fotografica", non feature core.
 4. Sorprendimi con layout a quote miste (ponte + spalle) tra i preset.
-5. **Commit**: 3 file modificati + ~14 nuovi MAI committati (vedi §6).
-6. Test dal vivo di Yuri su mobile reale (pinch 3D, upload foto vera).
+5. **Commit**: il grosso è stato committato il 22/07 (`94b0b55`); NON
+   committate le modifiche del 23/07 (3D neutro + Tavola tecnica:
+   configuratore.js v69, css v35, html). Committare solo su richiesta.
+6. Test dal vivo di Yuri su mobile reale (pinch 3D, upload foto vera,
+   leggibilità Tavola su schermo piccolo).
 
 ## 6. Avvio in locale
 
@@ -92,8 +144,9 @@ Funziona ed è verificato in browser (desktop + mobile):
   In alternativa: preview_start "sito-iconicwall" (launch.json già configurato)
   o un qualunque static server sulla cartella del progetto.
 - URL: `http://localhost:8123/configuratore.html` (Ctrl+F5 dopo ogni modifica).
-- Git: branch `master`, **17 voci non committate** (configuratore.*, scene,
-  texture HD, script). Nessun remote push automatico: committare solo su
+- Git: branch `master`; commit `94b0b55` (22/07) contiene configuratore,
+  scene, texture HD e script. Non committate: modifiche 23/07 (3D neutro,
+  Tavola tecnica). Nessun remote push automatico: committare solo su
   richiesta di Yuri.
 
 ## 7. Trappole / cose da sapere

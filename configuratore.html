@@ -21,11 +21,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Italiana&display=swap">
   <link rel="stylesheet" href="styles.css?v=56">
-  <link rel="stylesheet" href="configuratore.css?v=34">
+  <link rel="stylesheet" href="configuratore.css?v=37">
   <script src="script.js?v=57" defer></script>
   <script src="assets/dinoc/catalog-curated.js" defer></script>
   <script src="assets/dinoc/textures-hd/manifest.js" defer></script>
-  <script src="configuratore.js?v=68" defer></script>
+  <script src="configuratore.js?v=76" defer></script>
 </head>
 <body data-page="configuratore">
   <div id="studio-announcer" class="sr-only" aria-live="polite" role="status"></div>
@@ -55,6 +55,9 @@
               <button id="btn-render34" type="button" class="studio-action render-action" title="Fotoinserimento prospettico nella scena">
                 <span aria-hidden="true">✦</span> Renderizza
               </button>
+              <button id="btn-tech" type="button" class="studio-action render-action" title="Elevazione quotata con codici finitura" aria-pressed="false">
+                <span aria-hidden="true">▤</span> Tavola
+              </button>
             </div>
             <button id="btn-undo" type="button" class="studio-action studio-action-icon" title="Annulla ultima modifica" aria-label="Annulla ultima modifica">↺</button>
           </div>
@@ -62,6 +65,7 @@
 
         <div id="studio-stage" class="studio-stage">
           <svg id="wall-svg" role="img" aria-label="Anteprima della parete IconicWall"></svg>
+          <button id="tech-exit" type="button" class="stage-exit" hidden>✕ Torna alla composizione</button>
 
           <div id="studio-coach" class="studio-coach" hidden>
             <p><b>1</b> Tocca un pannello per trasformarlo</p>
@@ -235,6 +239,7 @@
       </div>
       <img id="render-result" alt="Render prospettico della parete configurata">
       <div class="render-overlay-foot">
+        <button id="render-back" type="button">← Torna al configuratore</button>
         <a id="render-download" download="iconicwall-render.jpg" href="#">▣ Scarica il render</a>
       </div>
     </div>

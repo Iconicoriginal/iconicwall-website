@@ -35,6 +35,14 @@ Per la variante a ¾ sostituire l'inizio con:
 > 140 cm, 35mm lens, the empty back wall fully visible in perspective…
 > (stessi vincoli: parete centrale vuota, luce da sinistra, 3:2)
 
+**VINCOLO CRITICO frontale↔¾ (lezione delle scene pilota, 23/07):** le due
+inquadrature devono mostrare LA STESSA porzione di muro — nel ¾ la parete
+deve restare visibile per tutta la larghezza che si vede nel frontale
+(muro da angolo ad angolo in entrambe, o comunque ≥ 6 m visibili; camera ¾
+più arretrata se serve). Se il ¾ "taglia" il muro prima del frontale, le
+composizioni larghe appaiono diverse tra le due viste e il render sembra
+sbagliato. Evitare tende/armadi che coprono le estremità del muro nel ¾.
+
 ## LE 3 VARIANTI DI STILE (suffisso al prompt base)
 
 1. **Contemporaneo caldo** — "warm contemporary Italian interior, oak floor,

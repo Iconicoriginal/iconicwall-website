@@ -124,7 +124,22 @@ Funziona ed è verificato in browser (desktop + mobile):
   hreflang="nl" inserito nelle 90 pagine esistenti, sitemap.xml con 18
   blocchi url nl + 108 alternates. Verificato su localhost: nav/footer nl,
   switcher a 6 lingue, hreflang ovunque, zero errori console.
-- NON ancora committato né deployato (Vercel): attesa ok di Yuri.
+- COMMITTATO e DEPLOYATO il 23/07 sera (`0100a75` nl + `3ba2785` piano
+  ambienti, push su `live/master` → Vercel): /nl/ live e verificato,
+  incluso tutto il lavoro configuratore (v76) che era su master.
+
+## ⭐ PUNTO DI RIPRESA (24/07/2026)
+
+PROSSIMA AZIONE: generare le immagini del LOTTO 1 (reception-hotel,
+zona-comune-hotel, ristorante — prompt pronti in
+assets/configurator/backgrounds/LOTTO-1-PROMPTS.md). Yuri ha chiesto che
+sia Claude a occuparsene guidando il SUO Chrome su Higgsfield (account
+suo, Nano Banana Pro, 2K, 3:2; la ¾ usa la frontale come Reference) —
+servono i tool "Claude in Chrome" e il Chrome di Yuri loggato. Poi, per
+ogni scena: calibrazione frontale (pxPerMm/cx/floorY/fbounds) → quad34
+con __calib → occl con crop-griglia+edge-snap → minBaseline da sagoma ¾
+→ verifica render → commit del lotto. Stato business: call con Pieter
+GIÀ avvenuta e agenda GIÀ inviata (non riproporre); sito /nl/ live.
 
 ## 5. Cosa resta da fare (in ordine)
 

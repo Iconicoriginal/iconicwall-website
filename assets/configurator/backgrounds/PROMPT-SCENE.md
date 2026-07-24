@@ -1,20 +1,36 @@
-# Scene fotorealistiche IconicWall Studio — scheda di generazione
+# Scene fotorealistiche IconicWall Studio — piano di produzione e prompt
 
-12 ambienti × 3 varianti di stile = 36 scene frontali (+ 36 varianti a ¾ per il
-render finale). Qualunque strumento si usi (Flux, Midjourney, ChatGPT/DALL·E),
-ogni immagine DEVE rispettare i vincoli del prompt base: sono ciò che permette
-alla parete IconicWall di agganciarsi alla foto.
+Decisioni del 23/07/2026 (Yuri): **1 variante per ambiente** (ampliabile poi),
+**ufficio e ristorante dentro** (fuori retail-farmacia e retail-profumeria),
+**ordine contract → casa → retail**. Pilota camera-hotel già fatto (3 varianti).
+
+## Piano di produzione (11 scene = 11 coppie frontale+¾)
+
+| Lotto | Ambiente | Stile assegnato | Stato |
+|---|---|---|---|
+| — | camera-hotel (×3: caldo/chiaro/sera) | — | ✅ in produzione |
+| 1 | reception-hotel | contemporaneo caldo | da generare |
+| 1 | zona-comune-hotel | contemporaneo caldo | da generare |
+| 1 | ristorante | scuro drammatico | da generare |
+| 2 | ufficio | minimale chiaro | da generare |
+| 2 | living-tv | contemporaneo caldo | da generare |
+| 2 | camera-residenziale | minimale chiaro | da generare |
+| 3 | living | scuro drammatico | da generare |
+| 3 | cucina | minimale chiaro | da generare |
+| 3 | ingresso | contemporaneo caldo | da generare |
+| 4 | retail-abbigliamento | minimale chiaro | da generare |
+| 4 | retail-ottica | minimale chiaro | da generare |
+
+Flusso per lotto: generazione coppie (account Higgsfield di Yuri, Nano Banana
+Pro, 2K, 3:2; la ¾ usa la frontale come Reference) → calibrazione e maschere
+(Claude, ~30-40 min a scena) → verifica di Yuri → commit.
 
 ## Convenzione nomi file (in questa cartella)
 
-    {ambiente}-{1|2|3}.jpg        vista frontale (per la vista di lavoro)
-    {ambiente}-{1|2|3}-34.jpg     stessa scena, vista a ¾ (per il render finale)
+    {ambiente}-1.webp        vista frontale (per la vista di lavoro)
+    {ambiente}-1-34.webp     stessa scena, vista a ¾ (per il render finale)
 
-Ambienti: living-tv, living, camera-hotel, camera-residenziale, ingresso,
-cucina, reception-hotel, zona-comune-hotel, retail-abbigliamento,
-retail-ottica, retail-farmacia, retail-profumeria.
-
-Risoluzione minima 2048 px sul lato lungo, formato 3:2 orizzontale, JPG/WebP.
+Risoluzione minima 2048 px sul lato lungo, formato 3:2 orizzontale.
 
 ## PROMPT BASE (inglese, da anteporre a ogni scena — vista frontale)
 
@@ -35,15 +51,54 @@ Per la variante a ¾ sostituire l'inizio con:
 > 140 cm, 35mm lens, the empty back wall fully visible in perspective…
 > (stessi vincoli: parete centrale vuota, luce da sinistra, 3:2)
 
-**VINCOLO CRITICO frontale↔¾ (lezione delle scene pilota, 23/07):** le due
-inquadrature devono mostrare LA STESSA porzione di muro — nel ¾ la parete
-deve restare visibile per tutta la larghezza che si vede nel frontale
-(muro da angolo ad angolo in entrambe, o comunque ≥ 6 m visibili; camera ¾
-più arretrata se serve). Se il ¾ "taglia" il muro prima del frontale, le
-composizioni larghe appaiono diverse tra le due viste e il render sembra
-sbagliato. Evitare tende/armadi che coprono le estremità del muro nel ¾.
+## VINCOLI CRITICI (lezioni delle scene pilota, 23/07)
 
-## LE 3 VARIANTI DI STILE (suffisso al prompt base)
+1. **Stessa porzione di muro tra frontale e ¾**: nel ¾ la parete deve restare
+   visibile per tutta la larghezza del frontale (muro da angolo ad angolo in
+   entrambe, o ≥ 6 m visibili; camera ¾ più arretrata se serve). Niente
+   tende/armadi che coprono le estremità del muro nel ¾.
+2. **Parallasse degli arredi addossati al muro**: tutto ciò che sporge dal
+   muro (testiere, banconi) proietta nel ¾ una sagoma PIÙ BASSA del suo filo
+   reale. Preferire arredi bassi o poco profondi contro il muro; in
+   calibrazione, minBaseline ≤ minimo della sagoma ¾ proiettata.
+3. **Primo piano semplice da mascherare**: sagome solide e compatte (letti,
+   banconi, divani). EVITARE gambe filiformi, steli sottili, oggetti
+   bianco-su-bianco contro la zona parete: le maschere di occlusione perdono
+   precisione.
+4. **Aggancio prompt**: frasi tipo "a modular wall covering will be digitally
+   added on the empty wall" aiutano il modello a lasciare il muro libero.
+
+## SPECIFICO PER AMBIENTE (da inserire tra prompt base e stile)
+
+- **reception-hotel** — "boutique hotel reception, low solid reception desk in
+  low foreground seen from the guest side, empty statement wall behind the
+  desk, no tall plants or pendant lights in front of the wall"
+- **zona-comune-hotel** — "hotel lounge common area, low lounge chairs at the
+  edges, low coffee table foreground, empty feature wall as the focal point"
+- **ristorante** — "upscale restaurant dining room, low banquette seating and
+  set tables in low foreground, empty feature wall behind the banquette,
+  warm evening hospitality lighting"
+- **ufficio** — "modern executive meeting room, low credenza at the side edge,
+  table in low foreground, empty feature wall facing the entrance"
+- **living-tv** — "residential living room, low media sideboard against the
+  side wall, sofa in low foreground facing the empty back wall where a TV
+  wall will be added"
+- **camera-residenziale** — "residential master bedroom, double bed low in
+  the foreground with a LOW shallow headboard, soft textiles, empty wall
+  behind the bed"
+- **living** — "residential living room, sofa and armchairs at the edges,
+  coffee table low foreground, the empty back wall is a decorative feature
+  wall"
+- **cucina** — "modern kitchen, island in low foreground, cabinetry on the
+  side walls only, the empty back wall rises above a clear counter line"
+- **ingresso** — "residential entryway, slim console at the side edge, coat
+  area hidden, empty feature wall facing the entrance"
+- **retail-abbigliamento** — "fashion clothing store interior, garment rails
+  at the side edges only, empty display wall at the center back"
+- **retail-ottica** — "optical eyewear store, low display counter foreground,
+  empty back wall ready for eyewear display panels"
+
+## GLI STILI (suffisso al prompt base, uno per ambiente — vedi tabella)
 
 1. **Contemporaneo caldo** — "warm contemporary Italian interior, oak floor,
    cream and beige textiles, warm brass accents, daylight"
@@ -52,39 +107,12 @@ sbagliato. Evitare tende/armadi che coprono le estremità del muro nel ¾.
 3. **Scuro drammatico** — "moody dark luxury interior, dark timber floor,
    charcoal and bronze palette, warm evening accent lighting"
 
-## SPECIFICO PER AMBIENTE (da inserire tra prompt base e stile)
-
-- **living-tv** — "residential living room, low media sideboard against the
-  side wall, sofa in low foreground facing the empty back wall where a TV
-  wall will be added"
-- **living** — "residential living room, sofa and armchairs at the edges,
-  coffee table low foreground, the empty back wall is a decorative feature
-  wall"
-- **camera-hotel** — "upscale hotel bedroom, king bed centered in LOW
-  foreground seen from behind the footboard, bedside tables with lamps at the
-  edges, empty headboard wall"
-- **camera-residenziale** — "residential master bedroom, double bed low in
-  the foreground, soft textiles, empty wall behind the bed"
-- **ingresso** — "residential entryway, slim console at the side edge, coat
-  area hidden, empty feature wall facing the entrance"
-- **cucina** — "modern kitchen, island in low foreground, cabinetry on the
-  side walls only, the empty back wall rises above a clear counter line"
-- **reception-hotel** — "boutique hotel reception, desk in low foreground
-  seen from the guest side, empty statement wall behind the reception desk"
-- **zona-comune-hotel** — "hotel lounge common area, lounge chairs at the
-  edges, empty feature wall as the focal point"
-- **retail-abbigliamento** — "fashion clothing store interior, garment rails
-  at the side edges only, empty display wall at the center back"
-- **retail-ottica** — "optical eyewear store, low display counter foreground,
-  empty back wall ready for eyewear display panels"
-- **retail-farmacia** — "modern pharmacy interior, clean counter low
-  foreground, empty back wall for shelving system, bright hygienic light"
-- **retail-profumeria** — "perfume and beauty store, elegant low display
-  tables, empty back wall as the brand feature wall, soft glamour lighting"
-
 ## Checklist qualità prima di consegnare una scena
 
 - [ ] La fascia centrale della parete di fondo è vuota da pavimento a soffitto
+- [ ] Frontale e ¾ mostrano la stessa larghezza di muro (vincolo 1)
+- [ ] Arredi contro il muro bassi/poco profondi (vincolo 2)
+- [ ] Primo piano a sagome solide, niente gambe filiformi (vincolo 3)
 - [ ] Linea pavimento/parete visibile e dritta (frontale) o pulita (¾)
 - [ ] Luce da un solo lato, ombre morbide coerenti
 - [ ] Nessun oggetto che "taglia" la zona parete (lampadari bassi, piante alte)

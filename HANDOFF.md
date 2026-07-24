@@ -116,6 +116,16 @@ Funziona ed è verificato in browser (desktop + mobile):
 - `scripts/generate-hd-textures.js` — generatore procedurale DEPRECATO
   (tenuto come riferimento, non usarlo: decisione §3).
 
+## 4bis. Sito multilingua (23/07 sera)
+
+- Aggiunto OLANDESE (nl): cartella `nl/` con 18 pagine tradotte (registro
+  formale "u", target studi/architetti), dizionario `i18n.nl` + bandiera +
+  regex percorsi in script.js (v57→v58 bumpato in TUTTE le pagine),
+  hreflang="nl" inserito nelle 90 pagine esistenti, sitemap.xml con 18
+  blocchi url nl + 108 alternates. Verificato su localhost: nav/footer nl,
+  switcher a 6 lingue, hreflang ovunque, zero errori console.
+- NON ancora committato né deployato (Vercel): attesa ok di Yuri.
+
 ## 5. Cosa resta da fare (in ordine)
 
 1. ~~PDF "da studio di progettazione"~~ FATTO (23/07): "Scarica scheda
@@ -123,16 +133,22 @@ Funziona ed è verificato in browser (desktop + mobile):
    quotata in prima pagina (`buildTechSheet()`, condiviso con la vista ▤),
    distinta, superficie, note di posa, CTA campioni con codici finiture,
    anteprima ambientata in seconda pagina (break-before: page).
-2. **Produrre gli altri 11 ambienti** (33 frontali + 33 ¾ su Higgsfield,
-   calibrarli come camera-hotel: quad, bounds, minBaseline). NB: `room3d`
-   non serve più (3D ora sempre studio neutro); i dati room3d nelle scene
-   esistenti sono rimasti ma sono inerti.
+2. **Produrre gli 11 ambienti** — DECISIONI 23/07 (Yuri): 1 variante per
+   ambiente, ufficio+ristorante dentro, farmacia+profumeria fuori, ordine
+   contract→casa→retail. Piano lotti e stili in PROMPT-SCENE.md; prompt
+   pronti del lotto 1 (reception-hotel, zona-comune-hotel, ristorante) in
+   LOTTO-1-PROMPTS.md. Generazione su account Higgsfield di Yuri; poi
+   calibrazione+maschere con pipeline collaudata (crop griglia → __calib →
+   occl con edge-snap → minBaseline da sagoma ¾ → verifica → commit a
+   lotto). NB: `room3d` non serve più (3D sempre studio neutro).
 3. **Render AI del composito** (endpoint `api/` + chiave Replicate/FAL da
    chiedere a Yuri) — solo come "suggestione fotografica", non feature core.
 4. Sorprendimi con layout a quote miste (ponte + spalle) tra i preset.
-5. **Commit**: il grosso è stato committato il 22/07 (`94b0b55`); NON
-   committate le modifiche del 23/07 (3D neutro + Tavola tecnica:
-   configuratore.js v69, css v35, html). Committare solo su richiesta.
+5. **Commit**: `94b0b55` (22/07, riscrittura Studio) + `8021350` (23/07,
+   riposizionamento professionale: 3D neutro, Tavola, occlusioni, PDF,
+   ricalibrazioni — js v76, css v36). Working tree pulito al 23/07 sera
+   salvo PROMPT-SCENE.md e LOTTO-1-PROMPTS.md (piano ambienti, da
+   committare col lotto 1). Committare solo su richiesta.
 6. Test dal vivo di Yuri su mobile reale (pinch 3D, upload foto vera,
    leggibilità Tavola su schermo piccolo).
 

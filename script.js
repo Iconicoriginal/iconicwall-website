@@ -1,10 +1,10 @@
-const supportedLangs = ["it", "en", "fr", "de", "es"];
-const langMatch = location.pathname.match(/^\/(en|fr|de|es)(\/|$)/);
+const supportedLangs = ["it", "en", "fr", "de", "es", "nl"];
+const langMatch = location.pathname.match(/^\/(en|fr|de|es|nl)(\/|$)/);
 const lang = langMatch && supportedLangs.includes(langMatch[1]) ? langMatch[1] : "it";
 
 // Percorso della pagina corrente senza prefisso di lingua, usato dallo switcher
 // (piu' affidabile di data-page: piu' pagine di supporto condividono lo stesso data-page="info")
-const currentPath = location.pathname.replace(/^\/(en|fr|de|es)\//, "").replace(/^\//, "") || "index.html";
+const currentPath = location.pathname.replace(/^\/(en|fr|de|es|nl)\//, "").replace(/^\//, "") || "index.html";
 
 const translatedPaths = new Set([
   "index.html", "sistema.html", "collezione.html", "materiali.html", "accessori.html",
@@ -22,13 +22,14 @@ function pageUrl(filename) {
   return urlForLang(lang, filename);
 }
 
-const langNativeNames = { it: "Italiano", en: "English", fr: "Français", de: "Deutsch", es: "Español" };
+const langNativeNames = { it: "Italiano", en: "English", fr: "Français", de: "Deutsch", es: "Español", nl: "Nederlands" };
 const flagIcons = {
   it: `<svg viewBox="0 0 3 2" preserveAspectRatio="none"><rect width="1" height="2" fill="#009246"/><rect width="1" height="2" x="1" fill="#fff"/><rect width="1" height="2" x="2" fill="#ce2b37"/></svg>`,
   en: `<svg viewBox="0 0 60 30" preserveAspectRatio="none"><rect width="60" height="30" fill="#00247d"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#cf142b" stroke-width="2"/><path d="M30,0 V30 M0,15 H60" stroke="#fff" stroke-width="10"/><path d="M30,0 V30 M0,15 H60" stroke="#cf142b" stroke-width="6"/></svg>`,
   fr: `<svg viewBox="0 0 3 2" preserveAspectRatio="none"><rect width="1" height="2" fill="#0055A4"/><rect width="1" height="2" x="1" fill="#fff"/><rect width="1" height="2" x="2" fill="#EF4135"/></svg>`,
   de: `<svg viewBox="0 0 3 2" preserveAspectRatio="none"><rect width="3" height=".667" fill="#000"/><rect width="3" height=".667" y=".667" fill="#DD0000"/><rect width="3" height=".667" y="1.333" fill="#FFCE00"/></svg>`,
   es: `<svg viewBox="0 0 3 2" preserveAspectRatio="none"><rect width="3" height="2" fill="#AA151B"/><rect width="3" height="1" y=".5" fill="#F1BF00"/></svg>`,
+  nl: `<svg viewBox="0 0 3 2" preserveAspectRatio="none"><rect width="3" height=".667" fill="#AE1C28"/><rect width="3" height=".667" y=".667" fill="#fff"/><rect width="3" height=".667" y="1.333" fill="#21468B"/></svg>`,
 };
 
 const i18n = {
@@ -366,6 +367,73 @@ const i18n = {
     chatError: "Ahora mismo no puedo responder. Inténtalo de nuevo en un momento o escríbenos a través del formulario de contacto.",
     chatRateLimit: "Has enviado demasiados mensajes. Inténtalo de nuevo en unos minutos.",
     chatThinking: "está escribiendo…",
+  },
+  nl: {
+    nav: { sistema: "Systeem", collezione: "Collectie", materiali: "Materialen", accessori: "Accessoires", applicazioni: "Toepassingen", origine: "Oorsprong", contatti: "Contact" },
+    menuToggle: "Menu openen",
+    homeAria: "IconicWall home",
+    iconicAria: "Iconic home",
+    footerIntroAria: "IconicWall",
+    footerCompanyAria: "Iconic S.R.L.",
+    footerIntro: "Een permanente structuur, ontworpen<br>voor oppervlakken, licht, accessoires<br>en functies die met de tijd mee-evolueren.",
+    footerCompanyName: "ICONIC S.R.L. a socio unico",
+    footerAddress: "Via Guido Rossa, 39<br>35020 Ponte San Nicolò (PD), Italië",
+    footerVat: "BTW-nr. / Fiscaal nr. 04683100988",
+    footerResources: "Informatie",
+    footerDocs: "Documentatie",
+    footerFaq: "FAQ",
+    footerMaintenance: "Onderhoud",
+    footerInstructions: "Montage-instructies",
+    footerTech: "Eigen technologie",
+    footerLegal: "Juridisch",
+    footerPrivacy: "Privacybeleid",
+    footerCookie: "Cookiebeleid",
+    footerCookiePrefs: "Cookievoorkeuren",
+    footerTerms: "Algemene voorwaarden",
+    footerSocial: "Social media",
+    instagramAria: "Instagram IconicWall",
+    facebookAria: "Facebook IconicWall",
+    linkedinAria: "LinkedIn IconicWall",
+    footerRights: "Alle rechten voorbehouden.",
+    footerTagline: "Ontworpen en gemaakt in Italië",
+    cookieAria: "Cookievoorkeuren",
+    cookieText1: "Wij gebruiken technische cookies die noodzakelijk zijn voor de werking van de site en, uitsluitend met uw toestemming, analytische en marketingcookies om de ervaring te verbeteren, bezoeken te meten en relevantere content te tonen.",
+    cookieText2: "U kunt alle cookies accepteren, niet-noodzakelijke cookies weigeren of uw voorkeuren aanpassen.",
+    cookiePolicyAria: "Cookie-informatie",
+    cookieReject: "Niet-noodzakelijke weigeren",
+    cookieCustomize: "Aanpassen",
+    cookieAcceptAll: "Alles accepteren",
+    cookiePrefsSaved: "Uw voorkeuren zijn opgeslagen. U kunt ze op elk moment wijzigen door naar deze pagina terug te keren.",
+    videoPause: "Pauze",
+    videoPlay: "Afspelen",
+    formErrorName: "Vul uw voor- en achternaam in.",
+    formErrorEmailEmpty: "Vul een e-mailadres in.",
+    formErrorEmailInvalid: "Vul een geldig e-mailadres in.",
+    formErrorMessage: "Schrijf een bericht.",
+    formErrorPrivacy: "U dient de privacyverklaring te accepteren.",
+    formSending: "BEZIG MET VERZENDEN…",
+    formSubmit: "AANVRAAG VERSTUREN",
+    formSuccess: "Aanvraag verzonden. Wij nemen zo snel mogelijk contact met u op.",
+    formError: "De aanvraag kon niet worden verzonden. Probeer het over enkele ogenblikken opnieuw of stuur ons een e-mail.",
+    configDimLabel: "Afmetingen",
+    configFinishLabel: "Afwerking",
+    configElementsLabel: "Elementen",
+    configNoAccessory: "geen accessoires",
+    configTBD: "nader te bepalen",
+    configSampleMsg: "Ik wil graag een staalkaart van de IconicWall-materialen aanvragen.",
+    configDocsMsg: "Ik ontvang graag de technische documentatie van IconicWall.",
+    chatToggleAria: "Chat openen",
+    chatCloseAria: "Chat sluiten",
+    chatMinimizeAria: "Chat minimaliseren",
+    chatTitle: "IconicWall-assistent",
+    chatSubtitle: "Vragen over systeem, materialen en producten",
+    chatWelcome: "Hallo! Ik ben de virtuele assistent van IconicWall. Ik beantwoord graag vragen over het systeem, de collectie, materialen, accessoires en montage. Waarmee kan ik u helpen?",
+    chatPlaceholder: "Typ een bericht…",
+    chatSendAria: "Bericht versturen",
+    chatDisclaimer: "Automatisch gegenereerde antwoorden. Gebruik voor commerciële aanvragen of specifieke projecten het contactformulier.",
+    chatError: "Ik kan op dit moment niet antwoorden. Probeer het over enkele ogenblikken opnieuw of gebruik het contactformulier.",
+    chatRateLimit: "U hebt te veel berichten verstuurd. Probeer het over enkele minuten opnieuw.",
+    chatThinking: "is aan het typen…",
   },
 };
 

@@ -33,6 +33,16 @@ module.exports = async function handler(req, res) {
     lingua: String(body.lingua || "").trim(),
   };
 
+  // Anti-spam: il campo esca deve restare vuoto e la compilazione non puo'
+  // essere istantanea. In entrambi i casi rispondiamo 200 senza inoltrare,
+  // cosi' il bot non capisce di essere stato scartato.
+  const honeypot = String(body.website || "").trim();
+  const elapsedMs = Number(body.elapsed_ms);
+  const tooFast = Number.isFinite(elapsedMs) && elapsedMs >= 0 && elapsedMs < 2000;
+  if (honeypot || tooFast) {
+    return sendJson(res, 200, { ok: true });
+  }
+
   if (!payload.full_name) {
     return sendJson(res, 400, { error: "Il nome e obbligatorio." });
   }

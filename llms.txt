@@ -1,0 +1,42 @@
+# IconicWall
+
+> IconicWall è un sistema di pareti modulari decorative brevettato, prodotto in Italia da Iconic S.R.L. (Ponte San Nicolò, Padova). Una struttura permanente a parete accoglie pannelli magnetici intercambiabili, luce e accessori: le superfici si possono cambiare nel tempo senza demolizioni. Destinato a retail, hospitality, contract e residenziale di fascia alta.
+
+Il sistema separa ciò che resta (la struttura fissata a parete) da ciò che può evolvere (pannelli, finiture, illuminazione, accessori). I pannelli esistono in cinque tipologie — Flat, Lux, Shelf, Frame, Box — e sono rivestiti con finiture 3M DI-NOC. Il sito è pubblicato in italiano, inglese, francese, tedesco, spagnolo e olandese; le pagine in lingua vivono sotto `/en/`, `/fr/`, `/de/`, `/es/`, `/nl/`.
+
+## Il sistema
+
+- [Sistema](https://www.iconicwall.it/sistema.html): struttura portante, moduli da 300/600/900 mm, logica di montaggio e principi tecnici del sistema modulare.
+- [Tecnologia proprietaria](https://www.iconicwall.it/tecnologia-proprietaria.html): il brevetto e il funzionamento dell'aggancio magnetico dei pannelli.
+- [Collezione](https://www.iconicwall.it/collezione.html): le cinque tipologie di pannello — Flat, Lux, Shelf, Frame, Box — e il loro uso.
+- [Materiali](https://www.iconicwall.it/materiali.html): finiture e rivestimenti disponibili, catalogo 3M DI-NOC.
+- [Accessori](https://www.iconicwall.it/accessori.html): accessori magnetici che si agganciano alla parete senza forature.
+
+## Applicazioni e progetti
+
+- [Applicazioni](https://www.iconicwall.it/applicazioni.html): contesti d'uso dal residenziale al contract, retail e hospitality.
+- [SavHotel Mantegna, Padova](https://www.iconicwall.it/savhotel-mantegna-padova/index.html): case study con 90 pannelli su 13 piani.
+- [Configuratore IconicWall Studio](https://www.iconicwall.it/configuratore.html): strumento web per comporre una parete in 2D, vederla in 3D e generare render (solo in italiano).
+
+## Azienda e supporto
+
+- [Origine](https://www.iconicwall.it/origine.html): storia e visione di IconicWall.
+- [Contatti](https://www.iconicwall.it/contatti.html): richieste di progetto, preventivi e informazioni commerciali.
+- [FAQ](https://www.iconicwall.it/faq.html): domande frequenti su sistema, installazione, materiali, costi e modalità di progetto.
+- [Documentazione](https://www.iconicwall.it/documentazione/index.html): brochure, catalogo finiture e dichiarazioni di prestazione in PDF.
+- [Manutenzione](https://www.iconicwall.it/manutenzione.html): pulizia e cura delle superfici.
+- [Istruzioni di montaggio](https://www.iconicwall.it/istruzioni-montaggio.html): indicazioni di posa per installatori e partner.
+
+## Dati aziendali
+
+- Ragione sociale: Iconic S.R.L. a socio unico
+- Sede: Via Guido Rossa 39, 35020 Ponte San Nicolò (PD), Italia
+- P.IVA / C.F.: 04683100988
+- Email: info@iconicwall.it
+- Telefono: +39 340 354 9344
+
+## Optional
+
+- [Privacy Policy](https://www.iconicwall.it/privacy.html): informativa sul trattamento dei dati personali.
+- [Cookie Policy](https://www.iconicwall.it/cookie.html): cookie tecnici, analytics e marketing.
+- [Termini e condizioni](https://www.iconicwall.it/termini.html): condizioni d'uso del sito.

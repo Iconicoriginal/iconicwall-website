@@ -36,6 +36,7 @@ const i18n = {
   it: {
     nav: { sistema: "Sistema", collezione: "Collezione", materiali: "Materiali", accessori: "Accessori", applicazioni: "Applicazioni", origine: "Origine", contatti: "Contatti" },
     menuToggle: "Apri il menu",
+    skipToContent: "Salta al contenuto",
     homeAria: "IconicWall home",
     iconicAria: "Iconic home",
     footerIntroAria: "IconicWall",
@@ -103,6 +104,7 @@ const i18n = {
   en: {
     nav: { sistema: "System", collezione: "Collection", materiali: "Materials", accessori: "Accessories", applicazioni: "Applications", origine: "Origin", contatti: "Contact" },
     menuToggle: "Open menu",
+    skipToContent: "Skip to content",
     homeAria: "IconicWall home",
     iconicAria: "Iconic home",
     footerIntroAria: "IconicWall",
@@ -170,6 +172,7 @@ const i18n = {
   fr: {
     nav: { sistema: "Système", collezione: "Collection", materiali: "Matériaux", accessori: "Accessoires", applicazioni: "Applications", origine: "Origine", contatti: "Contact" },
     menuToggle: "Ouvrir le menu",
+    skipToContent: "Aller au contenu",
     homeAria: "Accueil IconicWall",
     iconicAria: "Accueil Iconic",
     footerIntroAria: "IconicWall",
@@ -237,6 +240,7 @@ const i18n = {
   de: {
     nav: { sistema: "System", collezione: "Kollektion", materiali: "Materialien", accessori: "Zubehör", applicazioni: "Anwendungen", origine: "Ursprung", contatti: "Kontakt" },
     menuToggle: "Menü öffnen",
+    skipToContent: "Zum Inhalt springen",
     homeAria: "IconicWall Startseite",
     iconicAria: "Iconic Startseite",
     footerIntroAria: "IconicWall",
@@ -304,6 +308,7 @@ const i18n = {
   es: {
     nav: { sistema: "Sistema", collezione: "Colección", materiali: "Materiales", accessori: "Accesorios", applicazioni: "Aplicaciones", origine: "Origen", contatti: "Contacto" },
     menuToggle: "Abrir menú",
+    skipToContent: "Saltar al contenido",
     homeAria: "Inicio de IconicWall",
     iconicAria: "Inicio de Iconic",
     footerIntroAria: "IconicWall",
@@ -371,6 +376,7 @@ const i18n = {
   nl: {
     nav: { sistema: "Systeem", collezione: "Collectie", materiali: "Materialen", accessori: "Accessoires", applicazioni: "Toepassingen", origine: "Oorsprong", contatti: "Contact" },
     menuToggle: "Menu openen",
+    skipToContent: "Naar de inhoud",
     homeAria: "IconicWall home",
     iconicAria: "Iconic home",
     footerIntroAria: "IconicWall",
@@ -477,6 +483,21 @@ organizationSchema.textContent = JSON.stringify({
 });
 document.head.appendChild(organizationSchema);
 
+// Schema WebSite: solo sulla home di ciascuna lingua
+if (page === "home") {
+  const websiteSchema = document.createElement("script");
+  websiteSchema.type = "application/ld+json";
+  websiteSchema.textContent = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "IconicWall",
+    "url": "https://www.iconicwall.it/",
+    "inLanguage": lang,
+    "publisher": { "@type": "Organization", "name": "Iconic S.R.L." },
+  });
+  document.head.appendChild(websiteSchema);
+}
+
 const langSwitcherPath = translatedPaths.has(currentPath) ? currentPath : "index.html";
 const langDropdownItems = supportedLangs.map((targetLang) => `
     <li role="option" aria-selected="${targetLang === lang}">
@@ -506,7 +527,14 @@ header.innerHTML = `
       <ul class="lang-dropdown" role="listbox">${langDropdownItems}</ul>
     </div>
   </nav>`;
+const mainEl = document.querySelector("main");
+if (mainEl && !mainEl.id) mainEl.id = "contenuto";
 document.body.prepend(header);
+const skipLink = document.createElement("a");
+skipLink.className = "skip-link";
+skipLink.href = "#contenuto";
+skipLink.textContent = t.skipToContent;
+document.body.prepend(skipLink);
 
 const footer = document.createElement("footer");
 footer.innerHTML = `
@@ -915,6 +943,8 @@ if (contactForm) {
     return valid;
   }
 
+  const contactFormLoadedAt = Date.now();
+
   contactForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     setStatus("");
@@ -926,6 +956,9 @@ if (contactForm) {
       email: contactForm.elements.email.value.trim(),
       message: contactForm.elements.message.value.trim(),
       lingua: lang,
+      // anti-spam: campo esca (invisibile agli umani) + tempo di compilazione
+      website: contactForm.elements.website ? contactForm.elements.website.value.trim() : "",
+      elapsed_ms: Date.now() - contactFormLoadedAt,
     };
 
     if (submitButton) {

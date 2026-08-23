@@ -1,0 +1,16 @@
+{
+  "name": "IconicWall",
+  "short_name": "IconicWall",
+  "description": "Il sistema modulare brevettato che riveste le pareti con materia, luce e funzione, senza demolizioni.",
+  "lang": "it",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f2f0eb",
+  "theme_color": "#11110f",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

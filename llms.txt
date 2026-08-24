@@ -18,6 +18,21 @@ Il sistema separa ciò che resta (la struttura fissata a parete) da ciò che pu�
 - [SavHotel Mantegna, Padova](https://www.iconicwall.it/savhotel-mantegna-padova/index.html): case study di un hotel da 190 camere rinnovato in otto mesi senza mai chiudere, con 90 pannelli nei corridoi.
 - [Configuratore IconicWall Studio](https://www.iconicwall.it/configuratore.html): strumento web per comporre una parete in 2D, vederla in 3D e generare render (solo in italiano).
 
+## Guide alla progettazione (solo in italiano)
+
+Pagine tecniche per architetti e uffici tecnici che devono specificare il sistema in un capitolato. Dati, valori e criteri; i disegni costruttivi e la scheda tecnica di sistema non sono pubblicati.
+
+- [Guide alla progettazione](https://www.iconicwall.it/guide/index.html): indice delle guide, in tre aree — specifica, cantiere, contract.
+- [Reazione al fuoco dei rivestimenti a parete](https://www.iconicwall.it/guide/reazione-al-fuoco-rivestimenti-parete.html): reazione contro resistenza al fuoco, come si legge una Euroclasse, perché la classe del prodotto non è quella dell'assieme installato.
+- [Documentazione tecnica: cosa forniamo e come richiederla](https://www.iconicwall.it/guide/documentazione-tecnica.html): cosa è pubblico, cosa si trasmette su richiesta, quali prestazioni non sono determinate.
+- [Rivestire una parete senza demolire](https://www.iconicwall.it/guide/rivestire-parete-senza-demolire.html): otto strade a confronto per spessore, lavorazioni umide, impianti e durata.
+- [Quanto pesa e quanto ruba un rivestimento a parete](https://www.iconicwall.it/guide/pesi-spessori-rivestimenti-parete.html): peso, spessore e passaggio impianti contro cartongesso e boiserie in massello.
+- [Su quali muri si può installare](https://www.iconicwall.it/guide/supporti-installazione-parete.html): muratura, cartongesso e legno senza opere di preparazione.
+- [Integrare luce, TV e prese nella parete](https://www.iconicwall.it/guide/luce-tv-prese-parete.html): alimentazione 24V nell'intercapedine, dimensionamento dei trasformatori, competenze dell'installatore abilitato.
+- [Cambiare le finiture senza rifare la parete](https://www.iconicwall.it/guide/sostituire-finiture-parete.html): cosa resta e cosa si sostituisce a distanza di anni, e quando conviene rifare.
+- [Rifare le camere con l'albergo aperto](https://www.iconicwall.it/guide/rifacimento-camere-hotel.html): il consuntivo del cantiere SavHotel Mantegna e cosa determina davvero la durata di un intervento in esercizio.
+- [Rivestire pareti in ambulatori e ambienti sanitari](https://www.iconicwall.it/guide/rivestimenti-ambienti-sanitari.html): resistenza ai disinfettanti, emissioni dichiarate, limiti non determinati.
+
 ## Azienda e supporto
 
 - [Origine](https://www.iconicwall.it/origine.html): storia e visione di IconicWall.

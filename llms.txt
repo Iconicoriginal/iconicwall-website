@@ -15,7 +15,7 @@ Il sistema separa ciò che resta (la struttura fissata a parete) da ciò che pu�
 ## Applicazioni e progetti
 
 - [Applicazioni](https://www.iconicwall.it/applicazioni.html): contesti d'uso dal residenziale al contract, retail e hospitality.
-- [SavHotel Mantegna, Padova](https://www.iconicwall.it/savhotel-mantegna-padova/index.html): case study con 90 pannelli su 13 piani.
+- [SavHotel Mantegna, Padova](https://www.iconicwall.it/savhotel-mantegna-padova/index.html): case study di un hotel da 190 camere rinnovato in otto mesi senza mai chiudere, con 90 pannelli nei corridoi.
 - [Configuratore IconicWall Studio](https://www.iconicwall.it/configuratore.html): strumento web per comporre una parete in 2D, vederla in 3D e generare render (solo in italiano).
 
 ## Azienda e supporto

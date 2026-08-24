@@ -5,3 +5,5 @@ tmp/
 .claude/settings.local.json
 tmp_asset_contact_sheet.jpg
 node_modules/
+
+BRIEF-pagine-mancanti.md

@@ -1008,4 +1008,29 @@
     <xhtml:link rel="alternate" hreflang="nl" href="https://www.iconicwall.it/nl/savhotel-mantegna-padova/index.html" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://www.iconicwall.it/savhotel-mantegna-padova/index.html" />
   </url>
+  <url>
+    <loc>https://www.iconicwall.it/guide/index.html</loc>
+    <lastmod>2026-08-23</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.iconicwall.it/guide/rivestire-parete-senza-demolire.html</loc>
+    <lastmod>2026-08-23</lastmod>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.iconicwall.it/guide/pesi-spessori-rivestimenti-parete.html</loc>
+    <lastmod>2026-08-23</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.iconicwall.it/guide/supporti-installazione-parete.html</loc>
+    <lastmod>2026-08-23</lastmod>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.iconicwall.it/guide/luce-tv-prese-parete.html</loc>
+    <lastmod>2026-08-23</lastmod>
+    <priority>0.6</priority>
+  </url>
 </urlset>

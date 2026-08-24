@@ -47,6 +47,7 @@ const i18n = {
     footerVat: "P.IVA / C.F. 04683100988",
     footerResources: "Risorse",
     footerDocs: "Documentazione",
+    footerGuides: "Guide alla progettazione",
     footerFaq: "FAQ",
     footerMaintenance: "Manutenzione",
     footerInstructions: "Istruzioni di montaggio",
@@ -115,6 +116,7 @@ const i18n = {
     footerVat: "VAT / Tax ID 04683100988",
     footerResources: "Resources",
     footerDocs: "Documentation",
+    footerGuides: "Design guides",
     footerFaq: "FAQ",
     footerMaintenance: "Maintenance",
     footerInstructions: "Assembly instructions",
@@ -183,6 +185,7 @@ const i18n = {
     footerVat: "TVA / C.F. 04683100988",
     footerResources: "Ressources",
     footerDocs: "Documentation",
+    footerGuides: "Guides de conception",
     footerFaq: "FAQ",
     footerMaintenance: "Entretien",
     footerInstructions: "Instructions de montage",
@@ -251,6 +254,7 @@ const i18n = {
     footerVat: "USt-IdNr. / St.-Nr. 04683100988",
     footerResources: "Ressourcen",
     footerDocs: "Dokumentation",
+    footerGuides: "Planungsleitfäden",
     footerFaq: "FAQ",
     footerMaintenance: "Wartung",
     footerInstructions: "Montageanleitung",
@@ -319,6 +323,7 @@ const i18n = {
     footerVat: "NIF / C.F. 04683100988",
     footerResources: "Recursos",
     footerDocs: "Documentación",
+    footerGuides: "Guías de proyecto",
     footerFaq: "FAQ",
     footerMaintenance: "Mantenimiento",
     footerInstructions: "Instrucciones de montaje",
@@ -387,6 +392,7 @@ const i18n = {
     footerVat: "BTW-nr. / Fiscaal nr. 04683100988",
     footerResources: "Informatie",
     footerDocs: "Documentatie",
+    footerGuides: "Ontwerpgidsen",
     footerFaq: "FAQ",
     footerMaintenance: "Onderhoud",
     footerInstructions: "Montage-instructies",
@@ -571,6 +577,7 @@ footer.innerHTML = `
       <nav class="footer-column footer-nav" aria-label="${t.footerResources}">
         <h2>${t.footerResources}</h2>
         <a href="${pageUrl("documentazione/index.html")}">${t.footerDocs}</a>
+        ${lang === "it" ? `<a href="/guide/index.html">${t.footerGuides}</a>` : ""}
         <a href="${pageUrl("faq.html")}">${t.footerFaq}</a>
         <a href="${pageUrl("manutenzione.html")}">${t.footerMaintenance}</a>
         <a href="${pageUrl("istruzioni-montaggio.html")}">${t.footerInstructions}</a>

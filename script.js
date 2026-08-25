@@ -833,6 +833,40 @@ document.head.appendChild(gaInit);
 cookieConsent.activateConsentScripts();
 cookieConsent.renderBanner();
 
+// Eventi GA4 sui gesti intermedi — stesso gate di consenso di generate_lead:
+// senza consenso analytics window.gtag non esiste e non parte nulla.
+function trackGesture(name, params) {
+  if (typeof gtag === "function") gtag("event", name, params);
+}
+
+document.addEventListener("click", (event) => {
+  const link = event.target.closest("a[href]");
+  if (!link) return;
+  const href = link.getAttribute("href") || "";
+
+  if (href.startsWith("mailto:")) {
+    trackGesture("email_click", { pagina: location.pathname });
+    return;
+  }
+  if (href.startsWith("tel:")) {
+    trackGesture("phone_click", { pagina: location.pathname });
+    return;
+  }
+  if (location.pathname.includes("/guide/") && /\/contatti\.html$/.test(link.pathname)) {
+    const guida = (location.pathname.split("/").pop() || "index.html").replace(/\.html$/, "") || "index";
+    const tipo = new URLSearchParams(link.search).get("tipo");
+    trackGesture("guide_cta_click", tipo ? { guida, tipo } : { guida });
+  }
+});
+
+if (/\/configuratore\.html$/.test(location.pathname)) {
+  const origine =
+    document.referrer && document.referrer.startsWith(location.origin)
+      ? new URL(document.referrer).pathname
+      : "";
+  trackGesture("configurator_open", origine ? { origine } : {});
+}
+
 const cookiePreferencesForm = document.querySelector("[data-cookie-preferences]");
 if (cookiePreferencesForm) {
   const analyticsInput = cookiePreferencesForm.elements.analytics;
